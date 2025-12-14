@@ -133,10 +133,20 @@ export class EzrasNashimBuilder extends BaseBuilder {
   }
 
   buildNicanorGate(floorY, wallH, northZ) {
-    this.addWall(-26, floorY, northZ, 20, wallH, 2, this.mat.stonePolished);
-    this.addWall(26, floorY, northZ, 20, wallH, 2, this.mat.stonePolished);
-    this.addWall(0, floorY + 10, northZ, 14, wallH - 10, 2, this.mat.stonePolished);
-    this.addGateFrame(0, floorY, northZ - 1, 14, 10, this.mat.copper, 'Nicanor Gate');
+    // Gate opening is 14 units wide (matching the gate frame)
+    const gateWidth = 14;
+    const gateHeight = 10;
+
+    // Left wall section - from x=-33 to x=-7 (leaving opening from -7 to +7)
+    this.addWall(-20, floorY, northZ, 26, wallH, 2, this.mat.stonePolished);
+    // Right wall section - from x=+7 to x=+33
+    this.addWall(20, floorY, northZ, 26, wallH, 2, this.mat.stonePolished);
+
+    // Lintel above gate - NOT a collision wall (use addWallNonCollide)
+    this.addWallNonCollide(0, floorY + gateHeight, northZ, gateWidth, wallH - gateHeight, 2, this.mat.stonePolished);
+
+    // Decorative gate frame
+    this.addGateFrame(0, floorY, northZ - 1, gateWidth, gateHeight, this.mat.copper, 'Nicanor Gate');
   }
 
   build15Steps(floorY, northZ) {

@@ -124,7 +124,8 @@ export class HeichalBuilder extends BaseBuilder {
     // Back wall between Ulam and Heichal (with doorway)
     this.addWall(-7.5, ulamY, -58.5, 5, wallH, 1, this.mat.stonePolished);
     this.addWall(7.5, ulamY, -58.5, 5, wallH, 1, this.mat.stonePolished);
-    this.addWall(0, ulamY + 8, -58.5, 10, wallH - 8, 1, this.mat.stonePolished);
+    // Lintel above doorway - non-colliding
+    this.addWallNonCollide(0, ulamY + 8, -58.5, 10, wallH - 8, 1, this.mat.stonePolished);
 
     // Ceiling
     const ceiling = new THREE.Mesh(new THREE.BoxGeometry(heichalWidth, 1, heichalDepth), this.mat.cedar);

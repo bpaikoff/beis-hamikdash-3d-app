@@ -19,41 +19,60 @@ export const HebrewCalendar = {
     return (y % 19 === 0 || y % 19 === 3 || y % 19 === 6 || y % 19 === 8 || y % 19 === 11 || y % 19 === 14 || y % 19 === 17);
   },
 
-  getDate(date = new Date()) {
-    const ref = new Date(2023, 8, 16); // Tishrei 1, 5784
-    let y = 5784, m = 7, d = 1 + Math.floor((date - ref) / 86400000);
-    let ml = [29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30];
-    const isLeap = this.isLeapYear(y);
-    if (isLeap) ml.splice(11, 0, 30); // Add Adar I
+  getMonthLengths(year) {
+    // Correct month lengths: Nissan(30), Iyar(29), Sivan(30), Tammuz(29), Av(30), Elul(29),
+    // Tishrei(30), Cheshvan(29), Kislev(30), Teves(29), Shevat(30), Adar(29)
+    const isLeap = this.isLeapYear(year);
+    let ml = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];
+    if (isLeap) {
+      // Adar I(30), Adar II(29)
+      ml = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 30, 29];
+    }
+    return ml;
+  },
 
+  getDate(date = new Date()) {
+    const ref = new Date(2023, 8, 16); // September 16, 2023 = Tishrei 1, 5784
+    let y = 5784, m = 7, d = 1 + Math.floor((date - ref) / 86400000);
+    let ml = this.getMonthLengths(y);
+
+    // Handle dates in the future
     while (d > ml[m-1]) {
       d -= ml[m-1];
       m++;
-      if (m > (isLeap ? 13 : 12)) {
+      if (m > ml.length) {
         m = 1;
         y++;
-        ml = [29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30];
-        if (this.isLeapYear(y)) ml.splice(11, 0, 30);
+        ml = this.getMonthLengths(y);
       }
     }
+
+    // Handle dates before reference
     while (d < 1) {
       m--;
       if (m < 1) {
-        m = this.isLeapYear(y-1) ? 13 : 12;
         y--;
+        ml = this.getMonthLengths(y);
+        m = ml.length;
       }
       d += ml[m-1];
     }
 
     const dow = date.getDay();
     let special = null;
+    const isLeap = this.isLeapYear(y);
     const monthName = isLeap ? this.monthsLeap[m-1] : this.months[m-1];
 
+    // Check for special days
     if (m===7 && d<=2) special = 'ראש השנה';
     else if (m===7 && d===10) special = 'יום הכיפורים';
-    else if (m===7 && d>=15 && d<=22) special = 'סוכות';
+    else if (m===7 && d>=15 && d<=21) special = 'סוכות';
+    else if (m===7 && d===22) special = 'שמיני עצרת';
+    else if (m===9 && d>=25) special = 'חנוכה';
+    else if (m===10 && d<=2) special = 'חנוכה';
     else if (m===1 && d>=15 && d<=22) special = 'פסח';
     else if (m===3 && (d===6||d===7)) special = 'שבועות';
+    else if (m===5 && d===9) special = 'תשעה באב';
 
     return {
       year: y,

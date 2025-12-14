@@ -81,8 +81,8 @@ export class AzaraBuilder extends BaseBuilder {
         this.addWall(x, baseY, segCenterZ, 2, wallH, segDepth, this.mat.stonePolished);
       }
 
-      // Gate lintel
-      this.addWall(x, baseY + gateHeight, gate.z, 2, wallH - gateHeight, gateWidth, this.mat.stonePolished);
+      // Gate lintel - non-colliding
+      this.addWallNonCollide(x, baseY + gateHeight, gate.z, 2, wallH - gateHeight, gateWidth, this.mat.stonePolished);
       this.addGateFrame(x, floorY, gate.z, gateWidth, gateHeight, this.mat.copperP, gate.nameEn);
 
       currentZ = gate.z - gateWidth/2;

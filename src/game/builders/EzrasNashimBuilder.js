@@ -44,10 +44,11 @@ export class EzrasNashimBuilder extends BaseBuilder {
     const gateWidth = 12;
     const gateHeight = 8;
 
-    // South wall with Beautiful Gate
+    // South wall with Beautiful Gate (Sha'ar HaYafeh)
     this.addWall(-24, floorY, southZ, 18, wallH, 2, this.mat.stonePolished);
     this.addWall(24, floorY, southZ, 18, wallH, 2, this.mat.stonePolished);
-    this.addWall(0, floorY + gateHeight, southZ, gateWidth, wallH - gateHeight, 2, this.mat.stonePolished);
+    // Lintel - non-colliding so it doesn't block passage
+    this.addWallNonCollide(0, floorY + gateHeight, southZ, gateWidth, wallH - gateHeight, 2, this.mat.stonePolished);
     this.addGateFrame(0, floorY, southZ - 1, gateWidth, gateHeight, this.mat.copperP, 'Beautiful Gate');
 
     // Side walls with gates
@@ -55,11 +56,11 @@ export class EzrasNashimBuilder extends BaseBuilder {
     // East wall
     this.addWall(33, floorY, 47, 2, wallH, 20, this.mat.stonePolished);
     this.addWall(33, floorY, 19, 2, wallH, 20, this.mat.stonePolished);
-    this.addWall(33, floorY + 5, sideGateZ, 2, wallH - 5, 6, this.mat.stonePolished);
+    this.addWallNonCollide(33, floorY + 5, sideGateZ, 2, wallH - 5, 6, this.mat.stonePolished); // Lintel
     // West wall
     this.addWall(-33, floorY, 47, 2, wallH, 20, this.mat.stonePolished);
     this.addWall(-33, floorY, 19, 2, wallH, 20, this.mat.stonePolished);
-    this.addWall(-33, floorY + 5, sideGateZ, 2, wallH - 5, 6, this.mat.stonePolished);
+    this.addWallNonCollide(-33, floorY + 5, sideGateZ, 2, wallH - 5, 6, this.mat.stonePolished); // Lintel
   }
 
   buildCornerChambers(floorY) {

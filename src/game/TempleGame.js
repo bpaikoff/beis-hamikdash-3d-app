@@ -122,13 +122,27 @@ export class TempleGame {
       this.callbacks.onLoc({ name: a.name, nameEn: a.nameEn, desc: a.desc });
     }
 
+    // Holy vessels
     const KEILIM = {
       menorah: { name: 'מנורה', nameEn: 'Golden Menorah', icon: '🕎', desc: 'Seven branches, 18 tefachim tall, pure beaten gold.', pos: { x: -3, z: -65 } },
       shulchan: { name: 'שולחן הפנים', nameEn: 'Showbread Table', icon: '🍞', desc: '12 loaves arranged in two stacks, changed every Shabbos.', pos: { x: 3, z: -65 } },
       mizbeiachHazahav: { name: 'מזבח הזהב', nameEn: 'Golden Altar', icon: '✨', desc: 'For the Ketores, offered morning and afternoon.', pos: { x: 0, z: -75 } },
       mizbeiach: { name: 'מזבח העולה', nameEn: 'Great Altar', icon: '🔥', desc: '32 amos square. The eternal fire burns here.', pos: { x: 0, z: -30 } },
       kiyor: { name: 'כיור', nameEn: 'Copper Laver', icon: '💧', desc: 'Kohanim sanctify hands and feet before Avodah.', pos: { x: -10, z: -40 } },
-      aron: { name: 'ארון הקודש', nameEn: 'Holy Ark', icon: '📦', desc: 'Contains the Luchos. Keruvim spread wings above.', pos: { x: 0, z: -83 } }
+      aron: { name: 'ארון הקודש', nameEn: 'Holy Ark', icon: '📦', desc: 'Contains the Luchos. Keruvim spread wings above.', pos: { x: 0, z: -83 } },
+      // Gates - treated as keilim for info display
+      chuldahL: { name: 'שער חולדה', nameEn: 'Chuldah Gate (West)', icon: '🚪', desc: 'Southern entrance from the City of David.', pos: { x: -27, z: 68 } },
+      chuldahR: { name: 'שער חולדה', nameEn: 'Chuldah Gate (East)', icon: '🚪', desc: 'Southern entrance from the City of David.', pos: { x: 27, z: 68 } },
+      beautifulGate: { name: 'שער היפה', nameEn: 'Beautiful Gate', icon: '🏛️', desc: 'The main gate to Ezras Nashim, plated with Corinthian bronze.', pos: { x: 0, z: 58 } },
+      nicanorGate: { name: 'שער ניקנור', nameEn: 'Nicanor Gate', icon: '🏛️', desc: 'The great copper gate between Ezras Nashim and the Azara. Named for its miraculous journey from Alexandria.', pos: { x: 0, z: 8 } },
+      // Azara side gates - West
+      kindlingGate: { name: 'שער הדלק', nameEn: 'Kindling Gate', icon: '🚪', desc: 'Wood for the altar fire was brought through here.', pos: { x: -26, z: -18 } },
+      waterGate: { name: 'שער המים', nameEn: 'Water Gate', icon: '🚪', desc: 'Water for Nisuch HaMayim on Sukkos entered here.', pos: { x: -26, z: -29 } },
+      firstlingsGate: { name: 'שער הבכורות', nameEn: 'Gate of Firstlings', icon: '🚪', desc: 'Firstborn animals were brought through this gate.', pos: { x: -26, z: -38 } },
+      // Azara side gates - East
+      hearthGate: { name: 'שער בית המוקד', nameEn: 'Hearth Gate', icon: '🚪', desc: 'Entrance to the Chamber of the Hearth where Kohanim slept.', pos: { x: 26, z: -18 } },
+      flameGate: { name: 'שער הניצוץ', nameEn: 'Flame Gate', icon: '🚪', desc: 'The fire from here lit the altar fire.', pos: { x: 26, z: -29 } },
+      sacrificeGate: { name: 'שער הקרבן', nameEn: 'Sacrifice Gate', icon: '🚪', desc: 'Animals for sacrifice were brought through this gate.', pos: { x: 26, z: -38 } }
     };
 
     let closest = null, minDist = 8;

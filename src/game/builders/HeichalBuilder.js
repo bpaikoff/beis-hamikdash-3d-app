@@ -90,6 +90,30 @@ export class HeichalBuilder extends BaseBuilder {
       pillar.userData = { name: heb, nameEn: eng };
       this.scene.add(pillar);
     });
+
+    // Ulam entrance roof/portico spanning between the pillars
+    const roofY = ulamY + 19; // Above the pillar capitals
+    const roofWidth = 14; // Span between pillars plus overhang
+    const roofDepth = 4;
+
+    // Main roof beam
+    const roofBeam = new THREE.Mesh(
+      new THREE.BoxGeometry(roofWidth, 1.5, roofDepth),
+      this.mat.cedar
+    );
+    roofBeam.position.set(0, roofY, -49);
+    roofBeam.castShadow = true;
+    roofBeam.receiveShadow = true;
+    this.scene.add(roofBeam);
+
+    // Decorative gold trim on roof edge
+    const roofTrim = new THREE.Mesh(
+      new THREE.BoxGeometry(roofWidth + 0.5, 0.3, roofDepth + 0.5),
+      this.mat.goldEng
+    );
+    roofTrim.position.set(0, roofY + 0.9, -49);
+    roofTrim.castShadow = true;
+    this.scene.add(roofTrim);
   }
 
   buildHeichal(ulamY, heichalY, groundY, wallH) {

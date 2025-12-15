@@ -23,7 +23,7 @@ export default function BeisHamikdash3D() {
   const [loading, setLoading] = useState(null);
   const [location, setLocation] = useState(null);
   const [nearbyKli, setNearbyKli] = useState(null);
-  const [playerState, setPlayerState] = useState({ position: { x: 0, z: 62 }, rotation: 0, elevation: '0' });
+  const [playerState, setPlayerState] = useState({ position: { x: 0, y: 0, z: 62 }, rotation: 0, elevation: '0' });
   const [showKorbanos, setShowKorbanos] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
 
@@ -127,6 +127,7 @@ export default function BeisHamikdash3D() {
                     <div className="location-english">{location.nameEn}</div>
                     <div className="location-desc">{location.desc}</div>
                     <div className="elevation-display">Elevation: {playerState.elevation}m above ground</div>
+                    <div className="coords-display">Position: x={playerState.position.x.toFixed(1)}, y={playerState.position.y.toFixed(1)}, z={playerState.position.z.toFixed(1)}</div>
                   </>
                 )}
               </div>

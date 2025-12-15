@@ -124,25 +124,54 @@ export class TempleGame {
 
     // Holy vessels
     const KEILIM = {
-      menorah: { name: 'מנורה', nameEn: 'Golden Menorah', icon: '🕎', desc: 'Seven branches, 18 tefachim tall, pure beaten gold.', pos: { x: -3, z: -65 } },
-      shulchan: { name: 'שולחן הפנים', nameEn: 'Showbread Table', icon: '🍞', desc: '12 loaves arranged in two stacks, changed every Shabbos.', pos: { x: 3, z: -65 } },
-      mizbeiachHazahav: { name: 'מזבח הזהב', nameEn: 'Golden Altar', icon: '✨', desc: 'For the Ketores, offered morning and afternoon.', pos: { x: 0, z: -75 } },
-      mizbeiach: { name: 'מזבח העולה', nameEn: 'Great Altar', icon: '🔥', desc: '32 amos square. The eternal fire burns here.', pos: { x: 0, z: -30 } },
-      kiyor: { name: 'כיור', nameEn: 'Copper Laver', icon: '💧', desc: 'Kohanim sanctify hands and feet before Avodah.', pos: { x: -10, z: -40 } },
-      aron: { name: 'ארון הקודש', nameEn: 'Holy Ark', icon: '📦', desc: 'Contains the Luchos. Keruvim spread wings above.', pos: { x: 0, z: -83 } },
-      // Gates - treated as keilim for info display
-      chuldahL: { name: 'שער חולדה', nameEn: 'Chuldah Gate (West)', icon: '🚪', desc: 'Southern entrance from the City of David.', pos: { x: -27, z: 68 } },
-      chuldahR: { name: 'שער חולדה', nameEn: 'Chuldah Gate (East)', icon: '🚪', desc: 'Southern entrance from the City of David.', pos: { x: 27, z: 68 } },
-      beautifulGate: { name: 'שער היפה', nameEn: 'Beautiful Gate', icon: '🏛️', desc: 'The main gate to Ezras Nashim, plated with Corinthian bronze.', pos: { x: 0, z: 58 } },
-      nicanorGate: { name: 'שער ניקנור', nameEn: 'Nicanor Gate', icon: '🏛️', desc: 'The great copper gate between Ezras Nashim and the Azara. Named for its miraculous journey from Alexandria.', pos: { x: 0, z: 8 } },
+      // === HEICHAL INTERIOR ===
+      menorah: { name: 'מנורה', nameEn: 'Golden Menorah', icon: '🕎', desc: 'Seven branches, 18 tefachim tall, pure beaten gold. Lit daily by the Kohen.', pos: { x: -3, z: -68 } },
+      shulchan: { name: 'שולחן הפנים', nameEn: 'Showbread Table', icon: '🍞', desc: '12 loaves arranged in two stacks, changed every Shabbos. Miraculously stayed fresh.', pos: { x: 3, z: -68 } },
+      mizbeiachHazahav: { name: 'מזבח הזהב', nameEn: 'Golden Incense Altar', icon: '✨', desc: 'For the Ketores (incense), offered morning and afternoon. One amah square.', pos: { x: 0, z: -75 } },
+      paroches: { name: 'פרוכת', nameEn: 'Paroches (Curtain)', icon: '🪟', desc: 'The sacred curtain separating the Heichal from the Kodesh Hakodashim. Embroidered with Keruvim.', pos: { x: 0, z: -78 } },
+
+      // === KODESH HAKODASHIM ===
+      aron: { name: 'ארון הקודש', nameEn: 'Holy Ark', icon: '📦', desc: 'Contains the Luchos. Golden Keruvim spread wings above, facing each other.', pos: { x: 0, z: -83 } },
+      evenHashtiya: { name: 'אבן השתיה', nameEn: 'Foundation Stone', icon: '🪨', desc: 'The rock from which the world was created. The Ark rested upon it.', pos: { x: 0, z: -83 } },
+
+      // === ULAM (ENTRANCE HALL) ===
+      yachin: { name: 'יכין', nameEn: 'Yachin Pillar', icon: '🏛️', desc: 'Southern copper pillar at the Ulam entrance. 18 amos tall. Name means "He establishes."', pos: { x: -5, z: -49 } },
+      boaz: { name: 'בועז', nameEn: 'Boaz Pillar', icon: '🏛️', desc: 'Northern copper pillar at the Ulam entrance. 18 amos tall. Name means "In Him is strength."', pos: { x: 5, z: -49 } },
+
+      // === AZARAS KOHANIM ===
+      mizbeiach: { name: 'מזבח העולה', nameEn: 'Great Altar', icon: '🔥', desc: '32 amos square at base, 10 amos tall. The eternal fire burned here continuously.', pos: { x: 0, z: -28 } },
+      kevesh: { name: 'כבש', nameEn: 'Altar Ramp', icon: '📐', desc: 'The ramp for ascending the altar. 32 amos long, on the south side. No steps, as commanded.', pos: { x: 0, z: -17 } },
+      kiyor: { name: 'כיור', nameEn: 'Copper Laver', icon: '💧', desc: 'Made from copper mirrors. Kohanim sanctify hands and feet before the Avodah.', pos: { x: -8, z: -38 } },
+      slaughterTables: { name: 'שולחנות השיש', nameEn: 'Marble Slaughter Tables', icon: '🔪', desc: 'Eight marble tables for preparing the sacrifices. Intestines were washed here.', pos: { x: 14, z: -38 } },
+      slaughterRings: { name: 'טבעות', nameEn: 'Slaughter Rings', icon: '⭕', desc: '24 rings set in the floor for securing animals during slaughter.', pos: { x: 8, z: -35 } },
+      hangingPillars: { name: 'עמודים', nameEn: 'Hanging Pillars', icon: '🪝', desc: 'Cedar pillars with iron hooks for hanging and skinning sacrifices.', pos: { x: 6, z: -36 } },
+
+      // === CHAMBERS ===
+      lishkasHagazis: { name: 'לשכת הגזית', nameEn: 'Chamber of Hewn Stone', icon: '⚖️', desc: 'The Sanhedrin of 71 sat here, half inside the Azara. The supreme court of Israel.', pos: { x: -21, z: -35 } },
+      beisHamoked: { name: 'בית המוקד', nameEn: 'Chamber of the Hearth', icon: '🏠', desc: 'Kohanim on duty slept here. Fire burned constantly to warm them.', pos: { x: 21, z: -20 } },
+
+      // === DUCHAN & TRANSITION AREAS ===
+      duchan: { name: 'דוכן', nameEn: 'Duchan (Levite Platform)', icon: '🎵', desc: 'The Levites stood here to sing during the Avodah, between Yisrael and Kohanim.', pos: { x: 0, z: -12 } },
+
+      // === EZRAS NASHIM CHAMBERS ===
+      chamberOils: { name: 'לשכת השמנים', nameEn: 'Chamber of Oils', icon: '🫒', desc: 'Storage for oil and wine used in the Temple service.', pos: { x: -27, z: 52 } },
+      chamberLepers: { name: 'לשכת המצורעים', nameEn: 'Chamber of Lepers', icon: '🏥', desc: 'Healed metzora\'im (lepers) immersed here before bringing their offerings.', pos: { x: 27, z: 52 } },
+      chamberNazarites: { name: 'לשכת הנזירים', nameEn: 'Chamber of Nazarites', icon: '✂️', desc: 'Nazarites cooked their shelamim offerings and shaved their hair here.', pos: { x: -27, z: 14 } },
+      chamberWood: { name: 'לשכת העצים', nameEn: 'Chamber of Wood', icon: '🪵', desc: 'Kohanim with blemishes inspected wood for the altar fire here.', pos: { x: 27, z: 14 } },
+
+      // === GATES ===
+      nicanorGate: { name: 'שער ניקנור', nameEn: 'Nicanor Gate', icon: '🏛️', desc: 'The great copper gate from Alexandria. Miraculously survived a storm at sea.', pos: { x: 0, z: 8 } },
+      beautifulGate: { name: 'שער היפה', nameEn: 'Beautiful Gate', icon: '🏛️', desc: 'Main gate to Ezras Nashim, plated with Corinthian bronze.', pos: { x: 0, z: 58 } },
+      chuldahL: { name: 'שער חולדה', nameEn: 'Chuldah Gate (West)', icon: '🚪', desc: 'Southern entrance from the City of David. Named for the prophetess.', pos: { x: -27, z: 68 } },
+      chuldahR: { name: 'שער חולדה', nameEn: 'Chuldah Gate (East)', icon: '🚪', desc: 'Southern entrance from the City of David. Named for the prophetess.', pos: { x: 27, z: 68 } },
       // Azara side gates - West
       kindlingGate: { name: 'שער הדלק', nameEn: 'Kindling Gate', icon: '🚪', desc: 'Wood for the altar fire was brought through here.', pos: { x: -26, z: -18 } },
-      waterGate: { name: 'שער המים', nameEn: 'Water Gate', icon: '🚪', desc: 'Water for Nisuch HaMayim on Sukkos entered here.', pos: { x: -26, z: -29 } },
-      firstlingsGate: { name: 'שער הבכורות', nameEn: 'Gate of Firstlings', icon: '🚪', desc: 'Firstborn animals were brought through this gate.', pos: { x: -26, z: -38 } },
+      waterGate: { name: 'שער המים', nameEn: 'Water Gate', icon: '🚪', desc: 'Water for Nisuch HaMayim (water libation) on Sukkos entered here.', pos: { x: -26, z: -29 } },
+      firstlingsGate: { name: 'שער הבכורות', nameEn: 'Gate of Firstlings', icon: '🚪', desc: 'Firstborn animals for redemption were brought through this gate.', pos: { x: -26, z: -38 } },
       // Azara side gates - East
       hearthGate: { name: 'שער בית המוקד', nameEn: 'Hearth Gate', icon: '🚪', desc: 'Entrance to the Chamber of the Hearth where Kohanim slept.', pos: { x: 26, z: -18 } },
-      flameGate: { name: 'שער הניצוץ', nameEn: 'Flame Gate', icon: '🚪', desc: 'The fire from here lit the altar fire.', pos: { x: 26, z: -29 } },
-      sacrificeGate: { name: 'שער הקרבן', nameEn: 'Sacrifice Gate', icon: '🚪', desc: 'Animals for sacrifice were brought through this gate.', pos: { x: 26, z: -38 } }
+      flameGate: { name: 'שער הניצוץ', nameEn: 'Flame Gate', icon: '🚪', desc: 'Fire from here was used to relight the altar if needed.', pos: { x: 26, z: -29 } },
+      sacrificeGate: { name: 'שער הקרבן', nameEn: 'Sacrifice Gate', icon: '🚪', desc: 'Kodshei Kodashim sacrifices were brought through this gate.', pos: { x: 26, z: -38 } }
     };
 
     let closest = null, minDist = 8;

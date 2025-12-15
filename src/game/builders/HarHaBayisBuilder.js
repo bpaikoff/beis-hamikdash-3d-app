@@ -13,14 +13,17 @@ export class HarHaBayisBuilder extends BaseBuilder {
 
   buildPlatform() {
     // Main platform - the Temple Mount floor
-    this.addFloor(0, 1.8, 22, 140, 88, this.mat.floor, 'har-habayis');
+    // Extended north to accommodate Azara and Heichal (z=68 south to z=-95 north)
+    const platformCenterZ = -13;
+    const platformDepth = 166;  // From z=70 to z=-96
+    this.addFloor(0, 1.8, platformCenterZ, 140, platformDepth, this.mat.floor, 'har-habayis');
 
     // Fill underneath the platform
     const platformFill = new THREE.Mesh(
-      new THREE.BoxGeometry(140, 1.8, 88),
+      new THREE.BoxGeometry(140, 1.8, platformDepth),
       this.mat.stone
     );
-    platformFill.position.set(0, 0.9, 22);
+    platformFill.position.set(0, 0.9, platformCenterZ);
     platformFill.receiveShadow = true;
     this.scene.add(platformFill);
   }
@@ -37,7 +40,7 @@ export class HarHaBayisBuilder extends BaseBuilder {
     const wallH = 24;
     const wallThick = 5;
     const southZ = 68;
-    const northZ = -22;
+    const northZ = -95;  // Moved north to avoid blocking Azara/Heichal (was -22)
     const eastX = 72;
     const westX = -72;
     const gateWidth = 14;
@@ -53,8 +56,11 @@ export class HarHaBayisBuilder extends BaseBuilder {
 
     // === OTHER WALLS ===
     this.addWall(0, 0, northZ, 144, wallH, wallThick, this.mat.stone);
-    this.addWall(eastX, 0, 23, wallThick, wallH, 90, this.mat.stone);
-    this.addWall(westX, 0, 23, wallThick, wallH, 90, this.mat.stone);
+    // Side walls extended to match north boundary
+    const sideWallCenterZ = (southZ + northZ) / 2;  // Center between south and north
+    const sideWallDepth = southZ - northZ;  // Full length from south to north
+    this.addWall(eastX, 0, sideWallCenterZ, wallThick, wallH, sideWallDepth, this.mat.stone);
+    this.addWall(westX, 0, sideWallCenterZ, wallThick, wallH, sideWallDepth, this.mat.stone);
 
     // === Crenellations ===
     for (let i = -68; i <= 68; i += 8) {

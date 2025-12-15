@@ -152,11 +152,13 @@ export class EzrasNashimBuilder extends BaseBuilder {
 
   build15Steps(floorY, northZ) {
     // 15 Steps (Shir HaMaalos) from Ezras Nashim up to Azaras Yisrael
+    // Steps start narrow at the Nicanor Gate (14 units wide) and widen into the Azara
     const stepsRise = 3.0;
     for (let i = 0; i < 15; i++) {
       const stepY = floorY + ((i + 1) / 15) * stepsRise;
       const stepZ = northZ - 1 - i;
-      const stepWidth = 44 - i * 0.5;
+      // Start at gate width (14) and widen to 44 as we go into the Azara
+      const stepWidth = 14 + i * 2;
       const stepMesh = new THREE.Mesh(
         new THREE.BoxGeometry(stepWidth, 0.2, 1),
         this.mat.marbleW

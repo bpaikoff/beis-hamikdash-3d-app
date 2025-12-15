@@ -60,15 +60,17 @@ export class KeilimBuilder extends BaseBuilder {
   }
 
   buildKevesh(baseY) {
-    const rampLength = 14;
+    // Kevesh (ramp) goes from Azaras Kohanim (z=-13) up to the altar (z=-21)
+    // Ramp must stay within Azaras Kohanim area, not extend into Azaras Yisrael
+    const rampLength = 8;  // From z=-21 to z=-13 (was 14, extending to z=-7)
     const rampHeight = 6;
     const rampWidth = 5;
-    const rampSteps = 20;
+    const rampSteps = 16;  // Fewer steps for shorter ramp
 
     for (let i = 0; i < rampSteps; i++) {
       const progress = i / rampSteps;
       const stepY = baseY + rampHeight * (1 - progress);
-      const stepZ = -28 + 7 + progress * rampLength;
+      const stepZ = -28 + 7 + progress * rampLength;  // Goes from z=-21 to z=-13
       const stepMesh = new THREE.Mesh(
         new THREE.BoxGeometry(rampWidth, 0.4, rampLength / rampSteps + 0.1),
         this.mat.stone

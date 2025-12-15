@@ -48,20 +48,69 @@ export class AzaraBuilder extends BaseBuilder {
     // The 12 steps are 12 units wide (x=-6 to x=6), so we need to leave that opening
     const wallStartZ = -7;
     const wallEndZ = -43; // Changed from -45 to leave opening for stairs
+    const harHaBayisY = 1.8;
 
     // West wall with gates
-    this.buildSideWallWithGates(-26, baseY, wallH, wallStartZ, wallEndZ, [
+    const westGates = [
       { z: -18, name: 'שער הדלק', nameEn: 'Kindling Gate' },
       { z: -29, name: 'שער המים', nameEn: 'Water Gate' },
       { z: -38, name: 'שער הבכורות', nameEn: 'Gate of Firstlings' }
-    ], kohanimY);
+    ];
+    this.buildSideWallWithGates(-26, baseY, wallH, wallStartZ, wallEndZ, westGates, kohanimY);
+
+    // Add stairs to west gates
+    westGates.forEach(gate => {
+      this.addGateStairs(-26, harHaBayisY, kohanimY, gate.z, -1); // -1 for west (stairs go outward)
+    });
 
     // East wall with gates
-    this.buildSideWallWithGates(26, baseY, wallH, wallStartZ, wallEndZ, [
+    const eastGates = [
       { z: -18, name: 'שער בית המוקד', nameEn: 'Hearth Gate' },
       { z: -29, name: 'שער הניצוץ', nameEn: 'Flame Gate' },
       { z: -38, name: 'שער הקרבן', nameEn: 'Sacrifice Gate' }
-    ], kohanimY);
+    ];
+    this.buildSideWallWithGates(26, baseY, wallH, wallStartZ, wallEndZ, eastGates, kohanimY);
+
+    // Add stairs to east gates
+    eastGates.forEach(gate => {
+      this.addGateStairs(26, harHaBayisY, kohanimY, gate.z, 1); // +1 for east (stairs go outward)
+    });
+  }
+
+  addGateStairs(wallX, bottomY, topY, gateZ, direction) {
+    // Create stairs from Har HaBayis level up to gate/Azara level
+    const stairWidth = 4;
+    const stairDepth = 8; // How far stairs extend from wall
+    const heightDiff = topY - bottomY;
+    const numSteps = 12;
+    const stepRise = heightDiff / numSteps;
+    const stepRun = stairDepth / numSteps;
+
+    for (let i = 0; i < numSteps; i++) {
+      const stepY = bottomY + (i + 1) * stepRise;
+      const stepX = wallX + direction * (2 + i * stepRun); // Start outside wall, go outward
+
+      const step = new THREE.Mesh(
+        new THREE.BoxGeometry(stepRun + 0.1, 0.3, stairWidth),
+        this.mat.stone
+      );
+      step.position.set(stepX, stepY - 0.15, gateZ);
+      step.receiveShadow = true;
+      step.userData = { isFloor: true, isStep: true };
+      this.scene.add(step);
+      this.floors.push(step);
+    }
+
+    // Landing platform at gate level
+    const landing = new THREE.Mesh(
+      new THREE.BoxGeometry(3, 0.3, stairWidth + 1),
+      this.mat.stone
+    );
+    landing.position.set(wallX + direction * 0.5, topY - 0.15, gateZ);
+    landing.receiveShadow = true;
+    landing.userData = { isFloor: true };
+    this.scene.add(landing);
+    this.floors.push(landing);
   }
 
   buildSideWallWithGates(x, baseY, wallH, startZ, endZ, gates, floorY) {
@@ -223,27 +272,210 @@ export class AzaraBuilder extends BaseBuilder {
 
   buildChambers(kohanimY) {
     // Lishkas HaGazis (Chamber of Hewn Stone) - Sanhedrin
-    this.addChamberBuilding(-21, kohanimY, -35, 8, 6, 10, 'לשכת הגזית', 'Chamber of Hewn Stone');
+    this.buildLishkasHagazis(-21, kohanimY, -35);
+
     // Beis HaMoked (Chamber of the Hearth)
-    this.addChamberBuilding(21, kohanimY, -20, 8, 6, 8, 'בית המוקד', 'Chamber of the Hearth');
+    this.buildBeisHamoked(21, kohanimY, -20);
   }
 
-  addChamberBuilding(x, baseY, z, w, h, d, nameHeb, nameEn) {
-    const chamber = new THREE.Mesh(
-      new THREE.BoxGeometry(w, h, d),
+  buildLishkasHagazis(x, baseY, z) {
+    // Chamber of Hewn Stone - where the Sanhedrin of 71 sat
+    const w = 10, h = 6, d = 12;
+
+    // Building shell (walls)
+    this.addChamberWithInterior(x, baseY, z, w, h, d, 'לשכת הגזית', 'Chamber of Hewn Stone');
+
+    // Semi-circular seating arrangement for the Sanhedrin (71 judges)
+    // They sat in a semi-circle facing the entrance
+    const judgeMat = new THREE.MeshStandardMaterial({ color: 0x4a3c2a, roughness: 0.9 });
+    const robeMat = new THREE.MeshStandardMaterial({ color: 0x1a1a4a, roughness: 0.8 }); // Dark blue robes
+
+    // Create seated judges in a semi-circle
+    const radius = 4;
+    const numJudges = 12; // Representative number
+    for (let i = 0; i < numJudges; i++) {
+      const angle = (Math.PI / (numJudges - 1)) * i - Math.PI / 2;
+      const jx = x + Math.cos(angle) * radius;
+      const jz = z + Math.sin(angle) * (radius * 0.6);
+      this.addSeatedFigure(jx, baseY, jz, robeMat, judgeMat, Math.PI - angle);
+    }
+
+    // Stone benches (the seats)
+    const benchMat = this.mat.stone;
+    for (let i = 0; i < 3; i++) {
+      const benchAngle = (Math.PI / 2) * i - Math.PI / 2;
+      const bench = new THREE.Mesh(
+        new THREE.BoxGeometry(3, 0.5, 1),
+        benchMat
+      );
+      bench.position.set(
+        x + Math.cos(benchAngle) * 3.5,
+        baseY + 0.25,
+        z + Math.sin(benchAngle) * 2
+      );
+      bench.rotation.y = -benchAngle;
+      this.scene.add(bench);
+    }
+  }
+
+  buildBeisHamoked(x, baseY, z) {
+    // Chamber of the Hearth - where Kohanim slept and kept warm
+    const w = 10, h = 6, d = 10;
+
+    // Building shell
+    this.addChamberWithInterior(x, baseY, z, w, h, d, 'בית המוקד', 'Chamber of the Hearth');
+
+    // Central fire pit
+    const fireBaseMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 1 });
+    const firePit = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.2, 1.5, 0.4, 16),
+      fireBaseMat
+    );
+    firePit.position.set(x, baseY + 0.2, z);
+    this.scene.add(firePit);
+
+    // Fire glow (emissive)
+    const fireMat = new THREE.MeshBasicMaterial({ color: 0xff4400 });
+    const fire = new THREE.Mesh(
+      new THREE.ConeGeometry(0.8, 1.5, 8),
+      fireMat
+    );
+    fire.position.set(x, baseY + 1, z);
+    this.scene.add(fire);
+
+    // Fire light
+    const fireLight = new THREE.PointLight(0xff6600, 1, 8);
+    fireLight.position.set(x, baseY + 1.5, z);
+    this.scene.add(fireLight);
+
+    // Sleeping mats with Kohanim around the fire
+    const matMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.95 });
+    const kohenRobe = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.8 }); // White robes
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xD4A574, roughness: 0.8 });
+
+    const sleepPositions = [
+      { x: x - 3, z: z - 2, rot: 0 },
+      { x: x - 3, z: z + 2, rot: 0 },
+      { x: x + 3, z: z - 2, rot: Math.PI },
+      { x: x + 3, z: z + 2, rot: Math.PI }
+    ];
+
+    sleepPositions.forEach(pos => {
+      // Sleeping mat
+      const mat = new THREE.Mesh(
+        new THREE.BoxGeometry(2.5, 0.1, 1.2),
+        matMat
+      );
+      mat.position.set(pos.x, baseY + 0.05, pos.z);
+      this.scene.add(mat);
+
+      // Sleeping figure (lying down)
+      this.addSleepingFigure(pos.x, baseY + 0.2, pos.z, kohenRobe, skinMat, pos.rot);
+    });
+  }
+
+  addChamberWithInterior(x, baseY, z, w, h, d, nameHeb, nameEn) {
+    // Create chamber with open front (so we can see inside)
+    const wallThick = 0.5;
+
+    // Back wall
+    const backWall = new THREE.Mesh(
+      new THREE.BoxGeometry(w, h, wallThick),
       this.mat.stonePolished
     );
-    chamber.position.set(x, baseY + h/2, z);
-    chamber.castShadow = true;
-    chamber.receiveShadow = true;
-    chamber.userData = { name: nameHeb, nameEn: nameEn };
-    this.scene.add(chamber);
+    backWall.position.set(x, baseY + h/2, z - d/2 + wallThick/2);
+    backWall.castShadow = true;
+    this.scene.add(backWall);
 
+    // Side walls
+    [-1, 1].forEach(side => {
+      const sideWall = new THREE.Mesh(
+        new THREE.BoxGeometry(wallThick, h, d),
+        this.mat.stonePolished
+      );
+      sideWall.position.set(x + side * (w/2 - wallThick/2), baseY + h/2, z);
+      sideWall.castShadow = true;
+      this.scene.add(sideWall);
+    });
+
+    // Floor
+    const floor = new THREE.Mesh(
+      new THREE.BoxGeometry(w - wallThick, 0.3, d),
+      this.mat.floor
+    );
+    floor.position.set(x, baseY + 0.15, z);
+    floor.receiveShadow = true;
+    floor.userData = { isFloor: true };
+    this.scene.add(floor);
+    this.floors.push(floor);
+
+    // Roof
     const roof = new THREE.Mesh(
       new THREE.BoxGeometry(w + 0.5, 0.5, d + 0.5),
       this.mat.stone
     );
     roof.position.set(x, baseY + h + 0.25, z);
+    roof.castShadow = true;
     this.scene.add(roof);
+  }
+
+  addSeatedFigure(x, baseY, z, robeMat, skinMat, rotation) {
+    const figure = new THREE.Group();
+
+    // Body (seated, torso)
+    const torso = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.25, 0.3, 0.8, 8),
+      robeMat
+    );
+    torso.position.y = 0.9;
+    figure.add(torso);
+
+    // Head
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.15, 10, 10),
+      skinMat
+    );
+    head.position.y = 1.45;
+    figure.add(head);
+
+    // Legs (bent, seated)
+    const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 6);
+    [-0.12, 0.12].forEach(lz => {
+      const leg = new THREE.Mesh(legGeo, robeMat);
+      leg.position.set(0.2, 0.4, lz);
+      leg.rotation.z = Math.PI / 3;
+      figure.add(leg);
+    });
+
+    figure.position.set(x, baseY, z);
+    figure.rotation.y = rotation;
+    figure.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    this.scene.add(figure);
+  }
+
+  addSleepingFigure(x, baseY, z, robeMat, skinMat, rotation) {
+    const figure = new THREE.Group();
+
+    // Body (lying down)
+    const body = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.2, 1.2, 4, 8),
+      robeMat
+    );
+    body.rotation.z = Math.PI / 2;
+    body.position.y = 0.2;
+    figure.add(body);
+
+    // Head
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.15, 10, 10),
+      skinMat
+    );
+    head.position.set(-0.7, 0.25, 0);
+    figure.add(head);
+
+    figure.position.set(x, baseY, z);
+    figure.rotation.y = rotation;
+    figure.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    this.scene.add(figure);
   }
 }

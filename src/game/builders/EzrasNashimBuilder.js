@@ -65,10 +65,10 @@ export class EzrasNashimBuilder extends BaseBuilder {
 
   buildCornerChambers(floorY) {
     const chambers = [
-      { pos: [-27, 52], name: 'לשכת השמנים', nameEn: 'Chamber of Oils', doorDir: 'east' },
-      { pos: [27, 52], name: 'לשכת המצורעים', nameEn: 'Chamber of Lepers', doorDir: 'west' },
-      { pos: [-27, 14], name: 'לשכת הנזירים', nameEn: 'Chamber of Nazarites', doorDir: 'east' },
-      { pos: [27, 14], name: 'לשכת העצים', nameEn: 'Chamber of Wood', doorDir: 'west' }
+      { pos: [-27, 52], name: 'לשכת השמנים', nameEn: 'Chamber of Oils', doorDir: 'east', contentType: 'oils' },
+      { pos: [27, 52], name: 'לשכת המצורעים', nameEn: 'Chamber of Lepers', doorDir: 'west', contentType: 'lepers' },
+      { pos: [-27, 14], name: 'לשכת הנזירים', nameEn: 'Chamber of Nazarites', doorDir: 'east', contentType: 'nazarites' },
+      { pos: [27, 14], name: 'לשכת העצים', nameEn: 'Chamber of Wood', doorDir: 'west', contentType: 'wood' }
     ];
 
     const chamberSize = 10;
@@ -120,6 +120,376 @@ export class EzrasNashimBuilder extends BaseBuilder {
       roof.rotation.y = Math.PI / 4;
       roof.castShadow = true;
       this.scene.add(roof);
+
+      // Add chamber-specific contents
+      this.addChamberContents(cx, floorY + 0.3, cz, ch.contentType);
+    });
+  }
+
+  addChamberContents(cx, floorY, cz, contentType) {
+    switch (contentType) {
+      case 'oils':
+        this.addOilStorage(cx, floorY, cz);
+        break;
+      case 'lepers':
+        this.addMikvah(cx, floorY, cz);
+        break;
+      case 'nazarites':
+        this.addCookingArea(cx, floorY, cz);
+        break;
+      case 'wood':
+        this.addWoodStorage(cx, floorY, cz);
+        break;
+    }
+  }
+
+  addOilStorage(cx, floorY, cz) {
+    // Oil jars and storage vessels for the Menorah and Mincha offerings
+    const jarMat = new THREE.MeshStandardMaterial({ color: 0xC4A35A, roughness: 0.6 }); // Ceramic
+    const oilMat = new THREE.MeshStandardMaterial({ color: 0xDAA520, roughness: 0.3, metalness: 0.1 }); // Golden oil color
+
+    // Large storage jars along the walls
+    const jarPositions = [
+      { x: -3, z: -2 }, { x: -3, z: 0 }, { x: -3, z: 2 },
+      { x: 3, z: -2 }, { x: 3, z: 0 }, { x: 3, z: 2 }
+    ];
+
+    jarPositions.forEach(pos => {
+      // Large amphora-style jar
+      const jar = new THREE.Group();
+
+      // Body
+      const body = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.3, 0.4, 1.2, 12),
+        jarMat
+      );
+      body.position.y = 0.6;
+      jar.add(body);
+
+      // Neck
+      const neck = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.15, 0.25, 0.4, 12),
+        jarMat
+      );
+      neck.position.y = 1.4;
+      jar.add(neck);
+
+      // Oil level visible at top
+      const oil = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.13, 0.13, 0.05, 12),
+        oilMat
+      );
+      oil.position.y = 1.55;
+      jar.add(oil);
+
+      // Handles
+      [-0.35, 0.35].forEach(hx => {
+        const handle = new THREE.Mesh(
+          new THREE.TorusGeometry(0.12, 0.03, 8, 12, Math.PI),
+          jarMat
+        );
+        handle.position.set(hx, 1.1, 0);
+        handle.rotation.z = Math.PI / 2;
+        handle.rotation.y = hx > 0 ? 0 : Math.PI;
+        jar.add(handle);
+      });
+
+      jar.position.set(cx + pos.x, floorY, cz + pos.z);
+      jar.traverse(c => { if (c.isMesh) c.castShadow = true; });
+      this.scene.add(jar);
+    });
+
+    // Smaller oil vessels on a central table
+    const tableMat = this.mat.cedar;
+    const table = new THREE.Mesh(
+      new THREE.BoxGeometry(2, 0.6, 1.5),
+      tableMat
+    );
+    table.position.set(cx, floorY + 0.3, cz);
+    table.castShadow = true;
+    this.scene.add(table);
+
+    // Small oil pitchers on table
+    for (let i = -2; i <= 2; i++) {
+      const pitcher = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.12, 0.3, 8),
+        jarMat
+      );
+      pitcher.position.set(cx + i * 0.35, floorY + 0.75, cz);
+      pitcher.castShadow = true;
+      this.scene.add(pitcher);
+    }
+  }
+
+  addMikvah(cx, floorY, cz) {
+    // Mikvah (ritual bath) for the leper's purification
+    const waterMat = new THREE.MeshStandardMaterial({
+      color: 0x4A90D9,
+      roughness: 0.1,
+      metalness: 0.3,
+      transparent: true,
+      opacity: 0.7
+    });
+    const stoneMat = this.mat.stone;
+
+    // Mikvah basin (sunken pool)
+    const basinSize = 3;
+    const basinDepth = 1.5;
+
+    // Basin walls
+    const wallThick = 0.3;
+    // Back
+    const backWall = new THREE.Mesh(
+      new THREE.BoxGeometry(basinSize + wallThick * 2, basinDepth, wallThick),
+      stoneMat
+    );
+    backWall.position.set(cx, floorY + basinDepth / 2, cz - basinSize / 2);
+    this.scene.add(backWall);
+
+    // Front (lower, with steps)
+    const frontWall = new THREE.Mesh(
+      new THREE.BoxGeometry(basinSize + wallThick * 2, basinDepth * 0.5, wallThick),
+      stoneMat
+    );
+    frontWall.position.set(cx, floorY + basinDepth * 0.25, cz + basinSize / 2);
+    this.scene.add(frontWall);
+
+    // Sides
+    [-1, 1].forEach(side => {
+      const sideWall = new THREE.Mesh(
+        new THREE.BoxGeometry(wallThick, basinDepth, basinSize),
+        stoneMat
+      );
+      sideWall.position.set(cx + side * (basinSize / 2 + wallThick / 2), floorY + basinDepth / 2, cz);
+      this.scene.add(sideWall);
+    });
+
+    // Water surface
+    const water = new THREE.Mesh(
+      new THREE.BoxGeometry(basinSize, 0.1, basinSize),
+      waterMat
+    );
+    water.position.set(cx, floorY + basinDepth - 0.2, cz);
+    this.scene.add(water);
+
+    // Steps into mikvah
+    for (let i = 0; i < 3; i++) {
+      const step = new THREE.Mesh(
+        new THREE.BoxGeometry(basinSize * 0.8, 0.3, 0.4),
+        stoneMat
+      );
+      step.position.set(cx, floorY + i * 0.3 + 0.15, cz + basinSize / 2 - 0.5 - i * 0.4);
+      step.castShadow = true;
+      this.scene.add(step);
+    }
+
+    // Purification vessels nearby
+    const vesselMat = new THREE.MeshStandardMaterial({ color: 0xC4A35A, roughness: 0.6 });
+    [{ x: 2.5, z: -1 }, { x: 2.5, z: 1 }].forEach(pos => {
+      const vessel = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.2, 0.25, 0.5, 10),
+        vesselMat
+      );
+      vessel.position.set(cx + pos.x, floorY + 0.25, cz + pos.z);
+      vessel.castShadow = true;
+      this.scene.add(vessel);
+    });
+  }
+
+  addCookingArea(cx, floorY, cz) {
+    // Cooking area for Nazarites to cook their Shelamim offerings
+    const potMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.7 }); // Bronze/copper
+    const fireMat = new THREE.MeshBasicMaterial({ color: 0xFF4500 });
+    const ashMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 1 });
+
+    // Central cooking hearth
+    const hearth = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.2, 1.4, 0.4, 16),
+      ashMat
+    );
+    hearth.position.set(cx, floorY + 0.2, cz);
+    this.scene.add(hearth);
+
+    // Fire
+    const fire = new THREE.Mesh(
+      new THREE.ConeGeometry(0.6, 1, 8),
+      fireMat
+    );
+    fire.position.set(cx, floorY + 0.9, cz);
+    this.scene.add(fire);
+
+    // Fire light
+    const fireLight = new THREE.PointLight(0xff6600, 0.8, 6);
+    fireLight.position.set(cx, floorY + 1.2, cz);
+    this.scene.add(fireLight);
+
+    // Large cooking pot over fire
+    const pot = new THREE.Group();
+    // Pot body
+    const potBody = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.5, 0.4, 0.6, 16, 1, true),
+      potMat
+    );
+    potBody.position.y = 0.3;
+    pot.add(potBody);
+
+    // Pot bottom
+    const potBottom = new THREE.Mesh(
+      new THREE.CircleGeometry(0.4, 16),
+      potMat
+    );
+    potBottom.rotation.x = -Math.PI / 2;
+    pot.add(potBottom);
+
+    // Handles
+    [-0.55, 0.55].forEach(hx => {
+      const handle = new THREE.Mesh(
+        new THREE.TorusGeometry(0.1, 0.025, 6, 12, Math.PI),
+        potMat
+      );
+      handle.position.set(hx, 0.5, 0);
+      handle.rotation.z = Math.PI / 2;
+      handle.rotation.y = hx > 0 ? 0 : Math.PI;
+      pot.add(handle);
+    });
+
+    pot.position.set(cx, floorY + 1.2, cz);
+    pot.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    this.scene.add(pot);
+
+    // Tripod stand for pot
+    for (let i = 0; i < 3; i++) {
+      const angle = (i / 3) * Math.PI * 2;
+      const leg = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.04, 1.2, 6),
+        new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8 })
+      );
+      leg.position.set(
+        cx + Math.cos(angle) * 0.5,
+        floorY + 0.6,
+        cz + Math.sin(angle) * 0.5
+      );
+      leg.rotation.z = 0.15 * Math.cos(angle);
+      leg.rotation.x = 0.15 * Math.sin(angle);
+      this.scene.add(leg);
+    }
+
+    // Additional cooking utensils along the wall
+    const utensilPositions = [
+      { x: -3, z: 0 }, { x: -3, z: 2 }, { x: 3, z: 0 }, { x: 3, z: 2 }
+    ];
+    utensilPositions.forEach(pos => {
+      // Smaller pots
+      const smallPot = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.25, 0.2, 0.35, 12),
+        potMat
+      );
+      smallPot.position.set(cx + pos.x, floorY + 0.175, cz + pos.z);
+      smallPot.castShadow = true;
+      this.scene.add(smallPot);
+    });
+
+    // Bench for sitting
+    const bench = new THREE.Mesh(
+      new THREE.BoxGeometry(2.5, 0.4, 0.8),
+      this.mat.cedar
+    );
+    bench.position.set(cx, floorY + 0.2, cz - 3);
+    bench.castShadow = true;
+    this.scene.add(bench);
+  }
+
+  addWoodStorage(cx, floorY, cz) {
+    // Wood storage for the altar - Kohanim would inspect wood for worms here
+    const woodMat = new THREE.MeshStandardMaterial({ color: 0x8B6914, roughness: 0.9 });
+    const darkWoodMat = new THREE.MeshStandardMaterial({ color: 0x5C4033, roughness: 0.85 });
+
+    // Stacked wood piles
+    const pilePositions = [
+      { x: -2, z: -2, height: 4 },
+      { x: 2, z: -2, height: 5 },
+      { x: -2, z: 2, height: 3 },
+      { x: 2, z: 2, height: 4 },
+      { x: 0, z: 0, height: 6 } // Central pile
+    ];
+
+    pilePositions.forEach(pile => {
+      for (let layer = 0; layer < pile.height; layer++) {
+        const isEvenLayer = layer % 2 === 0;
+        const logsPerLayer = 3 + Math.floor(Math.random() * 2);
+
+        for (let log = 0; log < logsPerLayer; log++) {
+          const logMesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.12, 0.14, 1.4, 8),
+            Math.random() > 0.5 ? woodMat : darkWoodMat
+          );
+
+          if (isEvenLayer) {
+            logMesh.rotation.z = Math.PI / 2;
+            logMesh.position.set(
+              cx + pile.x,
+              floorY + layer * 0.25 + 0.12,
+              cz + pile.z - 0.5 + log * 0.35
+            );
+          } else {
+            logMesh.rotation.x = Math.PI / 2;
+            logMesh.position.set(
+              cx + pile.x - 0.5 + log * 0.35,
+              floorY + layer * 0.25 + 0.12,
+              cz + pile.z
+            );
+          }
+
+          logMesh.castShadow = true;
+          this.scene.add(logMesh);
+        }
+      }
+    });
+
+    // Inspection table where Kohanim check wood for worms
+    const table = new THREE.Mesh(
+      new THREE.BoxGeometry(2.5, 0.6, 1.2),
+      this.mat.cedar
+    );
+    table.position.set(cx, floorY + 0.3, cz - 3.5);
+    table.castShadow = true;
+    this.scene.add(table);
+
+    // A few logs on the table being inspected
+    for (let i = 0; i < 3; i++) {
+      const inspectLog = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.1, 0.12, 0.8, 8),
+        woodMat
+      );
+      inspectLog.rotation.z = Math.PI / 2;
+      inspectLog.position.set(cx - 0.6 + i * 0.6, floorY + 0.7, cz - 3.5);
+      inspectLog.castShadow = true;
+      this.scene.add(inspectLog);
+    }
+
+    // Wooden storage rack
+    const rackMat = this.mat.cedar;
+    // Vertical posts
+    [[-3.5, -1], [-3.5, 1], [3.5, -1], [3.5, 1]].forEach(([rx, rz]) => {
+      const post = new THREE.Mesh(
+        new THREE.BoxGeometry(0.2, 3, 0.2),
+        rackMat
+      );
+      post.position.set(cx + rx, floorY + 1.5, cz + rz);
+      post.castShadow = true;
+      this.scene.add(post);
+    });
+
+    // Horizontal beams
+    [0.5, 1.5, 2.5].forEach(ry => {
+      [-3.5, 3.5].forEach(rx => {
+        const beam = new THREE.Mesh(
+          new THREE.BoxGeometry(0.15, 0.15, 2.2),
+          rackMat
+        );
+        beam.position.set(cx + rx, floorY + ry, cz);
+        this.scene.add(beam);
+      });
     });
   }
 

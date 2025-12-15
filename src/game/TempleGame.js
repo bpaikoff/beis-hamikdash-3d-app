@@ -145,6 +145,7 @@ export class TempleGame {
       slaughterTables: { name: 'שולחנות השיש', nameEn: 'Marble Slaughter Tables', icon: '🔪', desc: 'Eight marble tables for preparing the sacrifices. Intestines were washed here.', pos: { x: 14, z: -38 } },
       slaughterRings: { name: 'טבעות', nameEn: 'Slaughter Rings', icon: '⭕', desc: '24 rings set in the floor for securing animals during slaughter.', pos: { x: 8, z: -35 } },
       hangingPillars: { name: 'עמודים', nameEn: 'Hanging Pillars', icon: '🪝', desc: 'Cedar pillars with iron hooks for hanging and skinning sacrifices.', pos: { x: 6, z: -36 } },
+      tamidLamb: { name: 'כבש התמיד', nameEn: 'Daily Tamid Lamb', icon: '🐑', desc: 'The Korban Tamid: Two yearling lambs offered daily—one at dawn, one at dusk. The perpetual offering that never ceased.', pos: { x: 10, z: -38 } },
 
       // === CHAMBERS ===
       lishkasHagazis: { name: 'לשכת הגזית', nameEn: 'Chamber of Hewn Stone', icon: '⚖️', desc: 'The Sanhedrin of 71 sat here, half inside the Azara. The supreme court of Israel.', pos: { x: -21, z: -35 } },

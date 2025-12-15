@@ -79,16 +79,20 @@ export class AzaraBuilder extends BaseBuilder {
 
   addGateStairs(wallX, bottomY, topY, gateZ, direction) {
     // Create stairs from Har HaBayis level up to gate/Azara level
-    const stairWidth = 4;
-    const stairDepth = 8; // How far stairs extend from wall
+    // Stairs extend OUTWARD from the wall, with bottom step furthest from wall
+    // and top step at the wall/gate level
+    const stairWidth = 5;
+    const stairDepth = 10; // How far stairs extend from wall
     const heightDiff = topY - bottomY;
     const numSteps = 12;
     const stepRise = heightDiff / numSteps;
     const stepRun = stairDepth / numSteps;
 
     for (let i = 0; i < numSteps; i++) {
+      // Step 0 is at bottom (furthest from wall), step 11 is at top (closest to wall)
       const stepY = bottomY + (i + 1) * stepRise;
-      const stepX = wallX + direction * (2 + i * stepRun); // Start outside wall, go outward
+      // Stairs go from far (stairDepth away) toward the wall
+      const stepX = wallX + direction * (stairDepth - i * stepRun);
 
       const step = new THREE.Mesh(
         new THREE.BoxGeometry(stepRun + 0.1, 0.3, stairWidth),
@@ -101,12 +105,12 @@ export class AzaraBuilder extends BaseBuilder {
       this.floors.push(step);
     }
 
-    // Landing platform at gate level
+    // Landing platform at gate level - exactly at topY
     const landing = new THREE.Mesh(
-      new THREE.BoxGeometry(3, 0.3, stairWidth + 1),
+      new THREE.BoxGeometry(3, 0.3, stairWidth + 2),
       this.mat.stone
     );
-    landing.position.set(wallX + direction * 0.5, topY - 0.15, gateZ);
+    landing.position.set(wallX + direction * 1.5, topY, gateZ);
     landing.receiveShadow = true;
     landing.userData = { isFloor: true };
     this.scene.add(landing);
@@ -114,8 +118,8 @@ export class AzaraBuilder extends BaseBuilder {
   }
 
   buildSideWallWithGates(x, baseY, wallH, startZ, endZ, gates, floorY) {
-    const gateWidth = 5;
-    const gateHeight = 6;
+    const gateWidth = 7;
+    const gateHeight = 8;
 
     gates.sort((a, b) => b.z - a.z);
 
@@ -287,7 +291,7 @@ export class AzaraBuilder extends BaseBuilder {
 
     // Semi-circular seating arrangement for the Sanhedrin (71 judges)
     // They sat in a semi-circle facing the entrance
-    const judgeMat = new THREE.MeshStandardMaterial({ color: 0x4a3c2a, roughness: 0.9 });
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xD4A574, roughness: 0.8 }); // Same skin tone as Kohanim
     const robeMat = new THREE.MeshStandardMaterial({ color: 0x1a1a4a, roughness: 0.8 }); // Dark blue robes
 
     // Create seated judges in a semi-circle
@@ -297,7 +301,7 @@ export class AzaraBuilder extends BaseBuilder {
       const angle = (Math.PI / (numJudges - 1)) * i - Math.PI / 2;
       const jx = x + Math.cos(angle) * radius;
       const jz = z + Math.sin(angle) * (radius * 0.6);
-      this.addSeatedFigure(jx, baseY, jz, robeMat, judgeMat, Math.PI - angle);
+      this.addSeatedFigure(jx, baseY, jz, robeMat, skinMat, Math.PI - angle);
     }
 
     // Stone benches (the seats)

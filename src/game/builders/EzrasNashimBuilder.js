@@ -397,6 +397,65 @@ export class EzrasNashimBuilder extends BaseBuilder {
     bench.position.set(cx, floorY + 0.2, cz - 3);
     bench.castShadow = true;
     this.scene.add(bench);
+
+    // Nazirite seated on bench (waiting for their offering to cook)
+    this.addNaziriteFigure(cx, floorY + 0.4, cz - 3, Math.PI);
+  }
+
+  addNaziriteFigure(x, baseY, z, rotation) {
+    // A Nazirite with long hair (they don't cut during their vow)
+    const skinMat = new THREE.MeshStandardMaterial({ color: 0xD4A574, roughness: 0.8 });
+    const robeMat = new THREE.MeshStandardMaterial({ color: 0xF5F5DC, roughness: 0.8 }); // Simple white/cream robe
+    const hairMat = new THREE.MeshStandardMaterial({ color: 0x2C1810, roughness: 0.9 }); // Dark brown hair
+
+    const figure = new THREE.Group();
+
+    // Body (seated, torso)
+    const torso = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.25, 0.3, 0.8, 8),
+      robeMat
+    );
+    torso.position.y = 0.9;
+    figure.add(torso);
+
+    // Head
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.15, 10, 10),
+      skinMat
+    );
+    head.position.y = 1.45;
+    figure.add(head);
+
+    // Long hair (distinctive of Nazirite)
+    const hair = new THREE.Mesh(
+      new THREE.SphereGeometry(0.18, 10, 10),
+      hairMat
+    );
+    hair.position.y = 1.5;
+    hair.scale.set(1, 1.2, 1);
+    figure.add(hair);
+
+    // Hair flowing down back
+    const hairBack = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.12, 0.08, 0.5, 8),
+      hairMat
+    );
+    hairBack.position.set(0, 1.2, -0.1);
+    figure.add(hairBack);
+
+    // Legs (bent, seated)
+    const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 6);
+    [-0.12, 0.12].forEach(lz => {
+      const leg = new THREE.Mesh(legGeo, robeMat);
+      leg.position.set(0.2, 0.4, lz);
+      leg.rotation.z = Math.PI / 3;
+      figure.add(leg);
+    });
+
+    figure.position.set(x, baseY, z);
+    figure.rotation.y = rotation;
+    figure.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    this.scene.add(figure);
   }
 
   addWoodStorage(cx, floorY, cz) {

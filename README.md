@@ -2,8 +2,6 @@
 
 An immersive first-person 3D walkthrough of the Holy Temple (Beis Hamikdash) in Jerusalem, featuring historically accurate architecture, holy vessels, animated characters, and educational information.
 
-![Temple Overview](screenshots/overview.png)
-
 ## Quick Start
 
 ```bash
@@ -18,9 +16,65 @@ Then open **http://localhost:5173** in your browser.
 
 ## Screenshots
 
-| Azaras Kohanim | Heichal Interior | Ezras Nashim |
-|----------------|------------------|--------------|
-| ![Azara](screenshots/azara.png) | ![Heichal](screenshots/heichal.png) | ![Ezras Nashim](screenshots/ezras-nashim.png) |
+### Overview
+![Temple Overview](screenshots/overview.png)
+
+### Outer Courts
+| Har HaBayis | Ezras Nashim | Beautiful Gate |
+|-------------|--------------|----------------|
+| ![Har HaBayis](screenshots/har-habayis.png) | ![Ezras Nashim](screenshots/ezras-nashim.png) | ![Beautiful Gate](screenshots/beautiful-gate.png) |
+
+### Ezras Nashim Chambers
+| Chamber of Oils | Chamber of Lepers | Chamber of Nazarites | Chamber of Wood |
+|-----------------|-------------------|----------------------|-----------------|
+| ![Oils](screenshots/chamber-oils.png) | ![Lepers](screenshots/chamber-lepers.png) | ![Nazarites](screenshots/chamber-nazarites.png) | ![Wood](screenshots/chamber-wood.png) |
+
+### Inner Courts (Azara)
+| Nicanor Gate & 15 Steps | Azaras Yisrael | Duchan |
+|-------------------------|----------------|--------|
+| ![Nicanor](screenshots/nicanor-gate.png) | ![Yisrael](screenshots/azaras-yisrael.png) | ![Duchan](screenshots/duchan.png) |
+
+| Azaras Kohanim | Great Altar | Slaughter Area |
+|----------------|-------------|----------------|
+| ![Kohanim](screenshots/azaras-kohanim.png) | ![Altar](screenshots/mizbeiach.png) | ![Slaughter](screenshots/slaughter-area.png) |
+
+### Azara Chambers
+| Lishkas HaGazis (Sanhedrin) | Beis HaMoked (Hearth) |
+|-----------------------------|----------------------|
+| ![Sanhedrin](screenshots/lishkas-hagazis.png) | ![Hearth](screenshots/beis-hamoked.png) |
+
+### Side Gates (with Stairs)
+| Kindling Gate | Water Gate | Flame Gate |
+|---------------|------------|------------|
+| ![Kindling](screenshots/kindling-gate.png) | ![Water](screenshots/water-gate.png) | ![Flame](screenshots/flame-gate.png) |
+
+### Heichal (Sanctuary)
+| Ulam Entrance | Yachin & Boaz Pillars | 12 Steps to Heichal |
+|---------------|----------------------|---------------------|
+| ![Ulam](screenshots/ulam.png) | ![Pillars](screenshots/yachin-boaz.png) | ![Steps](screenshots/heichal-steps.png) |
+
+| Heichal Interior | Golden Menorah | Showbread Table | Golden Altar |
+|------------------|----------------|-----------------|--------------|
+| ![Heichal](screenshots/heichal.png) | ![Menorah](screenshots/menorah.png) | ![Shulchan](screenshots/shulchan.png) | ![Incense](screenshots/mizbeach-hazahav.png) |
+
+### Kodesh HaKodashim
+| Paroches | Holy Ark | Even HaShtiya |
+|----------|----------|---------------|
+| ![Paroches](screenshots/paroches.png) | ![Ark](screenshots/aron.png) | ![Stone](screenshots/even-hashtiya.png) |
+
+### Characters & Animals
+| Kohanim | Sanhedrin Judges | Sleeping Kohanim | Nazirite |
+|---------|------------------|------------------|----------|
+| ![Kohanim](screenshots/kohanim.png) | ![Judges](screenshots/sanhedrin.png) | ![Sleeping](screenshots/sleeping-kohanim.png) | ![Nazirite](screenshots/nazirite.png) |
+
+| Sacrificial Lambs | Animals in Court |
+|-------------------|------------------|
+| ![Lambs](screenshots/tamid-lamb.png) | ![Animals](screenshots/animals.png) |
+
+### UI Elements
+| Minimap | Info Panel | Hebrew Date |
+|---------|------------|-------------|
+| ![Minimap](screenshots/minimap.png) | ![Info](screenshots/info-panel.png) | ![Date](screenshots/hebrew-date.png) |
 
 ## Controls
 

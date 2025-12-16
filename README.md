@@ -1,6 +1,8 @@
 # בית המקדש — Beis Hamikdash 3D Explorer
 
-An immersive first-person 3D walkthrough of the Holy Temple (Beis Hamikdash) in Jerusalem, featuring historically accurate architecture, holy vessels, and educational information.
+An immersive first-person 3D walkthrough of the Holy Temple (Beis Hamikdash) in Jerusalem, featuring historically accurate architecture, holy vessels, animated characters, and educational information.
+
+![Temple Overview](screenshots/overview.png)
 
 ## Quick Start
 
@@ -13,6 +15,12 @@ npm run dev
 ```
 
 Then open **http://localhost:5173** in your browser.
+
+## Screenshots
+
+| Azaras Kohanim | Heichal Interior | Ezras Nashim |
+|----------------|------------------|--------------|
+| ![Azara](screenshots/azara.png) | ![Heichal](screenshots/heichal.png) | ![Ezras Nashim](screenshots/ezras-nashim.png) |
 
 ## Controls
 
@@ -34,53 +42,67 @@ Then open **http://localhost:5173** in your browser.
 ### Outer Courts
 - **Har HaBayis** — Temple Mount platform with outer walls and Chuldah Gates
 - **Ezras Nashim** — Women's Court with four corner chambers:
-  - Chamber of Oils (שמנים)
-  - Chamber of Lepers (מצורעים)
-  - Chamber of Nazarites (נזירים)
-  - Chamber of Wood (עצים)
+  - **Chamber of Oils** (לשכת השמנים) — Oil storage jars and vessels for the Menorah
+  - **Chamber of Lepers** (לשכת המצורעים) — Mikvah for purification of healed metzora'im
+  - **Chamber of Nazarites** (לשכת הנזירים) — Cooking area with fire, pots; Nazirite figure with long hair
+  - **Chamber of Wood** (לשכת העצים) — Stacked wood piles, inspection table for checking worms
 
 ### Inner Courts (Azara)
-- **Azaras Yisrael** — Court of Israelites (accessed via 15 steps)
-- **Duchan** — Platform where Levites sang
+- **Azaras Yisrael** — Court of Israelites (accessed via 15 steps from Ezras Nashim)
+- **Duchan** — Platform where Levites sang during the Avodah
 - **Azaras Kohanim** — Priests' Court containing:
   - Great Altar (Mizbeiach) with ramp (Kevesh)
   - Copper Laver (Kiyor)
-  - Slaughter tables and rings
-  - Hanging pillars with hooks
-  - Chamber of Hewn Stone (Lishkas HaGazis) — Sanhedrin
-  - Chamber of the Hearth (Beis HaMoked)
+  - Marble slaughter tables with sacrificial lambs (Korban Tamid)
+  - Bronze slaughter rings (Taba'os)
+  - Cedar hanging pillars with iron hooks
+  - **Lishkas HaGazis** (Chamber of Hewn Stone) — Sanhedrin judges seated in semi-circle
+  - **Beis HaMoked** (Chamber of the Hearth) — Fire pit with sleeping Kohanim on mats
+- **Side Gates** — All 6 gates accessible via stone stairs from Har HaBayis level
 
 ### Heichal (Sanctuary)
-- **Ulam** — Entrance Hall with Yachin and Boaz copper pillars
+- **Ulam** — Entrance Hall with:
+  - Yachin and Boaz copper pillars (18 amos tall)
+  - Decorative roof/portico over the entrance
 - **Heichal** — Main Sanctuary containing:
-  - Golden Menorah (7 branches, lit)
+  - Golden Menorah (7 branches, perpetually lit)
   - Showbread Table (Shulchan) with 12 loaves
   - Golden Incense Altar (Mizbeiach HaZahav)
 - **Kodesh HaKodashim** — Holy of Holies containing:
-  - Holy Ark (Aron) with Keruvim
+  - Holy Ark (Aron) with golden Keruvim
   - Foundation Stone (Even HaShtiya)
-  - Paroches (sacred curtain)
+  - Paroches (sacred curtain with embroidered Keruvim)
 
 ## Gates
 
 ### Main Gates
-- **Chuldah Gates** — Southern entrance (2 gates)
-- **Beautiful Gate** (Sha'ar HaYafeh) — Entrance to Ezras Nashim
-- **Nicanor Gate** — The great copper gate to the Azara
+- **Chuldah Gates** — Southern entrance from the City of David (2 gates)
+- **Beautiful Gate** (שער היפה) — Corinthian bronze entrance to Ezras Nashim
+- **Nicanor Gate** — The great copper gate to the Azara (miraculously survived a storm at sea)
 
-### Azara Side Gates (6 total)
-- West: Kindling Gate, Water Gate, Gate of Firstlings
-- East: Hearth Gate, Flame Gate, Sacrifice Gate
+### Azara Side Gates (6 total, all accessible via stairs)
+| West Side | East Side |
+|-----------|-----------|
+| Kindling Gate (שער הדלק) | Hearth Gate (שער בית המוקד) |
+| Water Gate (שער המים) | Flame Gate (שער הניצוץ) |
+| Gate of Firstlings (שער הבכורות) | Sacrifice Gate (שער הקרבן) |
 
 ## Features
 
 - **Hebrew Date Display** — Shows current date in Hebrew calendar
-- **Daily Korbanos** — Lists the day's required offerings
-- **Interactive Labels** — Walk near any vessel or gate for historical information
+- **Daily Korbanos** — Lists the day's required offerings based on date
+- **Interactive Labels** — Walk near any vessel, gate, or chamber for historical information
 - **Minimap** — Top-left corner navigation aid
 - **Compass** — Directional orientation (North toward Kodesh HaKodashim)
-- **Sacrifice Animals** — Lambs placed on slaughter tables representing the Tamid
-- **Ambient Details** — Flames on the Menorah and altar, divine glow in Kodesh HaKodashim
+- **Coordinate Display** — X-Y-Z position shown for navigation
+- **Animated Characters**:
+  - Kohanim in white robes throughout the courts
+  - Sanhedrin judges in blue robes (Chamber of Hewn Stone)
+  - Sleeping Kohanim (Beis HaMoked)
+  - Nazirite with long hair (Chamber of Nazarites)
+  - Sheep, goats, bulls, and doves
+- **Sacrifice Animals** — Lambs on slaughter tables representing the daily Tamid
+- **Ambient Effects** — Fire particles on altar, smoke from incense, divine glow in Kodesh HaKodashim
 
 ## Architecture
 
@@ -89,22 +111,35 @@ The codebase uses a modular builder pattern:
 ```
 src/
 ├── game/
-│   ├── TempleGame.js        # Main game controller
+│   ├── TempleGame.js        # Main game controller & KEILIM labels
 │   ├── TempleBuilder.js     # Orchestrates all builders
 │   ├── PlayerController.js  # Movement and collision
+│   ├── CharacterSystem.js   # Kohanim and animal spawning
+│   ├── ParticleSystem.js    # Fire and smoke effects
 │   └── builders/
 │       ├── BaseBuilder.js       # Shared building utilities
-│       ├── HarHaBayisBuilder.js # Temple Mount
-│       ├── EzrasNashimBuilder.js# Women's Court
-│       ├── AzaraBuilder.js      # Priests' Courts
-│       ├── HeichalBuilder.js    # Sanctuary
+│       ├── HarHaBayisBuilder.js # Temple Mount platform
+│       ├── EzrasNashimBuilder.js# Women's Court & chambers
+│       ├── AzaraBuilder.js      # Priests' Courts & chambers
+│       ├── HeichalBuilder.js    # Sanctuary & Ulam
 │       ├── KeilimBuilder.js     # Holy vessels
 │       └── LightingBuilder.js   # Lights and atmosphere
 ├── utils/
 │   ├── HebrewCalendar.js    # Hebrew date calculations
 │   └── Korbanos.js          # Daily offering logic
-└── App.jsx                  # React UI
+└── App.jsx                  # React UI overlay
 ```
+
+## Floor Elevations
+
+| Area | Height (Y) |
+|------|------------|
+| Har HaBayis | 1.8 |
+| Ezras Nashim | 3.8 |
+| Azaras Yisrael | 6.8 |
+| Duchan | 7.0 |
+| Azaras Kohanim | 7.3 |
+| Heichal | 8.3 |
 
 ## Sources
 
@@ -123,11 +158,11 @@ Dimensions and layout based on:
 ## Contributing
 
 Contributions welcome! Areas for improvement:
-- Additional Keilim details
-- More accurate dimensions
+- Additional Keilim details and accuracy
 - Sound effects (Levite singing, shofar)
-- Time-of-day lighting changes
-- Festival-specific decorations
+- Time-of-day lighting changes (morning/afternoon Tamid)
+- Festival-specific decorations (Sukkos, etc.)
+- VR support
 
 ---
 

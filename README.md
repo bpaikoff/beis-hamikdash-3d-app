@@ -1,6 +1,6 @@
 # בית המקדש — Beis Hamikdash 3D Explorer
 
-An immersive first-person 3D walkthrough of the Holy Temple (Beis Hamikdash) in Jerusalem, featuring historically accurate architecture, holy vessels, and educational information.
+An open-source, immersive first-person 3D walkthrough of the Second Holy Temple (Beis Hamikdash) in Jerusalem, featuring historically accurate architecture, holy vessels, and educational information.
 
 ## Quick Start
 

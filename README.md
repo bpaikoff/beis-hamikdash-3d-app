@@ -41,7 +41,7 @@ Then open **http://localhost:5173** in your browser.
 
 | Copper Laver | Slaughter Area | Tamid |
 |----------------|-------------|----------------|
-| ![Kohanim](screenshots/copper-laver.png) | ![Slaughter Area](screenshots/mizbeiach-2.png) | ![Tamid](screenshots/tamid.png) |
+| ![Kohanim](screenshots/copper-laver.png) | ![Slaughter Area](screenshots/slaughter-area.png) | ![Tamid](screenshots/tamid.png) |
 
 ### Azara Chambers
 | Lishkas HaGazis (Sanhedrin) | Beis HaMoked (Hearth) |

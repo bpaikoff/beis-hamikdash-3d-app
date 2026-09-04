@@ -11,7 +11,8 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { mulberry32 } from './random.js';
-import { areas, byId, hotspots, worldBounds, worldPos } from '../content/index.js';
+import { areas, byId, hotspots, worldBounds, worldPos, levelWorldY } from '../content/index.js';
+import { AMAH } from '../content/units.js';
 import { Hotspots } from './Hotspots.js'; // HUD: in-scene labels
 import { TouchControls, isTouchDevice } from './TouchControls.js'; // HUD: virtual joystick
 
@@ -81,10 +82,21 @@ export class TempleGame {
     this.listeners = [];
     this.areaBounds = areas.map((a) => ({ entry: a, bounds: worldBounds(a) }));
     this.refreshHotspots();
-    this.unsubPeriod = store.subscribe((s) => s.period, () => this.refreshHotspots());
+    this.unsubPeriod = store.subscribe((s) => s.period, (period) => {
+      this.refreshHotspots();
+      this.applyPeriod(period);
+    });
     this.ready = this.init().catch((e) => {
       console.error(e);
       store.setState({ loading: null, error: e.message });
+    });
+  }
+
+  /** Show/hide groups the builders tagged with userData.period (e.g. Aron, Yachin/Boaz). */
+  applyPeriod(period = this.store.getState().period) {
+    this.scene.traverse((o) => {
+      const p = o.userData?.period;
+      if (Array.isArray(p) && p.length) o.visible = p.includes(period);
     });
   }
 
@@ -115,7 +127,12 @@ export class TempleGame {
     r.shadowMap.autoUpdate = false;
     this.container.appendChild(r.domElement);
     this.setupPostFX();
-    this.camera.position.set(0, CONFIG.PLAYER_HEIGHT + 1.8, 62);
+    // Default spawn: on Har HaBayis, a few metres east of the Ezras Nashim gate, facing west.
+    {
+      const gate = byId.ezras_nashim_gate ?? byId.nicanor_gate;
+      const [gx, , gz] = worldPos(gate);
+      this.camera.position.set(gx, levelWorldY('har_habayis') + CONFIG.PLAYER_HEIGHT, gz + 14);
+    }
 
     // Image-based lighting: without an environment the PBR gold and copper have nothing
     // to reflect and render almost black. RoomEnvironment ships with three (no download).
@@ -140,21 +157,36 @@ export class TempleGame {
       maxZ: Math.max(...all.map((b) => b.maxZ)),
     };
     this.player = new PlayerController(this.camera, floors, walls, { bounds });
+    this.applyPeriod();
     if (this.disposed) return;
 
     await this.setLoading('Placing Kohanim and animals...');
     this.characters = new CharacterSystem(this.scene, this.tex);
-    this.characters.createKohen(0, 8.3, -68, true); // Kohen Gadol in the Heichal
-    // Azaras Kohanim (y=7.3), Azaras Yisrael (y=6.8), Ezras Nashim (y=3.8)
-    [[10, -18], [-10, -18], [8, -28], [-8, -28], [12, -36], [-12, -36], [15, -42], [-15, -42]]
-      .forEach(([x, z]) => this.characters.createKohen(x, 7.3, z));
-    [[8, -9], [-8, -9], [0, -9]].forEach(([x, z]) => this.characters.createKohen(x, 6.8, z));
-    [[0, 30], [15, 35], [-15, 35], [10, 20], [-10, 20]].forEach(([x, z]) => this.characters.createKohen(x, 3.8, z));
-    const rand = mulberry32(11); // same flock on every load
-    for (let i = 0; i < 8; i++) this.characters.createAnimal('sheep', 20 + (rand() - 0.5) * 10 * (i % 2 === 0 ? 1 : -1), 30 + (rand() - 0.5) * 10);
-    for (let i = 0; i < 4; i++) this.characters.createAnimal('goat', 25 + (rand() - 0.5) * 8 * (i % 2 === 0 ? 1 : -1), 35 + (rand() - 0.5) * 8);
-    for (let i = 0; i < 2; i++) this.characters.createAnimal('bull', 30 + i * 5, 45);
-    for (let i = 0; i < 12; i++) this.characters.createDove((rand() - 0.5) * 60, 25 + rand() * 15, (rand() - 0.5) * 60);
+    // Placements derive from the content JSON so they follow the geometry when it moves.
+    const at = (id, dx = 0, dz = 0, level) => {
+      const [x, y, z] = worldPos(byId[id]);
+      return [x + dx, level ? levelWorldY(level) : y, z + dz];
+    };
+    const kohanimY = levelWorldY('azaras_kohanim');
+    const yisraelY = levelWorldY('azaras_yisrael');
+    const nashimY = levelWorldY('ezras_nashim');
+    this.characters.createKohen(...at('mizbeach_hazahav', 0, 3, 'heichal'), true); // Kohen Gadol in the Heichal
+    // Kohanim around the altar and the slaughter area (x north/south of the altar, z east of it)
+    const [ax, , az] = at('mizbeach');
+    [[10, 12], [-10, 12], [14, -2], [-14, 6], [22, 4], [-22, -4], [6, 18], [-6, 18]]
+      .forEach(([dx, dz]) => this.characters.createKohen(ax + dx, kohanimY, az + dz));
+    // Yisraelim in the Ezras Yisrael, west of the Nicanor threshold
+    const [nx, , nz] = at('nicanor_gate');
+    [[8, -3], [-8, -3], [0, -4]].forEach(([dx, dz]) => this.characters.createKohen(nx + dx, yisraelY, nz + dz));
+    // People in the Ezras Nashim
+    const [ex, , ez] = at('ezras_nashim', 0, 0, 'ezras_nashim');
+    [[0, 6], [15, 10], [-15, 10], [10, -8], [-10, -8]].forEach(([dx, dz]) => this.characters.createKohen(ex + dx, nashimY, ez + dz));
+    // Animals waiting by the Tamid pen in the Kohanim court; doves over the courts
+    const [px, , pz] = at('tamid_lamb');
+    for (let i = 0; i < 8; i++) this.characters.createAnimal('sheep', px + (rand() - 0.5) * 8, pz + (rand() - 0.5) * 8);
+    for (let i = 0; i < 4; i++) this.characters.createAnimal('goat', px + 6 + (rand() - 0.5) * 6, pz + 6 + (rand() - 0.5) * 6);
+    for (let i = 0; i < 2; i++) this.characters.createAnimal('bull', px - 6 - i * 4, pz + 8);
+    for (let i = 0; i < 12; i++) this.characters.createDove(ex + (rand() - 0.5) * 60, nashimY + 12 + rand() * 10, ez + (rand() - 0.5) * 60);
 
     if (this.tex.total > this.tex.loaded) {
       await this.setLoading(`Loading textures ${this.tex.loaded}/${this.tex.total}...`);
@@ -164,8 +196,13 @@ export class TempleGame {
 
     await this.setLoading('Lighting the fire...');
     this.particles = new ParticleSystem(this.scene);
-    this.particles.createFire(0, 17, -28, 4);
-    this.particles.createSmoke(0, 10, -75, 0.3);
+    {
+      // Altar fire on top of the ma'aracha (the altar is 10 amos high), incense smoke over the golden altar.
+      const [fx, fy, fz] = at('mizbeach');
+      this.particles.createFire(fx, fy + 10 * AMAH, fz, 4);
+      const [sx, sy, sz] = at('mizbeach_hazahav');
+      this.particles.createSmoke(sx, sy + 1.2, sz, 0.3);
+    }
     if (this.disposed) return;
 
     const spawn = readSpawn(window.location.search);

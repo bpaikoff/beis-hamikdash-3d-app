@@ -699,3 +699,95 @@ canvas {
     display: none;
   }
 }
+
+/* In-scene hotspot labels (CSS2DRenderer layer) ---------------------------- */
+.hotspot-layer {
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hotspot-pill {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(30, 30, 51, 0.82);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--card-shadow);
+  opacity: 0.8;
+  transition: opacity 0.15s, transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.hotspot-pill:hover,
+.hotspot-pill.focused {
+  opacity: 1;
+  border-color: var(--gold);
+  box-shadow: var(--card-shadow), var(--glow);
+  transform: scale(1.06);
+}
+
+.hotspot-pill .hotspot-icon {
+  font-size: 1.1rem;
+}
+
+.hotspot-pill .hotspot-he {
+  font-family: var(--font-he);
+  font-size: 1rem;
+  color: var(--gold);
+}
+
+.hotspot-pill .hotspot-en {
+  color: var(--muted);
+}
+
+.hotspot-pill .hotspot-en::before {
+  content: '·';
+  margin-right: 8px;
+  color: var(--faint);
+}
+
+.hotspot-pill.he-first .hotspot-en {
+  display: none;
+}
+
+/* "E · Inspect" prompt under the crosshair while a label is in the gaze cone. */
+.interact-hint {
+  position: absolute;
+  top: calc(50% + 28px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel-bg);
+  color: var(--ink);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.interact-hint kbd {
+  display: inline-block;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 7px;
+  margin-right: 6px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  color: var(--gold);
+}
+
+@media (pointer: coarse) {
+  .interact-hint {
+    display: none;
+  }
+}

@@ -7,6 +7,7 @@ import { Minimap } from './components/Minimap.jsx';
 import { Compass } from './components/Compass.jsx';
 import { Telemetry } from './components/Telemetry.jsx';
 import { store, useStore } from './store.js';
+import { byId } from './content/index.js';
 
 const hasWebGL2 = () => {
   try {
@@ -33,6 +34,9 @@ export default function BeisHamikdash3D() {
   const error = useStore((s) => s.error);
   const location = useStore((s) => s.location);
   const nearbyKli = useStore((s) => s.nearbyKli);
+  const selected = useStore((s) => s.selected);
+  const focused = useStore((s) => s.focused);
+  const selectedEntry = selected ? byId[selected] : null;
   const debug = useStore((s) => s.debug);
   const lang = useStore((s) => s.lang);
 
@@ -71,12 +75,17 @@ export default function BeisHamikdash3D() {
               <Minimap />
             </div>
 
-            {nearbyKli && (
-              <div className="panel kli-panel" key={nearbyKli.id}>
-                <div className="icon" aria-hidden="true">{nearbyKli.icon}</div>
-                <div className="name-heb" dir="rtl">{nearbyKli.name.he}</div>
-                <div className="name-en">{nearbyKli.name.en}</div>
-                <div className="desc" dir={lang === 'he' ? 'rtl' : 'ltr'}>{t(nearbyKli.desc)}</div>
+            {focused && !selectedEntry && (
+              <div className="interact-hint"><kbd>E</kbd>Inspect</div>
+            )}
+
+            {selectedEntry && (
+              <div className="panel kli-panel" key={selectedEntry.id}>
+                <button type="button" className="card-close" aria-label="Close" onClick={() => store.setState({ selected: null })}>×</button>
+                <div className="icon" aria-hidden="true">{selectedEntry.icon}</div>
+                <div className="name-heb" dir="rtl">{selectedEntry.name.he}</div>
+                <div className="name-en">{selectedEntry.name.en}</div>
+                <div className="desc" dir={lang === 'he' ? 'rtl' : 'ltr'}>{t(selectedEntry.desc)}</div>
               </div>
             )}
 

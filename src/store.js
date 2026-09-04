@@ -2,7 +2,8 @@
  * App state shared between the imperative TempleGame and the React HUD.
  *
  * Two kinds of state live here:
- *  - ordinary state (loading, location, nearbyKli, debug, locked, period, lang) read with
+ *  - ordinary state (loading, location, nearbyKli, selected, focused, debug, locked, period,
+ *    lang) read with
  *    `useStore(selector)`; components re-render only when their slice changes;
  *  - `frame` (player position / heading), written every animation frame. Never select it
  *    from a component: subscribe with `store.subscribe(s => s.frame, fn)` and write to a
@@ -20,6 +21,8 @@ export const store = createStore(
     error: null, // string when WebGL or the build failed
     location: null, // content entry of type 'area' the player is in
     nearbyKli: null, // nearest hotspot entry within reach, or null
+    selected: null, // id of the hotspot whose card is open, or null
+    focused: null, // id of the hotspot the player is looking at (label highlighted), or null
     debug: false, // ghost mode + telemetry
     locked: false, // pointer lock held
     period: 'bayis_sheni', // 'bayis_sheni' | 'bayis_rishon'

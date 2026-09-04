@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CONFIG } from '../../config.js';
-import { BaseBuilder } from './BaseBuilder.js';
+import { BaseBuilder, TILE_METRES } from './BaseBuilder.js';
 import { mulberry32 } from '../random.js';
 
 // ============================================================================
@@ -14,10 +14,15 @@ export class EnvironmentBuilder extends BaseBuilder {
   }
 
   buildGround() {
-    const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(500, 500, 50, 50),
-      this.mat.ground
-    );
+    // One quad: the 50 x 50 grid added 5,000 triangles to every frame (and to the
+    // collision BVH) for a plane that is flat anyway. UVs tile at TILE_METRES.ground.
+    const size = 500;
+    const geo = new THREE.PlaneGeometry(size, size, 1, 1);
+    const uv = geo.attributes.uv;
+    const reps = size / TILE_METRES.ground;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * reps, uv.getY(i) * reps);
+    const ground = new THREE.Mesh(geo, this.mat.ground);
+    ground.name = 'ground';
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     ground.userData = { isFloor: true };

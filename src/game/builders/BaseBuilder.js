@@ -16,7 +16,7 @@ export const TILE_METRES = {
   cedar: 2,
   acacia: 2,
   paroches: 4,
-  ground: 8,
+  ground: 10,
 };
 export const DEFAULT_TILE_METRES = 4;
 

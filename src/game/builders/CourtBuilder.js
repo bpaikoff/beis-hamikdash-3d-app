@@ -138,15 +138,16 @@ export class CourtBuilder extends BaseBuilder {
    * the other axis. Step k tops out at yBase + (k + 1) * rise, so the last step is level
    * with the upper floor; each step is solid down to just below the lower floor.
    */
-  flightA({ axis, span: [s1, s2], from, to, yBase, steps, rise, mat, name }) {
+  flightA({ axis, span: [s1, s2], from, to, yBase, bottom, steps, rise, mat, name }) {
     const tread = (to - from) / steps;
+    const base = bottom ?? yBase - SLAB;
     const out = [];
     for (let k = 0; k < steps; k++) {
       const a = from + k * tread;
       const b = a + tread;
       const top = yBase + (k + 1) * rise;
       const r = axis === 'z' ? [s1, s2, a, b] : [a, b, s1, s2];
-      out.push(this.blockA(...r, yBase - SLAB, top, mat, name));
+      out.push(this.blockA(...r, base, top, mat, name));
     }
     return out;
   }
@@ -253,7 +254,7 @@ export class CourtBuilder extends BaseBuilder {
     };
     for (const f of Object.keys(faces)) {
       if (skip.includes(f)) continue;
-      const openings = doors.filter((d) => d.face === f).map((d) => ({ ...d, floor: floor + LIP, name: d.name ?? name }));
+      const openings = doors.filter((d) => d.face === f).map((d) => ({ ...d, floor: d.floor ?? floor + LIP, name: d.name ?? name }));
       this.wallRunA({ ...faces[f], y1, y2: floor + h, mat: wm, openings });
     }
     if (roof === 'walk') this.floorA(x1, x2, z1, z2, floor + h + 1, roofMat ?? wm, `${name ?? 'room'} roof`);

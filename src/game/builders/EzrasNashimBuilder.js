@@ -197,7 +197,7 @@ export class EzrasNashimBuilder extends CourtBuilder {
     const rIn = e.geometry.d - e.geometry.h; // 5: the gate's half-width
     const rOut = e.geometry.d; // 12.5
     const tread = (rOut - rIn) / steps;
-    const cz = e.position.z - e.geometry.d / 2 + rOut; // 6: the wall's east face
+    const cz = WALL_T; // concentric on the gate at the wall's east face (temple.json: centred on x 0, z 6)
     const base = this.y - SLAB;
     const parts = [];
     for (let i = 0; i < steps; i++) {

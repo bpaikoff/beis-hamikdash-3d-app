@@ -134,3 +134,11 @@ describe('units', () => {
     expect(b.minZ).toBeLessThan(b.maxZ);
   });
 });
+
+describe('levels', () => {
+  it('maps named floors to metres', () => {
+    expect(levelWorldY('azaras_yisrael')).toBe(6.8);
+    expect(levelWorldY('azaras_kohanim')).toBeCloseTo(6.8 + levels.azaras_kohanim * 0.5);
+    expect(() => levelWorldY('nope')).toThrow();
+  });
+});

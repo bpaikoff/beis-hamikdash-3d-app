@@ -18,7 +18,7 @@ import { TouchControls, isTouchDevice } from './TouchControls.js'; // HUD: virtu
 
 const HOTSPOT_RADIUS = 8; // metres; the nearest entry within this shows in the HUD
 
-const BLOOM = { strength: 0.18, radius: 0.35, threshold: 1.0 };
+const BLOOM = { strength: 0.15, radius: 0.3, threshold: 1.2 };
 
 /**
  * Bloom needs WebGL2 (MSAA + half-float render targets) and is skipped on phones/tablets

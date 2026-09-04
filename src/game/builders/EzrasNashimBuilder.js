@@ -226,7 +226,7 @@ export class EzrasNashimBuilder extends CourtBuilder {
     this.group('nicanor_gate', () => {
       this.gateA({
         along: 'x', across: [0, WALL_T], at: gate.position.x, w: gate.geometry.w, floor: y, h: gate.geometry.h,
-        frame: this.mat.copper, doors: 'open', doorMat: this.mat.copperP, threshold: true, thresholdMat: this.mat.marbleW, name: 'nicanor_gate',
+        frame: this.mat.copper, doors: 'open', doorMat: this.mat.copper, threshold: true, thresholdMat: this.mat.marbleW, name: 'nicanor_gate',
       });
     });
     for (const id of ['lishkas_pinchas_hamalbish', 'lishkas_osei_chavitin']) {
@@ -239,7 +239,7 @@ export class EzrasNashimBuilder extends CourtBuilder {
           x1, x2, z1: 0, z2: d, floor: y, h, floorMat: this.mat.marbleW, wallMat: this.mat.stonePolished, roof: false, name: id,
           doors: [
             { face: 'w', at: c.position.x, w: 3, h: 6, frame: this.mat.cedar },
-            { face: 'e', at: c.position.x, w: 2, h: 4, frame: this.mat.cedar, doors: 'closed', doorMat: this.mat.copperP, name: `${id} wicket` },
+            { face: 'e', at: c.position.x, w: 2, h: 4, frame: this.mat.cedar, doors: 'closed', doorMat: this.mat.copper, name: `${id} wicket` },
           ],
         });
       });

@@ -212,7 +212,7 @@ export class CourtBuilder extends BaseBuilder {
       m.name = name ? `${name} frame` : 'gate frame';
       this.scene.add(m);
     }
-    const leaf = doorMat ?? this.mat.copperP;
+    const leaf = doorMat ?? this.mat.copper; // patina reads as green/orange blotches on flat leaves
     if (doors === 'closed') {
       this.wallA(...rect(at - w / 2, at + w / 2, mid - DOOR_T / 2, mid + DOOR_T / 2), floor, floor + h - FRAME_T / 2, leaf);
     } else if (doors === 'open') {

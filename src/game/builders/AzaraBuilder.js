@@ -1,485 +1,456 @@
 import * as THREE from 'three';
-import { BaseBuilder } from './BaseBuilder.js';
+import { CourtBuilder, GROUND, LIP, SLAB, WALL_T } from './CourtBuilder.js';
+import { instance } from '../instanced.js';
+import { AMAH } from '../../content/units.js';
 
 // ============================================================================
-// AZARA BUILDER - Azaras Yisrael, Duchan, and Azaras Kohanim
+// AZARAH BUILDER - Ezras Yisrael, Duchan, Ezras Kohanim, the seven gates, the lishkos
+// and the slaughtering area. Everything in amos in the azarah frame (temple.json).
+// The building west of z -54 (Ulam steps, Ulam, Heichal), the altar, kevesh, small
+// kevashim and kiyor belong to HeichalBuilder / KeilimBuilder.
 // ============================================================================
-export class AzaraBuilder extends BaseBuilder {
+
+/** Azarah interior half-width (Middot 5:1: 135 wide) and outer face of its 6-amah walls. */
+const X_IN = 67.5;
+const X_OUT = X_IN + WALL_T;
+/** West wall inner face (Middot 5:1: 187 long). */
+const Z_WEST = -187;
+/** Court wall tops, amos above the Azarah floor (not given in Middot; the gates are 20 high). */
+const WALL_TOP = 30;
+const EAST_WALL_TOP = 25;
+/** The Heichal building and the Ulam footprint (HeichalBuilder's ground). */
+const BUILDING_X = 35;
+const ULAM_X = 50;
+const ULAM_Z = [-92, -76];
+const STEPS_Z = -54;
+/** A 1-amah rise is exactly CONFIG.STEP_HEIGHT; the Duchan platform sits 5 mm lower so the float compare never blocks the step. */
+const NUDGE = 0.01;
+
+export class AzaraBuilder extends CourtBuilder {
   build() {
-    // Floor heights
-    const yisraelY = 6.8;
-    const duchanY = 7.0;
-    const kohanimY = 7.3;
-    const baseY = 3.8;
-    const wallH = 14;
-    const innerWidth = 52;
-
-    this.buildAzarasYisrael(yisraelY, baseY, innerWidth);
-    this.buildDuchan(yisraelY, duchanY, innerWidth);
-    this.buildAzarasKohanim(duchanY, kohanimY, baseY, innerWidth);
-    this.buildSideWalls(baseY, wallH, kohanimY);
-    this.buildSlaughterArea(kohanimY);
-    this.buildChambers(kohanimY);
+    this.yYisrael = this.level('azaras_yisrael');
+    this.yDuchan = this.level('duchan');
+    this.yKohanim = this.level('azaras_kohanim');
+    this.buildEzrasYisrael();
+    this.buildDuchan();
+    this.buildEzrasKohanim();
+    this.buildEastWall();
+    this.buildSouthWall();
+    this.buildNorthWall();
+    this.buildWestWall();
+    this.buildBeisHamoked();
+    this.buildLishkasHagazis();
+    this.buildNorthernLishkos();
+    this.buildSouthernLishkos();
+    this.buildBeisAvtinas();
+    this.buildSlaughterArea();
+    this.buildTamidPen();
   }
 
-  buildAzarasYisrael(yisraelY, baseY, innerWidth) {
-    // z=-7 to z=-11 (4 units deep)
-    this.addFloor(0, yisraelY, -9, innerWidth, 4, this.mat.marbleW, 'azaras-yisrael');
-    this.addSolidFill(0, baseY, yisraelY, -9, innerWidth, 4);
+  /** Beis HaMoked projects 15 amos into the court at x 52.5 .. 67.5, z -26 .. -2. */
+  get hall() {
+    const e = this.entry('beis_hamoked');
+    const { w, d } = e.geometry;
+    return { x1: e.position.x - w / 2, x2: e.position.x + w / 2, z1: e.position.z - d / 2, z2: e.position.z + d / 2 };
   }
 
-  buildDuchan(yisraelY, duchanY, innerWidth) {
-    // z=-11 to z=-13 (2 units deep)
-    this.addFloor(0, duchanY, -12, innerWidth - 6, 2, this.mat.marbleR, 'duchan');
-    this.addStepRow(0, yisraelY, -11, innerWidth - 6, duchanY - yisraelY);
-  }
-
-  buildAzarasKohanim(duchanY, kohanimY, baseY, innerWidth) {
-    // z=-13 to z=-45 (32 units deep)
-    const kohanimDepth = 32;
-    const kohanimCenterZ = -29; // center of -13 to -45
-    this.addFloor(0, kohanimY, kohanimCenterZ, innerWidth, kohanimDepth, this.mat.floor, 'azaras-kohanim');
-    this.addSolidFill(0, baseY, kohanimY, kohanimCenterZ, innerWidth, kohanimDepth);
-    this.addStepRow(0, duchanY, -13, innerWidth - 6, kohanimY - duchanY);
-  }
-
-  buildSideWalls(baseY, wallH, kohanimY) {
-    // FIXED: Side walls now stop at z=-43 to leave opening for the 12 steps to Ulam
-    // The 12 steps are 12 units wide (x=-6 to x=6), so we need to leave that opening
-    const wallStartZ = -7;
-    const wallEndZ = -43; // Changed from -45 to leave opening for stairs
-    const harHaBayisY = 1.8;
-
-    // West wall with gates
-    const westGates = [
-      { z: -18, name: 'שער הדלק', nameEn: 'Kindling Gate' },
-      { z: -29, name: 'שער המים', nameEn: 'Water Gate' },
-      { z: -38, name: 'שער הבכורות', nameEn: 'Gate of Firstlings' }
-    ];
-    this.buildSideWallWithGates(-26, baseY, wallH, wallStartZ, wallEndZ, westGates, kohanimY);
-
-    // Add stairs to west gates
-    westGates.forEach(gate => {
-      this.addGateStairs(-26, harHaBayisY, kohanimY, gate.z, -1); // -1 for west (stairs go outward)
-    });
-
-    // East wall with gates
-    const eastGates = [
-      { z: -18, name: 'שער בית המוקד', nameEn: 'Hearth Gate' },
-      { z: -29, name: 'שער הניצוץ', nameEn: 'Flame Gate' },
-      { z: -38, name: 'שער הקרבן', nameEn: 'Sacrifice Gate' }
-    ];
-    this.buildSideWallWithGates(26, baseY, wallH, wallStartZ, wallEndZ, eastGates, kohanimY);
-
-    // Add stairs to east gates
-    eastGates.forEach(gate => {
-      this.addGateStairs(26, harHaBayisY, kohanimY, gate.z, 1); // +1 for east (stairs go outward)
+  buildEzrasYisrael() {
+    const a = this.entry('azaras_yisrael').bounds;
+    const { x1: hx, z2: hz2 } = this.hall;
+    this.group('azaras_yisrael', () => {
+      this.floorA(a.minX, hx, a.minZ, a.maxZ, this.yYisrael, this.mat.floor, 'azaras_yisrael');
+      this.floorA(hx, a.maxX, hz2, a.maxZ, this.yYisrael, this.mat.floor, 'azaras_yisrael');
     });
   }
 
-  addGateStairs(wallX, bottomY, topY, gateZ, direction) {
-    // Create stairs from Har HaBayis level up to gate/Azara level
-    // Stairs extend OUTWARD from the wall, with bottom step furthest from wall
-    // and top step at the wall/gate level
-    const stairWidth = 5;
-    const stairDepth = 10; // How far stairs extend from wall
-    const heightDiff = topY - bottomY;
-    const numSteps = 12;
-    const stepRise = heightDiff / numSteps;
-    const stepRun = stairDepth / numSteps;
-
-    for (let i = 0; i < numSteps; i++) {
-      // Step 0 is at bottom (furthest from wall), step 11 is at top (closest to wall)
-      const stepY = bottomY + (i + 1) * stepRise;
-      // Stairs go from far (stairDepth away) toward the wall
-      const stepX = wallX + direction * (stairDepth - i * stepRun);
-
-      const step = new THREE.Mesh(
-        new THREE.BoxGeometry(stepRun + 0.1, 0.3, stairWidth),
-        this.mat.stone
-      );
-      step.position.set(stepX, stepY - 0.15, gateZ);
-      step.receiveShadow = true;
-      step.userData = { isFloor: true, isStep: true };
-      this.scene.add(step);
-      this.floors.push(step);
-    }
-
-    // Landing platform at gate level - exactly at topY
-    const landing = new THREE.Mesh(
-      new THREE.BoxGeometry(3, 0.3, stairWidth + 2),
-      this.mat.stone
-    );
-    landing.position.set(wallX + direction * 1.5, topY, gateZ);
-    landing.receiveShadow = true;
-    landing.userData = { isFloor: true };
-    this.scene.add(landing);
-    this.floors.push(landing);
-  }
-
-  buildSideWallWithGates(x, baseY, wallH, startZ, endZ, gates, floorY) {
-    const gateWidth = 7;
-    const gateHeight = 8;
-
-    gates.sort((a, b) => b.z - a.z);
-
-    let currentZ = startZ;
-    gates.forEach((gate) => {
-      const segmentStart = currentZ;
-      const segmentEnd = gate.z + gateWidth/2;
-
-      if (segmentStart > segmentEnd) {
-        const segDepth = segmentStart - segmentEnd;
-        const segCenterZ = (segmentStart + segmentEnd) / 2;
-        this.addWall(x, baseY, segCenterZ, 2, wallH, segDepth, this.mat.stonePolished);
-      }
-
-      // Gate lintel - non-colliding
-      this.addWallNonCollide(x, baseY + gateHeight, gate.z, 2, wallH - gateHeight, gateWidth, this.mat.stonePolished);
-      this.addGateFrame(x, floorY, gate.z, gateWidth, gateHeight, this.mat.copperP, gate.nameEn);
-
-      currentZ = gate.z - gateWidth/2;
+  /** One-amah step to the Duchan platform, then three half-amah steps to the Ezras Kohanim (Middot 2:6). */
+  buildDuchan() {
+    const e = this.entry('duchan');
+    const a = this.entry('azaras_yisrael').bounds;
+    const z0 = e.position.z + e.geometry.d / 2; // -11
+    const z1 = e.position.z - e.geometry.d / 2; // -14
+    const platformDepth = 1.5;
+    const x2 = this.hall.x1;
+    this.group('duchan', () => {
+      this.blockA(a.minX, x2, z0, z0 - platformDepth, this.yYisrael - SLAB, this.yDuchan - NUDGE, this.mat.marbleW, 'duchan');
+      this.flightA({
+        axis: 'z', span: [a.minX, x2], from: z0 - platformDepth, to: z1, yBase: this.yDuchan, bottom: this.yYisrael - SLAB,
+        steps: 3, rise: (this.yKohanim - this.yDuchan) / 3, mat: this.mat.marbleW, name: 'duchan steps',
+      });
     });
-
-    // Final wall segment
-    if (currentZ > endZ) {
-      const segDepth = currentZ - endZ;
-      const segCenterZ = (currentZ + endZ) / 2;
-      this.addWall(x, baseY, segCenterZ, 2, wallH, segDepth, this.mat.stonePolished);
-    }
   }
 
-  buildSlaughterArea(kohanimY) {
-    const centerX = 14;
-    const centerZ = -38;
-
-    // 8 marble slaughter tables
-    for (let row = 0; row < 2; row++) {
-      for (let col = 0; col < 4; col++) {
-        const table = new THREE.Mesh(
-          new THREE.BoxGeometry(1.8, 0.5, 1.2),
-          this.mat.marbleW
-        );
-        table.position.set(centerX - 4 + col * 2.5, kohanimY + 0.25, centerZ - row * 2);
-        table.castShadow = true;
-        table.receiveShadow = true;
-        this.scene.add(table);
+  /**
+   * Ezras Kohanim floor: full width from the Duchan steps to the altar's west face at
+   * z -54 (the altar, kevesh and kiyor stand on it), then only the strips beside the
+   * building (x +-35 .. +-67.5, notched for the Ulam) and the strip behind it to z -187.
+   */
+  buildEzrasKohanim() {
+    const y = this.yKohanim;
+    const { x1: hx, z1: hz1 } = this.hall;
+    const zDuchanTop = this.entry('duchan').position.z - this.entry('duchan').geometry.d / 2; // -14
+    const m = this.mat.stonePolished;
+    const bldg = this.entry('heichal');
+    const zBack = bldg.position.z - bldg.geometry.d / 2 - 38; // building z -76 .. -176 (Middot 4:7); -176
+    this.group('azaras_kohanim', () => {
+      this.floorA(-X_IN, hx, zDuchanTop, hz1, y, m, 'azaras_kohanim');
+      this.floorA(-X_IN, X_IN, hz1, STEPS_Z, y, m, 'azaras_kohanim');
+      for (const s of [1, -1]) {
+        this.floorA(s * ULAM_X, s * X_IN, STEPS_Z, zBack, y, m, 'azaras_kohanim');
+        this.floorA(s * BUILDING_X, s * ULAM_X, STEPS_Z, ULAM_Z[1], y, m, 'azaras_kohanim');
+        this.floorA(s * BUILDING_X, s * ULAM_X, ULAM_Z[0], zBack, y, m, 'azaras_kohanim');
       }
+      this.floorA(-X_IN, X_IN, zBack, Z_WEST, y, m, 'azaras_kohanim');
+    });
+  }
+
+  /** Gate opening spec for a temple.json gate entry in a wall run along `along`. */
+  gateOpening(id, along, extra = {}) {
+    const e = this.entry(id);
+    const { w, h } = e.geometry;
+    return {
+      at: along === 'x' ? e.position.x : e.position.z, w, h, floor: e.position.y, entry: id, name: id,
+      frame: this.mat.stonePolished, doors: 'closed', doorMat: this.mat.goldEng, threshold: true, ...extra,
+    };
+  }
+
+  /**
+   * East wall (z 0 .. 6) with the Nicanor opening and the two side chambers built into
+   * it (their furniture is EzrasNashimBuilder's), and the doors of the Lishkos Klei Shir
+   * under the Ezras Yisrael floor, opening east.
+   */
+  buildEastWall() {
+    const nic = this.entry('nicanor_gate');
+    const klei = this.entry('lishkos_klei_shir');
+    const openings = [{ at: 0, w: nic.geometry.w, h: nic.geometry.h, floor: this.yYisrael, cut: false }];
+    for (const id of ['lishkas_pinchas_hamalbish', 'lishkas_osei_chavitin']) {
+      const c = this.entry(id);
+      openings.push({ at: c.position.x, w: c.geometry.w, h: c.geometry.h, floor: c.position.y });
     }
+    for (const s of [1, -1]) openings.push({ at: s * klei.position.x, w: 4, h: klei.geometry.h, floor: klei.position.y, frame: this.mat.cedar, name: 'lishkos_klei_shir' });
+    this.group('azaras_yisrael', () => {
+      this.wallRunA({ along: 'x', across: [0, WALL_T], from: -X_OUT, to: X_OUT, y1: GROUND, y2: EAST_WALL_TOP, mat: this.mat.stone, openings });
+    }, { part: 'east wall' });
+  }
 
-    // Slaughter rings (Taba'os) - larger and more visible
-    const ringMat = new THREE.MeshStandardMaterial({ color: 0xB87333, metalness: 0.8, roughness: 0.3 });
-    for (let row = 0; row < 4; row++) {
-      for (let col = 0; col < 6; col++) {
-        // Ring base plate embedded in floor
-        const basePlate = new THREE.Mesh(
-          new THREE.CylinderGeometry(0.25, 0.25, 0.05, 16),
-          ringMat
-        );
-        basePlate.position.set(centerX - 6 + col * 2, kohanimY + 0.025, centerZ + 3 - row * 1.5);
-        this.scene.add(basePlate);
+  /** South wall: Mayim, Bechoros, Delek (Middot 1:4), Shaar HaElyon of the 13-gate count, Lishkas HaGazis straddling it. */
+  buildSouthWall() {
+    const gz = this.entry('lishkas_hagazis');
+    this.group('azaras_kohanim', () => {
+      this.wallRunA({
+        along: 'z', across: [-X_OUT, -X_IN], from: WALL_T, to: Z_WEST - WALL_T, y1: GROUND, y2: WALL_TOP, mat: this.mat.stone,
+        openings: [
+          this.gateOpening('water_gate', 'z'),
+          this.gateOpening('bechoros_gate', 'z'),
+          this.gateOpening('delek_gate', 'z'),
+          this.gateOpening('shaar_elyon', 'z'),
+          { at: gz.position.z, w: gz.geometry.d, cut: true },
+        ],
+      });
+    }, { part: 'south wall' });
+  }
 
-        // The actual ring
-        const ring = new THREE.Mesh(
-          new THREE.TorusGeometry(0.18, 0.04, 12, 24),
-          ringMat
-        );
-        ring.position.set(centerX - 6 + col * 2, kohanimY + 0.15, centerZ + 3 - row * 1.5);
-        ring.rotation.x = Math.PI / 2;
-        ring.castShadow = true;
-        this.scene.add(ring);
-      }
-    }
+  /** North wall: Nitzotz (= Yechonya), Korban, Beis HaMoked (= HaShir) per Middot 1:5 / 2:6, Shaar HaNashim, the hall straddling it. */
+  buildNorthWall() {
+    const { z1, z2 } = this.hall;
+    this.group('azaras_kohanim', () => {
+      this.wallRunA({
+        along: 'z', across: [X_IN, X_OUT], from: WALL_T, to: Z_WEST - WALL_T, y1: GROUND, y2: WALL_TOP, mat: this.mat.stone,
+        openings: [
+          this.gateOpening('nitzotz_gate', 'z', { labels: ['shaar_yechonya'] }),
+          this.gateOpening('korban_gate', 'z'),
+          this.gateOpening('shaar_hanashim', 'z'),
+          { at: (z1 + z2) / 2, w: z2 - z1, cut: true },
+        ],
+      });
+    }, { part: 'north wall' });
+  }
 
-    // Sacrifice animals (lambs) on some tables - representing the daily Tamid
-    this.addSacrificeAnimal(centerX - 4, kohanimY + 0.5, centerZ);       // Table 1
-    this.addSacrificeAnimal(centerX - 1.5, kohanimY + 0.5, centerZ - 2); // Table 6
+  buildWestWall() {
+    this.group('azaras_kohanim', () => {
+      this.wallRunA({
+        along: 'x', across: [Z_WEST - WALL_T, Z_WEST], from: -X_OUT, to: X_OUT, y1: GROUND, y2: WALL_TOP, mat: this.mat.stone,
+        openings: [this.gateOpening('shaar_maaravi_north', 'x'), this.gateOpening('shaar_maaravi_south', 'x')],
+      });
+    }, { part: 'west wall' });
+  }
 
-    // Hanging pillars with hooks
-    [centerX - 8, centerX + 8].forEach(px => {
-      const pillar = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.3, 0.3, 6, 8),
-        this.mat.cedar
-      );
-      pillar.position.set(px, kohanimY + 3, centerZ + 2);
-      pillar.castShadow = true;
-      this.scene.add(pillar);
-
-      // Horizontal bar
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(6, 0.25, 0.25), this.mat.cedar);
-      bar.position.set(px, kohanimY + 5.8, centerZ + 2);
-      bar.castShadow = true;
-      this.scene.add(bar);
-
-      // Iron hooks on the bar
-      const hookMat = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.9, roughness: 0.4 });
-      for (let h = -2; h <= 2; h++) {
-        const hook = new THREE.Mesh(
-          new THREE.TorusGeometry(0.12, 0.025, 8, 16, Math.PI),
-          hookMat
-        );
-        hook.position.set(px + h * 1.2, kohanimY + 5.5, centerZ + 2);
-        hook.rotation.z = Math.PI;
-        this.scene.add(hook);
+  /**
+   * Beis HaMoked: a domed hall straddling the north wall (Middot 1:6-8), its gate to the
+   * Azarah at x 52.5 (threshold at the Ezras Kohanim level, five steps down to the hall
+   * floor at y 0), a closed gate to the Cheil, four corner chambers and stone ledges.
+   */
+  buildBeisHamoked() {
+    const e = this.entry('beis_hamoked');
+    const gate = this.entry('beis_hamoked_gate');
+    const { x1, x2, z1, z2 } = this.hall;
+    const floor = e.position.y;
+    const h = 25; // temple.json gives 12, too low for the 20-amah gate (Middot 2:3); "large domed hall"
+    const zc = gate.position.z;
+    this.group('beis_hamoked', () => {
+      this.roomA({
+        x1, x2, z1, z2, floor, h, base: GROUND, floorMat: this.mat.floor, roofMat: this.mat.stone, name: 'beis_hamoked',
+        doors: [
+          { face: 's', at: zc, w: gate.geometry.w, h: gate.geometry.h, floor: this.yKohanim, entry: 'beis_hamoked_gate', labels: ['shaar_hashir'], frame: this.mat.stonePolished, doors: 'open', doorMat: this.mat.goldEng, threshold: true, name: 'beis_hamoked_gate' },
+          { face: 'n', at: zc, w: gate.geometry.w, h: gate.geometry.h, floor: floor + LIP, frame: this.mat.stonePolished, doors: 'closed', doorMat: this.mat.goldEng, name: 'beis_hamoked north gate' },
+        ],
+      });
+      // Down from the Azarah gate to the hall floor.
+      this.flightA({ axis: 'x', span: [zc - gate.geometry.w / 2, zc + gate.geometry.w / 2], from: x1 + 3.5, to: x1 + 1, yBase: floor + LIP, steps: 5, rise: (this.yKohanim - floor - LIP) / 5, mat: this.mat.marbleW, name: 'beis_hamoked steps' });
+      // The court wall continues above the hall.
+      this.decoA(X_IN, X_OUT, z1, z2, floor + h + 1, WALL_TOP, this.mat.stone);
+      // Dome.
+      const r = (z2 - z1) / 2;
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(r * AMAH, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), this.mat.stone);
+      dome.position.set(...this.pt((x1 + x2) / 2, floor + h + 1, (z1 + z2) / 2));
+      dome.castShadow = true;
+      this.scene.add(dome);
+      // Stone ledges to sleep on (Middot 1:8), along the east and west inner faces between the corner chambers.
+      for (const [za, zb] of [[z2 - 2, z2 - 1], [z1 + 1, z1 + 2]]) this.decoA(x1 + 10, x2 - 10, za, zb, floor + LIP, floor + LIP + 1, this.mat.stonePolished);
+      // Four 8 x 8 corner chambers (Middot 1:6), doors toward the middle of the hall.
+      for (const c of e.children ?? []) {
+        const s = 4;
+        const cx = c.position.x;
+        const cz = c.position.z;
+        const toward = cx < (x1 + x2) / 2 ? 'n' : 's';
+        this.group(c.id, () => {
+          this.roomA({ x1: cx - s, x2: cx + s, z1: cz - s, z2: cz + s, floor: floor + LIP, h: 8, name: c.id, doors: [{ face: toward, at: cz, w: 3, h: 6, frame: this.mat.cedar }] });
+        }, { period: e.period });
       }
     });
   }
 
-  addSacrificeAnimal(x, y, z) {
-    // Simple lamb/sheep representation
-    const lambMat = new THREE.MeshStandardMaterial({ color: 0xF5F5DC, roughness: 0.9 });
-    const lamb = new THREE.Group();
-
-    // Body
-    const body = new THREE.Mesh(
-      new THREE.SphereGeometry(0.35, 12, 12),
-      lambMat
-    );
-    body.scale.set(1.3, 0.9, 0.9);
-    lamb.add(body);
-
-    // Head
-    const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.18, 10, 10),
-      lambMat
-    );
-    head.position.set(0.4, 0.1, 0);
-    lamb.add(head);
-
-    // Ears
-    [-0.12, 0.12].forEach(ez => {
-      const ear = new THREE.Mesh(
-        new THREE.SphereGeometry(0.06, 6, 6),
-        lambMat
-      );
-      ear.position.set(0.45, 0.2, ez);
-      ear.scale.set(0.5, 1, 0.8);
-      lamb.add(ear);
+  /** Lishkas HaGazis straddles the south wall (Yoma 25a), half in the kodesh and half in the chol. */
+  buildLishkasHagazis() {
+    const e = this.entry('lishkas_hagazis');
+    const { w, d, h } = e.geometry;
+    const x1 = e.position.x - w / 2;
+    const x2 = e.position.x + w / 2;
+    const z1 = e.position.z - d / 2;
+    const z2 = e.position.z + d / 2;
+    const etz = this.entry('lishkas_haetz');
+    this.group('lishkas_hagazis', () => {
+      this.roomA({
+        x1, x2, z1, z2, floor: e.position.y, h, base: GROUND, floorMat: this.mat.marbleW, wallMat: this.mat.stonePolished, name: 'lishkas_hagazis',
+        doors: [
+          { face: 'n', at: e.position.z, w: 5, h: 8, frame: this.mat.cedar, doors: 'open', doorMat: this.mat.cedar },
+          { face: 's', at: etz.position.z + 8, w: 4, h: 7, frame: this.mat.cedar },
+        ],
+      });
+      // Seats of the Sanhedrin in a half-circle facing east (Sanhedrin 4:3): three tiers of benches.
+      for (let t = 0; t < 3; t++) this.decoA(x1 + 2 + t * 1.5, x1 + 3 + t * 1.5, z1 + 3 + t, z2 - 3 - t, e.position.y + LIP + t * 0.5, e.position.y + LIP + t * 0.5 + 0.6, this.mat.cedar);
+      // The court wall continues above the chamber.
+      this.decoA(-X_OUT, -X_IN, z1, z2, e.position.y + h + 1, WALL_TOP, this.mat.stone);
     });
-
-    // Legs (folded, lying down)
-    [[-0.2, -0.15], [-0.2, 0.15], [0.15, -0.15], [0.15, 0.15]].forEach(([lx, lz]) => {
-      const leg = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.05, 0.04, 0.2, 8),
-        lambMat
-      );
-      leg.position.set(lx, -0.2, lz);
-      leg.rotation.z = Math.PI / 2;
-      lamb.add(leg);
-    });
-
-    lamb.position.set(x, y + 0.15, z);
-    lamb.rotation.y = Math.random() * Math.PI * 2;
-    lamb.traverse(c => { if (c.isMesh) c.castShadow = true; });
-    this.scene.add(lamb);
   }
 
-  buildChambers(kohanimY) {
-    // Lishkas HaGazis (Chamber of Hewn Stone) - Sanhedrin
-    this.buildLishkasHagazis(-21, kohanimY, -35);
-
-    // Beis HaMoked (Chamber of the Hearth)
-    this.buildBeisHamoked(21, kohanimY, -20);
-  }
-
-  buildLishkasHagazis(x, baseY, z) {
-    // Chamber of Hewn Stone - where the Sanhedrin of 71 sat
-    const w = 10, h = 6, d = 12;
-
-    // Building shell (walls)
-    this.addChamberWithInterior(x, baseY, z, w, h, d, 'לשכת הגזית', 'Chamber of Hewn Stone');
-
-    // Semi-circular seating arrangement for the Sanhedrin (71 judges)
-    // They sat in a semi-circle facing the entrance
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0xD4A574, roughness: 0.8 }); // Same skin tone as Kohanim
-    const robeMat = new THREE.MeshStandardMaterial({ color: 0x1a1a4a, roughness: 0.8 }); // Dark blue robes
-
-    // Create seated judges in a semi-circle
-    const radius = 4;
-    const numJudges = 12; // Representative number
-    for (let i = 0; i < numJudges; i++) {
-      const angle = (Math.PI / (numJudges - 1)) * i - Math.PI / 2;
-      const jx = x + Math.cos(angle) * radius;
-      const jz = z + Math.sin(angle) * (radius * 0.6);
-      this.addSeatedFigure(jx, baseY, jz, robeMat, skinMat, Math.PI - angle);
+  /**
+   * Madichin, Parvah and Melach against the north wall (Middot 5:3). The Parvah's roof
+   * carries the Kohen Gadol's mikveh, reached by a stair inside the Madichin; the three
+   * roofs form one walkable terrace with a parapet.
+   */
+  buildNorthernLishkos() {
+    const ids = ['lishkas_hamadichin', 'lishkas_haparvah', 'lishkas_hamelach'];
+    const rooms = ids.map((id) => {
+      const e = this.entry(id);
+      const { w, d, h } = e.geometry;
+      return { id, e, h, x1: X_IN - w, x2: X_IN, z1: e.position.z - d / 2, z2: e.position.z + d / 2, floor: e.position.y };
+    });
+    const [mad, par, mel] = rooms;
+    const roofY = mad.floor + mad.h + 1;
+    const wellX = [mad.x1 + 1, mad.x1 + 6];
+    const wellZ = [mad.z2 - 1.5, mad.z1 + 1];
+    for (const r of rooms) {
+      const first = r === mad;
+      this.group(r.id, () => {
+        this.roomA({
+          x1: r.x1, x2: r.x2, z1: r.z1, z2: r.z2, floor: r.floor, h: r.h, floorMat: this.mat.marbleW, wallMat: this.mat.stonePolished, name: r.id,
+          skip: first ? ['n'] : ['n', 'e'], roof: first ? false : 'walk', roofMat: this.mat.stone,
+          doors: [{ face: 's', at: r.e.position.z, w: 4, h: 7, frame: this.mat.cedar }],
+        });
+      });
     }
+    this.group('lishkas_hamadichin', () => {
+      // Roof with a stair well; the stair climbs westward to the terrace.
+      this.floorA(wellX[1], mad.x2, mad.z1, mad.z2, roofY, this.mat.stone, 'lishkas_hamadichin roof');
+      this.floorA(mad.x1, wellX[1], wellZ[0], mad.z2, roofY, this.mat.stone, 'lishkas_hamadichin roof');
+      this.floorA(mad.x1, wellX[1], mad.z1, wellZ[1], roofY, this.mat.stone, 'lishkas_hamadichin roof');
+      this.flightA({ axis: 'z', span: wellX, from: wellZ[0], to: wellZ[1], yBase: mad.floor, steps: 22, rise: (roofY - mad.floor) / 22, mat: this.mat.stonePolished, name: 'lishkas_hamadichin stair' });
+      // Parapet around the terrace (south edge, east and west ends).
+      this.wallA(mad.x1, mad.x1 + 0.5, mel.z1, mad.z2, roofY, roofY + 1, this.mat.stone);
+      this.wallA(mad.x1, mad.x2, mad.z2 - 0.5, mad.z2, roofY, roofY + 1, this.mat.stone);
+      this.wallA(mad.x1, mad.x2, mel.z1, mel.z1 + 0.5, roofY, roofY + 1, this.mat.stone);
+    }, { part: 'roof' });
+    this.group('lishkas_haparvah', () => {
+      // The mikveh on the roof (Middot 5:3, Yoma 3:3): a 4 x 4 tank rising 2 above the terrace.
+      const cx = (par.x1 + par.x2) / 2;
+      const cz = (par.z1 + par.z2) / 2;
+      const s = 2;
+      this.wallA(cx - s, cx - s + 0.5, cz - s, cz + s, roofY, roofY + 2, this.mat.stonePolished);
+      this.wallA(cx + s - 0.5, cx + s, cz - s, cz + s, roofY, roofY + 2, this.mat.stonePolished);
+      this.wallA(cx - s, cx + s, cz - s, cz - s + 0.5, roofY, roofY + 2, this.mat.stonePolished);
+      this.wallA(cx - s, cx + s, cz + s - 0.5, cz + s, roofY, roofY + 2, this.mat.stonePolished);
+      this.decoA(cx - s + 0.5, cx + s - 0.5, cz - s + 0.5, cz + s - 0.5, roofY + 1.5, roofY + 1.6, this.mat.water);
+    }, { part: 'mikveh' });
+  }
 
-    // Stone benches (the seats)
-    const benchMat = this.mat.stone;
-    for (let i = 0; i < 3; i++) {
-      const benchAngle = (Math.PI / 2) * i - Math.PI / 2;
-      const bench = new THREE.Mesh(
-        new THREE.BoxGeometry(3, 0.5, 1),
-        benchMat
-      );
-      bench.position.set(
-        x + Math.cos(benchAngle) * 3.5,
-        baseY + 0.25,
-        z + Math.sin(benchAngle) * 2
-      );
-      bench.rotation.y = -benchAngle;
-      this.scene.add(bench);
+  /** Golah inside the south wall (Middot 5:4); Etz and Palhedrin outside it in the Cheil (Abba Shaul). */
+  buildSouthernLishkos() {
+    const golah = this.entry('lishkas_hagolah');
+    {
+      const { w, d, h } = golah.geometry;
+      const x1 = -X_IN;
+      const x2 = -X_IN + w;
+      const z1 = golah.position.z - d / 2;
+      const z2 = golah.position.z + d / 2;
+      this.group('lishkas_hagolah', () => {
+        this.roomA({ x1, x2, z1, z2, floor: golah.position.y, h, floorMat: this.mat.marbleW, wallMat: this.mat.stonePolished, skip: ['s'], name: 'lishkas_hagolah', doors: [{ face: 'n', at: golah.position.z, w: 4, h: 7, frame: this.mat.cedar }] });
+        // Cistern mouth and wheel (Middot 5:4).
+        const cx = (x1 + x2) / 2;
+        const cz = (z1 + z2) / 2;
+        const y = golah.position.y + LIP;
+        const ring = new THREE.Mesh(new THREE.CylinderGeometry(1.2 * AMAH, 1.4 * AMAH, 0.8 * AMAH, 20), this.mat.stonePolished);
+        ring.position.set(...this.pt(cx, y + 0.4, cz));
+        const wheel = new THREE.Mesh(new THREE.TorusGeometry(1.5 * AMAH, 0.12 * AMAH, 8, 24), this.mat.cedar);
+        wheel.position.set(...this.pt(cx, y + 2.2, cz - 1.8));
+        for (const m of [ring, wheel]) {
+          m.castShadow = true;
+          this.scene.add(m);
+        }
+      });
+    }
+    const etz = this.entry('lishkas_haetz');
+    const hag = this.entry('lishkas_hagazis');
+    const hagX1 = hag.position.x - hag.geometry.w / 2;
+    {
+      // JSON gives x -73.5 .. -87.5, which overlaps Lishkas HaGazis (to -77.5); built from the Gazis face outward.
+      const { d, h } = etz.geometry;
+      const x2 = hagX1;
+      const x1 = etz.position.x - etz.geometry.w / 2;
+      const z1 = etz.position.z - d / 2;
+      const z2 = etz.position.z + d / 2;
+      this.group('lishkas_haetz', () => {
+        this.roomA({ x1, x2, z1, z2, floor: etz.position.y, h, base: GROUND, floorMat: this.mat.floor, name: 'lishkas_haetz', doors: [{ face: 'n', at: etz.position.z + 8, w: 4, h: 7, frame: this.mat.cedar }] });
+      });
+    }
+    const pal = this.entry('lishkas_palhedrin');
+    {
+      const { w, d, h } = pal.geometry;
+      const x1 = pal.position.x - w / 2;
+      const x2 = pal.position.x + w / 2;
+      const z1 = pal.position.z - d / 2;
+      const z2 = pal.position.z + d / 2;
+      this.group('lishkas_palhedrin', () => {
+        this.roomA({ x1, x2, z1, z2, floor: pal.position.y, h, base: GROUND, floorMat: this.mat.floor, name: 'lishkas_palhedrin', doors: [{ face: 'e', at: pal.position.x, w: 4, h: 7, frame: this.mat.cedar, doors: 'closed', doorMat: this.mat.cedar }] });
+      });
     }
   }
 
-  buildBeisHamoked(x, baseY, z) {
-    // Chamber of the Hearth - where Kohanim slept and kept warm
-    const w = 10, h = 6, d = 10;
-
-    // Building shell
-    this.addChamberWithInterior(x, baseY, z, w, h, d, 'בית המוקד', 'Chamber of the Hearth');
-
-    // Central fire pit
-    const fireBaseMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 1 });
-    const firePit = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.2, 1.5, 0.4, 16),
-      fireBaseMat
-    );
-    firePit.position.set(x, baseY + 0.2, z);
-    this.scene.add(firePit);
-
-    // Fire glow (emissive)
-    const fireMat = new THREE.MeshBasicMaterial({ color: 0xff4400 });
-    const fire = new THREE.Mesh(
-      new THREE.ConeGeometry(0.8, 1.5, 8),
-      fireMat
-    );
-    fire.position.set(x, baseY + 1, z);
-    this.scene.add(fire);
-
-    // Fire light
-    const fireLight = new THREE.PointLight(0xff6600, 1, 8);
-    fireLight.position.set(x, baseY + 1.5, z);
-    this.scene.add(fireLight);
-
-    // Sleeping mats with Kohanim around the fire
-    const matMat = new THREE.MeshStandardMaterial({ color: 0x8B4513, roughness: 0.95 });
-    const kohenRobe = new THREE.MeshStandardMaterial({ color: 0xf5f5f5, roughness: 0.8 }); // White robes
-    const skinMat = new THREE.MeshStandardMaterial({ color: 0xD4A574, roughness: 0.8 });
-
-    const sleepPositions = [
-      { x: x - 3, z: z - 2, rot: 0 },
-      { x: x - 3, z: z + 2, rot: 0 },
-      { x: x + 3, z: z - 2, rot: Math.PI },
-      { x: x + 3, z: z + 2, rot: Math.PI }
-    ];
-
-    sleepPositions.forEach(pos => {
-      // Sleeping mat
-      const mat = new THREE.Mesh(
-        new THREE.BoxGeometry(2.5, 0.1, 1.2),
-        matMat
-      );
-      mat.position.set(pos.x, baseY + 0.05, pos.z);
-      this.scene.add(mat);
-
-      // Sleeping figure (lying down)
-      this.addSleepingFigure(pos.x, baseY + 0.2, pos.z, kohenRobe, skinMat, pos.rot);
+  /** Beis Avtinas: the upper storey over Shaar HaMayim (Yoma 3:3), with a mikveh on its roof. */
+  buildBeisAvtinas() {
+    const e = this.entry('beis_avtinas');
+    const { w, d, h } = e.geometry;
+    const x1 = e.position.x - w / 2;
+    const x2 = e.position.x + w / 2;
+    const z1 = e.position.z - d / 2;
+    const z2 = e.position.z + d / 2;
+    const floor = e.position.y;
+    this.group('beis_avtinas', () => {
+      this.roomA({ x1, x2, z1, z2, floor, h, floorMat: this.mat.floor, wallMat: this.mat.stonePolished, roof: 'walk', roofMat: this.mat.stone, name: 'beis_avtinas', doors: [{ face: 'n', at: e.position.z, w: 3, h: 6, frame: this.mat.cedar, doors: 'closed', doorMat: this.mat.cedar }] });
+      // Corbels under the part that overhangs the court.
+      for (const z of [z1 + 1, (z1 + z2) / 2, z2 - 1]) this.decoA(-X_IN, x2, z - 0.5, z + 0.5, floor - SLAB - 1.5, floor - SLAB, this.mat.stone);
+      // Mikveh on the roof.
+      const ry = floor + h + 1;
+      const cx = (x1 + x2) / 2;
+      const cz = (z1 + z2) / 2;
+      this.decoA(cx - 2, cx + 2, cz - 2, cz + 2, ry, ry + 1.5, this.mat.stonePolished);
+      this.decoA(cx - 1.6, cx + 1.6, cz - 1.6, cz + 1.6, ry + 1.5, ry + 1.6, this.mat.water);
     });
   }
 
-  addChamberWithInterior(x, baseY, z, w, h, d, nameHeb, nameEn) {
-    // Create chamber with open front (so we can see inside)
-    const wallThick = 0.5;
+  /**
+   * North of the altar (Middot 3:5, 5:2): 24 rings set in the floor (x 24 .. 48), eight
+   * marble tables at x 52, eight short pillars at x 58 with cedar beams and three rows
+   * of hooks.
+   */
+  buildSlaughterArea() {
+    const y = this.yKohanim;
+    const tables = this.entry('slaughter_tables');
+    const rings = this.entry('slaughter_rings');
+    const pillars = this.entry('hanging_pillars');
+    const z1 = rings.position.z + rings.geometry.d / 2; // -26
+    const z2 = rings.position.z - rings.geometry.d / 2; // -50
 
-    // Back wall
-    const backWall = new THREE.Mesh(
-      new THREE.BoxGeometry(w, h, wallThick),
-      this.mat.stonePolished
-    );
-    backWall.position.set(x, baseY + h/2, z - d/2 + wallThick/2);
-    backWall.castShadow = true;
-    this.scene.add(backWall);
-
-    // Side walls
-    [-1, 1].forEach(side => {
-      const sideWall = new THREE.Mesh(
-        new THREE.BoxGeometry(wallThick, h, d),
-        this.mat.stonePolished
-      );
-      sideWall.position.set(x + side * (w/2 - wallThick/2), baseY + h/2, z);
-      sideWall.castShadow = true;
-      this.scene.add(sideWall);
+    this.group('slaughter_tables', () => {
+      const { w, d, h } = tables.geometry;
+      const n = 8;
+      const pitch = (z1 - z2) / n;
+      const positions = [];
+      for (let i = 0; i < n; i++) positions.push({ position: this.pt(tables.position.x, y + h / 2, z1 - pitch * (i + 0.5)) });
+      const mesh = instance(this.box(w * AMAH, h * AMAH, d * AMAH, this.mat.marbleW), this.mat.marbleW, positions, { name: 'slaughter_tables' });
+      this.scene.add(mesh);
+      this.colliderA(tables.position.x - w / 2, tables.position.x + w / 2, z1, z2, y, y + h);
     });
 
-    // Floor
-    const floor = new THREE.Mesh(
-      new THREE.BoxGeometry(w - wallThick, 0.3, d),
-      this.mat.floor
-    );
-    floor.position.set(x, baseY + 0.15, z);
-    floor.receiveShadow = true;
-    floor.userData = { isFloor: true };
-    this.scene.add(floor);
-    this.floors.push(floor);
-
-    // Roof
-    const roof = new THREE.Mesh(
-      new THREE.BoxGeometry(w + 0.5, 0.5, d + 0.5),
-      this.mat.stone
-    );
-    roof.position.set(x, baseY + h + 0.25, z);
-    roof.castShadow = true;
-    this.scene.add(roof);
-  }
-
-  addSeatedFigure(x, baseY, z, robeMat, skinMat, rotation) {
-    const figure = new THREE.Group();
-
-    // Body (seated, torso)
-    const torso = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.25, 0.3, 0.8, 8),
-      robeMat
-    );
-    torso.position.y = 0.9;
-    figure.add(torso);
-
-    // Head
-    const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.15, 10, 10),
-      skinMat
-    );
-    head.position.y = 1.45;
-    figure.add(head);
-
-    // Legs (bent, seated)
-    const legGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.5, 6);
-    [-0.12, 0.12].forEach(lz => {
-      const leg = new THREE.Mesh(legGeo, robeMat);
-      leg.position.set(0.2, 0.4, lz);
-      leg.rotation.z = Math.PI / 3;
-      figure.add(leg);
+    this.group('slaughter_rings', () => {
+      const rx1 = rings.position.x - rings.geometry.w / 2; // 24
+      const cols = 6;
+      const rows = 4;
+      const geo = new THREE.TorusGeometry(0.5 * AMAH, 0.05 * AMAH, 8, 24);
+      const items = [];
+      for (let i = 0; i < cols; i++) {
+        for (let j = 0; j < rows; j++) {
+          const x = rx1 + (i + 0.5) * (rings.geometry.w / cols);
+          const z = z1 - (j + 0.5) * ((z1 - z2) / rows);
+          items.push({ position: this.pt(x, y + 0.03, z), rotation: [Math.PI / 2, 0, 0] });
+        }
+      }
+      this.scene.add(instance(geo, this.mat.copper, items, { name: 'slaughter_rings', castShadow: false }));
     });
 
-    figure.position.set(x, baseY, z);
-    figure.rotation.y = rotation;
-    figure.traverse(c => { if (c.isMesh) c.castShadow = true; });
-    this.scene.add(figure);
+    this.group('hanging_pillars', () => {
+      const { w, h } = pillars.geometry;
+      const n = 8;
+      const gap = 3;
+      const zs = [];
+      for (let i = 0; i < n; i++) zs.push(z1 - 1 - i * gap); // -27 .. -48
+      const px = pillars.position.x;
+      const shafts = zs.map((z) => ({ position: this.pt(px, y + h / 2, z) }));
+      this.scene.add(instance(this.box(w * AMAH, h * AMAH, w * AMAH, this.mat.stone), this.mat.stone, shafts, { name: 'hanging_pillars' }));
+      const caps = zs.map((z) => ({ position: this.pt(px, y + h + 0.25, z) }));
+      this.scene.add(instance(this.box(1.5 * AMAH, 0.5 * AMAH, 1.5 * AMAH, this.mat.cedar), this.mat.cedar, caps, { name: 'hanging_pillars caps' }));
+      // Cedar beam joining the caps, and three rows of iron hooks on each side of every pillar.
+      this.decoA(px - 0.25, px + 0.25, zs[0] + 1, zs[n - 1] - 1, y + h + 0.5, y + h + 1, this.mat.cedar);
+      const hooks = [];
+      for (const z of zs) {
+        for (let r = 0; r < 3; r++) {
+          for (const s of [-1, 1]) hooks.push({ position: this.pt(px + s * 0.75, y + h - 0.5 - r * 0.8, z), rotation: [0, 0, s * 0.4] });
+        }
+      }
+      this.scene.add(instance(new THREE.BoxGeometry(0.6 * AMAH, 0.08 * AMAH, 0.08 * AMAH), this.mat.copperP, hooks, { name: 'hanging_pillars hooks', castShadow: false }));
+      this.colliderA(px - w / 2, px + w / 2, zs[0] + 0.5, zs[n - 1] - 0.5, y, y + h);
+    });
   }
 
-  addSleepingFigure(x, baseY, z, robeMat, skinMat, rotation) {
-    const figure = new THREE.Group();
-
-    // Body (lying down)
-    const body = new THREE.Mesh(
-      new THREE.CapsuleGeometry(0.2, 1.2, 4, 8),
-      robeMat
-    );
-    body.rotation.z = Math.PI / 2;
-    body.position.y = 0.2;
-    figure.add(body);
-
-    // Head
-    const head = new THREE.Mesh(
-      new THREE.SphereGeometry(0.15, 10, 10),
-      skinMat
-    );
-    head.position.set(-0.7, 0.25, 0);
-    figure.add(head);
-
-    figure.position.set(x, baseY, z);
-    figure.rotation.y = rotation;
-    figure.traverse(c => { if (c.isMesh) c.castShadow = true; });
-    this.scene.add(figure);
+  /** The Tamid lamb waits in a small cedar pen by the second ring (Tamid 4:1). */
+  buildTamidPen() {
+    const e = this.entry('tamid_lamb');
+    const y = this.yKohanim;
+    const { x, z } = e.position;
+    const s = 1.5;
+    this.group('tamid_lamb', () => {
+      const rail = (x1, x2, z1, z2) => {
+        for (const ry of [0.4, 0.9]) this.decoA(x1, x2, z1, z2, y + ry, y + ry + 0.12, this.mat.cedar);
+      };
+      rail(x - s, x + s, z - s, z - s + 0.15);
+      rail(x - s, x + s, z + s - 0.15, z + s);
+      rail(x - s, x - s + 0.15, z - s, z + s);
+      rail(x + s - 0.15, x + s, z - s, z + s);
+      for (const [px, pz] of [[x - s, z - s], [x - s, z + s], [x + s, z - s], [x + s, z + s]]) this.decoA(px - 0.1, px + 0.1, pz - 0.1, pz + 0.1, y, y + 1.1, this.mat.cedar);
+      // The lamb: a woolly body and a head.
+      this.decoA(x - 0.35, x + 0.35, z - 0.6, z + 0.6, y + 0.45, y + 1.05, this.mat.marbleW);
+      this.decoA(x - 0.2, x + 0.2, z - 0.95, z - 0.55, y + 0.85, y + 1.2, this.mat.marbleW);
+      for (const [lx, lz] of [[-0.2, -0.4], [0.2, -0.4], [-0.2, 0.4], [0.2, 0.4]]) this.decoA(x + lx - 0.06, x + lx + 0.06, z + lz - 0.06, z + lz + 0.06, y, y + 0.45, this.mat.stone);
+    });
   }
 }

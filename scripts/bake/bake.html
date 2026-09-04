@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head><meta charset="utf-8" /><title>bake textures</title></head>
+  <body>
+    <script type="module">
+      // Served by the Vite dev server that scripts/bake_textures.mjs starts. Renders every
+      // procedural texture on its canvas and exposes it as a WebP data URL.
+      import { TextureFactory, TEXTURE_NAMES } from '/src/game/TextureFactory.js';
+      const factory = new TextureFactory({ baked: false });
+      window.__bake = {
+        names: TEXTURE_NAMES,
+        render(name, quality) {
+          const tex = factory.generate(name);
+          const canvas = tex.image;
+          return { width: canvas.width, height: canvas.height, dataUrl: canvas.toDataURL('image/webp', quality) };
+        },
+      };
+      window.__bakeReady = true;
+    </script>
+  </body>
+</html>

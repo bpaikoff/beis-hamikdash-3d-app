@@ -68,7 +68,10 @@ export class TempleGame {
     );
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.clock = new THREE.Clock();
-    this.tex = new TextureFactory({ maxAnisotropy: this.renderer.capabilities.getMaxAnisotropy() });
+    this.tex = new TextureFactory({
+      maxAnisotropy: this.renderer.capabilities.getMaxAnisotropy(),
+      baked: new URLSearchParams(window.location.search).get('bake') !== '0',
+    });
     this.currentArea = null;
     this.nearbyKli = null;
     this.raf = 0;
@@ -119,7 +122,10 @@ export class TempleGame {
     this.scene.environment = this.envTexture;
     pmrem.dispose();
 
-    await this.setLoading('Generating textures...');
+    // Baked textures stream in from /textures/*.webp while the geometry builds; the
+    // canvas generators only run for files that are missing (or with ?bake=0).
+    this.tex.onProgress((n, total) => this.store.setState({ loading: `Loading textures ${n}/${total}...` }));
+    await this.setLoading(this.tex.baked ? 'Loading textures...' : 'Generating textures...');
     const builder = new TempleBuilder(this.scene, this.tex);
     await this.setLoading('Building the Beis HaMikdash...');
     const { floors, walls } = builder.build();
@@ -147,6 +153,12 @@ export class TempleGame {
     for (let i = 0; i < 4; i++) this.characters.createAnimal('goat', 25 + (rand() - 0.5) * 8 * (i % 2 === 0 ? 1 : -1), 35 + (rand() - 0.5) * 8);
     for (let i = 0; i < 2; i++) this.characters.createAnimal('bull', 30 + i * 5, 45);
     for (let i = 0; i < 12; i++) this.characters.createDove((rand() - 0.5) * 60, 25 + rand() * 15, (rand() - 0.5) * 60);
+
+    if (this.tex.total > this.tex.loaded) {
+      await this.setLoading(`Loading textures ${this.tex.loaded}/${this.tex.total}...`);
+      await this.tex.whenLoaded();
+    }
+    if (this.disposed) return;
 
     await this.setLoading('Lighting the fire...');
     this.particles = new ParticleSystem(this.scene);
@@ -323,6 +335,7 @@ export class TempleGame {
       }
     });
     this.scene.clear();
+    this.tex.dispose();
     this.envTexture?.dispose();
     if (this.composer) {
       this.bloomPass?.dispose();

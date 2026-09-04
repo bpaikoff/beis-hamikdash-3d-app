@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{js,jsx}\" \"scripts/**/*.mjs\"",
     "test": "vitest",
-    "screenshot": "node scripts/screenshot.mjs"
+    "screenshot": "node scripts/screenshot.mjs",
+    "bake": "node scripts/bake_textures.mjs"
   },
   "dependencies": {
     "react": "^18.2.0",

@@ -49,7 +49,7 @@ mkdirSync(outDir, { recursive: true });
 const browser = await chromium.launch({
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
 });
-const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
 page.on('pageerror', (e) => console.error('page error:', e.message));
 
 const results = [];
@@ -64,9 +64,17 @@ try {
       .waitForFunction(() => window.__mikdash?.ready === true, null, { timeout: 60000 })
       .catch(() => page.waitForTimeout(8000));
     await page.waitForTimeout(500); // one settled frame
-    const info = await page.evaluate(() => window.__mikdash?.info ?? null);
+    const info = await page.evaluate(() => {
+      const m = window.__mikdash;
+      if (!m) return null;
+      const snap = { calls: m.info.calls, triangles: m.info.triangles };
+      m.paused = true; // stop the render loop so the software rasteriser can composite a frame
+      return snap;
+    });
+    await page.waitForTimeout(300);
     const file = `${outDir}/${v.name}.png`;
-    await page.screenshot({ path: file });
+    await page.screenshot({ path: file, timeout: 120000, animations: 'disabled' });
+    await page.evaluate(() => { if (window.__mikdash) window.__mikdash.paused = false; });
     results.push({ view: v.name, file, calls: info?.calls, triangles: info?.triangles });
     console.log(`${v.name.padEnd(20)} ${file}${info ? `  calls=${info.calls} tris=${info.triangles}` : ''}`);
   }

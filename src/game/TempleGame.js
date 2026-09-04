@@ -236,6 +236,7 @@ export class TempleGame {
   animate() {
     if (this.disposed) return;
     this.raf = requestAnimationFrame(() => this.animate());
+    if (window.__mikdash?.paused) return; // screenshot tooling holds the last frame
     const delta = Math.min(this.clock.getDelta(), 0.1);
     this.player.update(delta);
     this.characters.update(delta);

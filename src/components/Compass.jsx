@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { store } from '../store.js';
 
 // The scene's +x is north and -z is west. The camera faces -z at yaw 0.

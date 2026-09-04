@@ -6,8 +6,11 @@ import { TempleGame } from './game/TempleGame.js';
 import { Minimap } from './components/Minimap.jsx';
 import { Compass } from './components/Compass.jsx';
 import { Telemetry } from './components/Telemetry.jsx';
+import { HotspotCard } from './components/HotspotCard.jsx';
+import { LockOverlay } from './components/LockOverlay.jsx';
+import { StartScreen } from './components/StartScreen.jsx';
 import { store, useStore } from './store.js';
-import { styles } from './styles.js';
+import { byId } from './content/index.js';
 
 const hasWebGL2 = () => {
   try {
@@ -34,6 +37,8 @@ export default function BeisHamikdash3D() {
   const error = useStore((s) => s.error);
   const location = useStore((s) => s.location);
   const nearbyKli = useStore((s) => s.nearbyKli);
+  const selected = useStore((s) => s.selected);
+  const focused = useStore((s) => s.focused);
   const debug = useStore((s) => s.debug);
   const lang = useStore((s) => s.lang);
 
@@ -44,25 +49,44 @@ export default function BeisHamikdash3D() {
   useEffect(() => {
     if (!started || !containerRef.current || !webgl) return;
     store.setState({ loading: 'Starting...', error: null });
-    gameRef.current = new TempleGame(containerRef.current, store);
+    const game = new TempleGame(containerRef.current, store);
+    gameRef.current = game;
+    // `?at=<id>`: the game spawns beside the item; open its card once the first frame is in.
+    const at = new URLSearchParams(window.location.search).get('at');
+    if (at && byId[at]) {
+      game.ready.then(() => {
+        if (!game.disposed && !store.getState().error) store.setState({ selected: at });
+      });
+    }
     return () => {
-      gameRef.current?.dispose();
+      game.dispose();
       gameRef.current = null;
     };
   }, [started, webgl]);
 
   const t = (obj) => (obj ? obj[lang] ?? obj.en : '');
 
+  // Start and take the pointer in the same user gesture; the game syncs the lock state once
+  // its controls exist. Browsers without pointer lock (touch) just start.
+  const enter = () => {
+    setStarted(true);
+    const el = containerRef.current;
+    try {
+      el?.requestPointerLock?.()?.catch?.(() => {});
+    } catch {
+      /* unsupported */
+    }
+  };
+
   return (
     <>
-      <style>{styles}</style>
-      <div className="game-container" ref={containerRef}>
+      <div className="game-container" ref={containerRef} tabIndex={-1}>
         {started && !loading && !error && (
           <div className="overlay">
-            <div className="crosshair"><div className="crosshair-dot"></div></div>
+            <div className="crosshair" aria-hidden="true"><div className="crosshair-dot"></div></div>
 
             <div className="hud-top">
-              <div className="panel date-panel" dir="rtl">
+              <div className="panel date-panel" dir="rtl" lang="he">
                 <div className="date-hebrew">{hebrewDate.formatted}</div>
                 <div className="date-day">{hebrewDate.dayName}</div>
                 {hebrewDate.special && <div className="date-special">{hebrewDate.special}</div>}
@@ -73,41 +97,39 @@ export default function BeisHamikdash3D() {
               <Minimap />
             </div>
 
-            {nearbyKli && (
-              <div className="panel kli-panel" key={nearbyKli.id}>
-                <div className="icon" aria-hidden="true">{nearbyKli.icon}</div>
-                <div className="name-heb" dir="rtl">{nearbyKli.name.he}</div>
-                <div className="name-en">{nearbyKli.name.en}</div>
-                <div className="desc" dir={lang === 'he' ? 'rtl' : 'ltr'}>{t(nearbyKli.desc)}</div>
-              </div>
+            {focused && !selected && (
+              <div className="interact-hint"><kbd>E</kbd>Inspect</div>
             )}
+
+            <HotspotCard />
+            <LockOverlay />
 
             {showKorbanos && (
               <div className="panel korbanos-panel">
-                <h3 dir="rtl">קרבנות היום</h3>
+                <h3 dir="rtl" lang="he">קרבנות היום</h3>
                 {korbanos.map((k, i) => (
                   <div key={i} className="korban-item">
-                    <div className="korban-name" dir="rtl">{k.name}</div>
-                    <div className="korban-name-en">{k.en}</div>
-                    <div className="korban-desc">{k.desc}</div>
-                    <span className="korban-type">{k.type}</span>
+                    <div className="korban-name" dir="rtl" lang="he">{k.name}</div>
+                    <div className="korban-name-en" lang="en">{k.en}</div>
+                    <div className="korban-desc" lang="en">{k.desc}</div>
+                    <span className="korban-type" lang="en">{k.type}</span>
                   </div>
                 ))}
               </div>
             )}
 
             <div className="hud-bottom">
-              <div className="panel location-panel">
+              <div className="panel location-panel" aria-live="polite" aria-atomic="true">
                 {location && (
                   <>
-                    <div className="location-hebrew" dir="rtl">{location.name.he}</div>
-                    <div className="location-english">{location.name.en}</div>
-                    <div className="location-desc" dir={lang === 'he' ? 'rtl' : 'ltr'}>{t(location.desc)}</div>
+                    <div className="location-hebrew" dir="rtl" lang="he">{location.name.he}</div>
+                    <div className="location-english" lang="en">{location.name.en}</div>
+                    <div className="location-desc" dir={lang === 'he' ? 'rtl' : 'ltr'} lang={location.desc?.[lang] ? lang : 'en'}>{t(location.desc)}</div>
                     {debug && <Telemetry />}
                   </>
                 )}
               </div>
-              <div className="controls-hint">
+              <div className="controls-hint" lang="en">
                 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move •{' '}
                 <kbd>Space</kbd> Jump •{' '}
                 <kbd>Shift</kbd> Run •{' '}
@@ -137,32 +159,7 @@ export default function BeisHamikdash3D() {
           </div>
         )}
 
-        {!started && (
-          <div className="start-screen">
-            <div className="start-panel">
-              <h1 dir="rtl">בית המקדש</h1>
-              <h2>Beis Hamikdash Explorer</h2>
-              <p>
-                Walk through the Second Temple as described in Maseches Middos and the Rambam:
-                from the Chuldah Gates through the courts to the Kodesh HaKodashim.
-              </p>
-
-              <div className="date-info" dir="rtl">
-                <div className="heb">{hebrewDate.formatted}</div>
-                <div className="day">{hebrewDate.dayName}</div>
-                {hebrewDate.special && <div className="heb" style={{ marginTop: '8px' }}>{hebrewDate.special}</div>}
-              </div>
-
-              {webgl ? (
-                <button className="start-btn" onClick={() => setStarted(true)}>Enter the Temple</button>
-              ) : (
-                <p className="footer">This walkthrough needs WebGL 2, which this browser does not provide.</p>
-              )}
-
-              <div className="footer">Based on Maseches Middos, Rambam Hilchos Beis HaBechirah &amp; Mishna Yoma</div>
-            </div>
-          </div>
-        )}
+        {!started && <StartScreen hebrewDate={hebrewDate} webgl={webgl} onEnter={enter} />}
       </div>
     </>
   );

@@ -1190,3 +1190,68 @@ canvas {
     opacity: 1;
   }
 }
+
+/* Period toggle on the start screen ---------------------------------------- */
+.period-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  border: none;
+  margin: 8px 0 4px;
+  position: relative;
+}
+
+.period-toggle legend {
+  color: var(--faint);
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  width: 100%;
+  text-align: center;
+}
+
+.period-toggle label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.period-toggle label [lang='he'] {
+  font-size: 1.15rem;
+  text-align: center;
+}
+
+.period-toggle label [lang='en'] {
+  font-size: 0.85rem;
+}
+
+.period-toggle label.active {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+  color: var(--ink);
+}
+
+.period-toggle label:has(input:focus-visible) {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.period-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.start-panel .footer a {
+  color: var(--gold-dim);
+}

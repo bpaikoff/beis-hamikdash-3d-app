@@ -8,6 +8,7 @@ import { Compass } from './components/Compass.jsx';
 import { Telemetry } from './components/Telemetry.jsx';
 import { HotspotCard } from './components/HotspotCard.jsx';
 import { LockOverlay } from './components/LockOverlay.jsx';
+import { StartScreen } from './components/StartScreen.jsx';
 import { store, useStore } from './store.js';
 
 const hasWebGL2 = () => {
@@ -149,32 +150,7 @@ export default function BeisHamikdash3D() {
           </div>
         )}
 
-        {!started && (
-          <div className="start-screen">
-            <div className="start-panel">
-              <h1 dir="rtl">בית המקדש</h1>
-              <h2>Beis Hamikdash Explorer</h2>
-              <p>
-                Walk through the Second Temple as described in Maseches Middos and the Rambam:
-                from the Chuldah Gates through the courts to the Kodesh HaKodashim.
-              </p>
-
-              <div className="date-info" dir="rtl">
-                <div className="heb">{hebrewDate.formatted}</div>
-                <div className="day">{hebrewDate.dayName}</div>
-                {hebrewDate.special && <div className="heb" style={{ marginTop: '8px' }}>{hebrewDate.special}</div>}
-              </div>
-
-              {webgl ? (
-                <button className="start-btn" onClick={enter}>Enter the Temple</button>
-              ) : (
-                <p className="footer">This walkthrough needs WebGL 2, which this browser does not provide.</p>
-              )}
-
-              <div className="footer">Based on Maseches Middos, Rambam Hilchos Beis HaBechirah &amp; Mishna Yoma</div>
-            </div>
-          </div>
-        )}
+        {!started && <StartScreen hebrewDate={hebrewDate} webgl={webgl} onEnter={enter} />}
       </div>
     </>
   );

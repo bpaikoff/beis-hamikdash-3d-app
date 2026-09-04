@@ -1,14 +1,64 @@
 import * as THREE from 'three';
+import { MeshBVH, acceleratedRaycast } from 'three-mesh-bvh';
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { CONFIG } from '../config.js';
+
+THREE.Mesh.prototype.raycast = acceleratedRaycast;
+
+const _origin = new THREE.Vector3();
+const _down = new THREE.Vector3(0, -1, 0);
+const _forward = new THREE.Vector3();
+const _right = new THREE.Vector3();
+const _move = new THREE.Vector3();
+const _sphere = new THREE.Sphere();
+const UP = new THREE.Vector3(0, 1, 0);
+
+/**
+ * Merge every walkable mesh into one static collision mesh with a BVH, so the three
+ * downward raycasts per frame cost O(log n) instead of a test against ~200 floors.
+ * Only positions are kept; the meshes stay in the scene for rendering.
+ */
+function buildFloorCollider(floors) {
+  const parts = [];
+  for (const m of floors) {
+    if (!m.geometry) continue;
+    m.updateWorldMatrix(true, false);
+    const g = m.geometry.clone();
+    for (const name of Object.keys(g.attributes)) if (name !== 'position') g.deleteAttribute(name);
+    g.applyMatrix4(m.matrixWorld);
+    parts.push(g.index ? g.toNonIndexed() : g);
+  }
+  if (!parts.length) return null;
+  const merged = BufferGeometryUtils.mergeGeometries(parts, false);
+  for (const p of parts) p.dispose();
+  merged.boundsTree = new MeshBVH(merged);
+  const mesh = new THREE.Mesh(merged, new THREE.MeshBasicMaterial({ visible: false }));
+  mesh.name = 'floorCollider';
+  return mesh;
+}
 
 // ============================================================================
 // PLAYER CONTROLLER
 // ============================================================================
 export class PlayerController {
-  constructor(camera, floors, walls) {
+  /**
+   * @param {THREE.Camera} camera
+   * @param {THREE.Mesh[]} floors   walkable meshes (userData.isFloor)
+   * @param {THREE.Mesh[]} walls    blocking meshes (userData.isWall)
+   * @param {{bounds?: {minX,maxX,minZ,maxZ}}} [opts]
+   */
+  constructor(camera, floors, walls, opts = {}) {
     this.camera = camera;
-    this.floors = floors;
-    this.walls = walls;
+    this.collider = buildFloorCollider(floors);
+    this.floors = this.collider ? [this.collider] : floors;
+    // World-space boxes computed once; the walls never move.
+    this.wallBoxes = walls
+      .filter((w) => w.userData?.isWall)
+      .map((w) => {
+        w.updateWorldMatrix(true, false);
+        return new THREE.Box3().setFromObject(w);
+      });
+    this.bounds = opts.bounds ?? { minX: -100, maxX: 100, minZ: -95, maxZ: 120 };
     this.euler = new THREE.Euler(0, 0, 0, 'YXZ');
     this.moveF = false;
     this.moveB = false;
@@ -19,14 +69,13 @@ export class PlayerController {
     this.groundY = 0;
     this.verticalVelocity = 0;
     this.isJumping = false;
-    this.debugMode = false; // Noclip mode
+    this.debugMode = false; // ghost: free flight, no collisions
     this.raycaster = new THREE.Raycaster();
-    this.downVec = new THREE.Vector3(0, -1, 0);
+    this.raycaster.firstHitOnly = true;
   }
 
   toggleDebug(callback) {
     this.debugMode = !this.debugMode;
-    console.log('Debug mode:', this.debugMode ? 'ON (noclip)' : 'OFF');
     if (callback) callback(this.debugMode);
   }
 
@@ -37,94 +86,93 @@ export class PlayerController {
     }
   }
 
-  getFloorHeight(x, z) {
-    this.raycaster.set(new THREE.Vector3(x, 100, z), this.downVec);
-    this.raycaster.far = 200;
+  /** Height of the highest walkable surface under (x, z), or 0 if there is none. */
+  getFloorHeight(x, z, fromY = 100) {
+    _origin.set(x, fromY, z);
+    this.raycaster.set(_origin, _down);
+    this.raycaster.far = fromY + 100;
     const hits = this.raycaster.intersectObjects(this.floors, false);
+    if (!hits.length) return 0;
+    if (this.collider) return hits[0].point.y; // BVH with firstHitOnly returns the nearest = highest
     let highest = -Infinity;
-    for (const hit of hits) {
-      if (hit.point.y > highest && hit.point.y < 100) highest = hit.point.y;
-    }
+    for (const hit of hits) if (hit.point.y > highest && hit.point.y < fromY) highest = hit.point.y;
     return highest > -Infinity ? highest : 0;
   }
 
-  checkWallCollision(newPos) {
-    for (const wall of this.walls) {
-      if (!wall.userData?.isWall) continue;
-      const box = new THREE.Box3().setFromObject(wall);
-      const sphere = new THREE.Sphere(newPos, CONFIG.PLAYER_RADIUS);
-      if (box.intersectsSphere(sphere)) return true;
-    }
+  collides(pos) {
+    _sphere.set(pos, CONFIG.PLAYER_RADIUS);
+    for (const box of this.wallBoxes) if (box.intersectsSphere(_sphere)) return true;
     return false;
   }
 
   update(delta) {
     if (!this.isLocked) return;
     const speed = (this.isRun ? CONFIG.RUN_SPEED : CONFIG.MOVE_SPEED) * delta;
+    const cam = this.camera;
 
-    // Debug mode: free flight, no collisions
     if (this.debugMode) {
-      const forward = new THREE.Vector3();
-      this.camera.getWorldDirection(forward);
-      const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
-      const move = new THREE.Vector3();
-      if (this.moveF) move.add(forward.clone().multiplyScalar(speed * 2));
-      if (this.moveB) move.add(forward.clone().multiplyScalar(-speed * 2));
-      if (this.moveR) move.add(right.clone().multiplyScalar(speed * 2));
-      if (this.moveL) move.add(right.clone().multiplyScalar(-speed * 2));
-      this.camera.position.add(move);
+      cam.getWorldDirection(_forward);
+      _right.crossVectors(_forward, UP).normalize();
+      _move.set(0, 0, 0);
+      if (this.moveF) _move.addScaledVector(_forward, speed * 2);
+      if (this.moveB) _move.addScaledVector(_forward, -speed * 2);
+      if (this.moveR) _move.addScaledVector(_right, speed * 2);
+      if (this.moveL) _move.addScaledVector(_right, -speed * 2);
+      cam.position.add(_move);
       return;
     }
 
-    const dir = new THREE.Vector3(Number(this.moveR) - Number(this.moveL), 0, Number(this.moveF) - Number(this.moveB)).normalize();
-    const forward = new THREE.Vector3();
-    this.camera.getWorldDirection(forward);
-    forward.y = 0;
-    forward.normalize();
-    const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0));
-    const move = new THREE.Vector3().addScaledVector(forward, dir.z * speed).addScaledVector(right, dir.x * speed);
-    const newPos = this.camera.position.clone().add(move);
-    const currentFloorY = this.getFloorHeight(this.camera.position.x, this.camera.position.z);
-    const newFloorY = this.getFloorHeight(newPos.x, newPos.z);
-    const heightDiff = newFloorY - currentFloorY;
+    const dx = Number(this.moveR) - Number(this.moveL);
+    const dz = Number(this.moveF) - Number(this.moveB);
+    const len = Math.hypot(dx, dz) || 1;
+    cam.getWorldDirection(_forward);
+    _forward.y = 0;
+    _forward.normalize();
+    _right.crossVectors(_forward, UP);
+    _move.set(0, 0, 0).addScaledVector(_forward, (dz / len) * speed).addScaledVector(_right, (dx / len) * speed);
 
-    // Horizontal movement with step climbing
-    if (Math.abs(heightDiff) <= CONFIG.STEP_HEIGHT || heightDiff < 0 || this.isJumping) {
-      if (!this.checkWallCollision(newPos)) {
-        this.camera.position.x = newPos.x;
-        this.camera.position.z = newPos.z;
-        this.groundY = newFloorY;
-      }
+    // Horizontal move with step climbing, resolved per axis so walls are slid along, not stuck to.
+    const currentFloorY = this.getFloorHeight(cam.position.x, cam.position.z);
+    const feetY = cam.position.y - CONFIG.PLAYER_HEIGHT;
+    for (const axis of ['x', 'z']) {
+      if (_move[axis] === 0) continue;
+      const next = cam.position.clone();
+      next[axis] += _move[axis];
+      const nextFloorY = this.getFloorHeight(next.x, next.z, feetY + CONFIG.STEP_HEIGHT + 1);
+      const rise = nextFloorY - currentFloorY;
+      if (rise > CONFIG.STEP_HEIGHT && !this.isJumping) continue;
+      if (this.collides(next)) continue;
+      cam.position[axis] = next[axis];
     }
 
-    // Vertical movement (jumping/gravity)
-    const gravity = 20;
-    this.verticalVelocity -= gravity * delta;
-
-    const currentY = this.camera.position.y - CONFIG.PLAYER_HEIGHT;
-    const newY = currentY + this.verticalVelocity * delta;
-    const floorY = this.getFloorHeight(this.camera.position.x, this.camera.position.z);
-
-    if (newY <= floorY) {
-      // Hit the ground
-      this.camera.position.y = floorY + CONFIG.PLAYER_HEIGHT;
+    // Vertical: gravity, landing, and stepping up onto the surface we just walked onto.
+    this.verticalVelocity -= 20 * delta;
+    const floorY = this.getFloorHeight(cam.position.x, cam.position.z, feetY + CONFIG.STEP_HEIGHT + 1);
+    const newFeet = feetY + this.verticalVelocity * delta;
+    if (newFeet <= floorY) {
+      cam.position.y = floorY + CONFIG.PLAYER_HEIGHT;
       this.verticalVelocity = 0;
       this.isJumping = false;
-      this.groundY = floorY;
     } else {
-      this.camera.position.y = newY + CONFIG.PLAYER_HEIGHT;
+      cam.position.y = newFeet + CONFIG.PLAYER_HEIGHT;
     }
+    this.groundY = floorY;
 
-    // Boundaries
-    this.camera.position.x = Math.max(-100, Math.min(100, this.camera.position.x));
-    this.camera.position.z = Math.max(-95, Math.min(120, this.camera.position.z));
+    const b = this.bounds;
+    cam.position.x = Math.max(b.minX, Math.min(b.maxX, cam.position.x));
+    cam.position.z = Math.max(b.minZ, Math.min(b.maxZ, cam.position.z));
   }
 
   onMouseMove(e) {
     if (!this.isLocked) return;
+    this.look(e.movementX || 0, e.movementY || 0);
+  }
+
+  /** Rotate the view by pixel deltas (mouse or touch drag). */
+  look(dx, dy) {
     this.euler.setFromQuaternion(this.camera.quaternion);
-    this.euler.y -= (e.movementX || 0) * CONFIG.LOOK_SPEED;
-    this.euler.x -= (e.movementY || 0) * CONFIG.LOOK_SPEED;
+    this.euler.y -= dx * CONFIG.LOOK_SPEED;
+    this.euler.x -= dy * CONFIG.LOOK_SPEED;
     this.euler.x = Math.max(-Math.PI / 2.1, Math.min(Math.PI / 2.1, this.euler.x));
     this.camera.quaternion.setFromEuler(this.euler);
   }

@@ -1,0 +1,802 @@
+{
+  "meta": {
+    "schema": 1,
+    "title": "Beis HaMikdash walkthrough content",
+    "frame": "azarah",
+    "frameNote": "origin = Nicanor Gate threshold at the Azarah floor; +x north, -x south; -z west (toward the Heichal), +z east; +y up; unit amah (0.5 m in the scene)",
+    "unit": "amah",
+    "amahMetres": 0.5,
+    "generated": "2026-09-04",
+    "phase": "1: legacy hotspot tables converted to the content schema; positions are the legacy scene positions except the kevesh. Geometry accuracy fixes (Middot-derived positions recorded in position.note) are deferred.",
+    "periods": ["bayis_rishon", "bayis_sheni"]
+  },
+  "entries": [
+    {
+      "id": "outside",
+      "type": "area",
+      "name": {"he": "מחוץ לחומות", "en": "Outside the Walls"},
+      "desc": {"he": "הדרך העולה אל הר הבית מדרום. משם עולים במדרגות אל שערי חולדה ונכנסים אל הר הבית, ומי שרואה את המקדש מברך ומשתחווה.", "en": "The approach to the Temple Mount from the south. From here pilgrims climbed the steps to the Chuldah Gates and entered Har HaBayis."},
+      "period": ["bayis_sheni"],
+      "bounds": {"minX": -200, "maxX": 200, "minZ": 104, "maxZ": 284},
+      "position": {"frame": "azarah", "x": 0, "y": -10, "z": 194, "unit": "amah", "source": "", "note": "legacy: converted from the pre-2026 scene coordinates (area centre)"},
+      "sources": ["Mishnah Middot 1:3", "Mishnah Berakhot 9:5"],
+      "questions": [
+        {"he": "מאיזה כיוון נכנסו רוב עולי הרגל להר הבית?", "en": "From which direction did most pilgrims enter the Temple Mount?"},
+        {"he": "מה אסור להכניס להר הבית?", "en": "What may one not bring onto the Temple Mount?"}
+      ],
+      "legacyId": "outside"
+    },
+    {
+      "id": "har_habayis",
+      "type": "area",
+      "name": {"he": "הר הבית", "en": "Temple Mount"},
+      "desc": {"he": "הר הבית חמש מאות אמה על חמש מאות אמה, ורוב שטחו הפנוי בדרום. כל הנכנסים נכנסים דרך ימין ומקיפים ויוצאים דרך שמאל, חוץ מן האבל ומי שאירע בו דבר.", "en": "Har HaBayis measured five hundred amos square, with most of its open space on the south. All who entered turned to the right, circled, and left by the left, except mourners and those in distress."},
+      "period": ["bayis_sheni"],
+      "bounds": {"minX": -140, "maxX": 140, "minZ": 100, "maxZ": 124},
+      "dimensions": [
+        {"label": "side", "value": 500, "unit": "amah", "source": "Mishnah Middot 2:1", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": -10, "z": 112, "unit": "amah", "source": "", "note": "legacy: converted from the pre-2026 scene coordinates (area centre)"},
+      "sources": ["Mishnah Middot 2:1", "Mishnah Middot 2:2", "Mishnah Kelim 1:8"],
+      "questions": [
+        {"he": "מדוע רוב השטח הפנוי של הר הבית בדרום?", "en": "Why was most of the open space on the south side?"},
+        {"he": "מי רשאי להיכנס להר הבית ומי לא?", "en": "Who may enter Har HaBayis, and who may not?"},
+        {"he": "למה מקיפים דרך ימין?", "en": "Why did visitors circle to the right?"}
+      ],
+      "legacyId": "har-habayis"
+    },
+    {
+      "id": "ezras_nashim",
+      "type": "area",
+      "name": {"he": "עזרת נשים", "en": "Women's Court"},
+      "desc": {"he": "החצר החיצונה של המקדש, מאה שלושים וחמש אמה על מאה שלושים וחמש, ובארבע פינותיה ארבע לשכות. בשמחת בית השואבה עמדו הלוויים על חמש עשרה המעלות העולות ממנה לשער ניקנור ושרו בכינורות ובנבלים.", "en": "The outer court of the Sanctuary, 135 by 135 amos, with a chamber in each of its four corners. At the Simchas Beis HaShoeva the Levites stood on the fifteen steps rising from it to the Nicanor Gate and sang with harps and lyres."},
+      "period": ["bayis_sheni"],
+      "bounds": {"minX": -64, "maxX": 64, "minZ": -30, "maxZ": 100},
+      "dimensions": [
+        {"label": "side", "value": 135, "unit": "amah", "source": "Mishnah Middot 2:5", "note": ""},
+        {"label": "steps to Nicanor", "value": 15, "unit": "count", "source": "Mishnah Middot 2:5", "note": "half-amah rise each, Mishnah Middot 2:3"}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": -6, "z": 35, "unit": "amah", "source": "", "note": "legacy: converted from the pre-2026 scene coordinates (area centre)"},
+      "sources": ["Mishnah Middot 2:5", "Mishnah Sukkah 5:4", "Mishnah Kelim 1:8"],
+      "questions": [
+        {"he": "מדוע נקראת עזרת נשים אם גם גברים נכנסו אליה?", "en": "Why is it called the Women's Court if men entered it too?"},
+        {"he": "מה היה הגזוזטרה שבנו בה?", "en": "What was the balcony built around it for?"},
+        {"he": "מי רשאי להיכנס לעזרת נשים?", "en": "Who was permitted to enter the Ezras Nashim?"}
+      ],
+      "legacyId": "ezras-nashim"
+    },
+    {
+      "id": "azaras_yisrael",
+      "type": "area",
+      "name": {"he": "עזרת ישראל", "en": "Israelites Court"},
+      "desc": {"he": "רצועה של אחת עשרה אמה ברוחב מאה שלושים וחמש אמה, מן שער ניקנור ועד הדוכן. כאן עומדים ישראל המביאים קרבן וצופים בעבודה, ואין ישראל נכנס לפנים ממנה אלא לסמיכה, לשחיטה ולתנופה.", "en": "A strip eleven amos deep and 135 amos wide, from the Nicanor Gate to the Duchan. Israelites bringing an offering stood here to watch the service; they entered further only for semichah, slaughter and waving."},
+      "period": ["bayis_sheni"],
+      "bounds": {"minX": -52, "maxX": 52, "minZ": -40, "maxZ": -30},
+      "dimensions": [
+        {"label": "depth", "value": 11, "unit": "amah", "source": "Mishnah Middot 2:6", "note": ""},
+        {"label": "width", "value": 135, "unit": "amah", "source": "Mishnah Middot 5:1", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": 0, "z": -35, "unit": "amah", "source": "", "note": "legacy: converted from the pre-2026 scene coordinates (area centre)"},
+      "sources": ["Mishnah Middot 2:6", "Mishnah Middot 5:1", "Mishnah Kelim 1:8"],
+      "questions": [
+        {"he": "מתי מותר לישראל להיכנס לעזרת כהנים?", "en": "When may an Israelite enter the Kohanim's court?"},
+        {"he": "האם צריך לעמוד בשעת הקרבת הקרבן?", "en": "Must the owner stand while his offering is brought?"}
+      ],
+      "legacyId": "azaras-yisrael"
+    },
+    {
+      "id": "azaras_kohanim",
+      "type": "area",
+      "name": {"he": "עזרת כהנים", "en": "Kohanim Court"},
+      "desc": {"he": "החצר הפנימית, מקום העבודה. העזרה כולה מאה שמונים ושבע אמה על מאה שלושים וחמש: אחת עשרה אמה לעזרת כהנים, שלושים ושתיים למזבח, עשרים ושתיים בין המזבח לאולם, ומאה לבית. כאן מזבח העולה, הכיור ובית המטבחיים, ואש התמיד לא כבתה.", "en": "The inner court where the service took place. The whole Azarah measured 187 by 135 amos: eleven for the Kohanim's court, thirty-two for the altar, twenty-two between the altar and the Ulam, and a hundred for the building. Here stood the outer altar, the laver and the slaughtering area, and the altar fire never went out."},
+      "period": ["bayis_sheni"],
+      "bounds": {"minX": -52, "maxX": 52, "minZ": -106, "maxZ": -40},
+      "dimensions": [
+        {"label": "Azarah length", "value": 187, "unit": "amah", "source": "Mishnah Middot 5:1", "note": "east to west"},
+        {"label": "Azarah width", "value": 135, "unit": "amah", "source": "Mishnah Middot 5:1", "note": "north to south"}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": 1, "z": -73, "unit": "amah", "source": "", "note": "legacy: converted from the pre-2026 scene coordinates (area centre)"},
+      "sources": ["Mishnah Middot 5:1", "Mishnah Middot 2:6", "Mishnah Kelim 1:8", "Leviticus 6:6"],
+      "questions": [
+        {"he": "מה ההבדל בקדושה בין עזרת ישראל לעזרת כהנים?", "en": "How does the sanctity of the Kohanim's court differ from the Israelites' court?"},
+        {"he": "היכן שוחטים קדשי קדשים והיכן קדשים קלים?", "en": "Where are kodshei kodashim slaughtered, and where kodashim kalim?"},
+        {"he": "כמה מערכות אש היו על המזבח?", "en": "How many fires burned on the altar?"}
+      ],
+      "legacyId": "azaras-kohanim"
+    },
+    {
+      "id": "heichal",
+      "type": "area",
+      "name": {"he": "היכל", "en": "Sanctuary"},
+      "desc": {"he": "הבית עצמו: אולם, היכל וקודש הקודשים. ההיכל ארבעים אמה אורכו ועשרים רוחבו ומאה אמה גובהו, ובו המנורה בדרום, השולחן בצפון ומזבח הזהב ביניהם. נכנסים אליו רק לעבודה.", "en": "The Temple building itself: Ulam, Heichal and Kodesh HaKodashim. The Heichal was forty amos long, twenty wide and a hundred tall, holding the Menorah on the south, the Table on the north and the golden altar between them. Kohanim entered only for the service."},
+      "period": ["bayis_sheni"],
+      "bounds": {"minX": -18, "maxX": 18, "minZ": -172, "maxZ": -106},
+      "dimensions": [
+        {"label": "length", "value": 40, "unit": "amah", "source": "Mishnah Middot 4:7", "note": ""},
+        {"label": "width", "value": 20, "unit": "amah", "source": "Mishnah Middot 4:7", "note": ""},
+        {"label": "height", "value": 100, "unit": "amah", "source": "Mishnah Middot 4:6", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": 3, "z": -139, "unit": "amah", "source": "", "note": "legacy: converted from the pre-2026 scene coordinates (area centre); Middot 5:1 + 4:7 arithmetic puts the Heichal centre at z = -118, y = 8.5 (review), geometry fix deferred"},
+      "sources": ["Mishnah Middot 4:6", "Mishnah Middot 4:7", "Mishnah Kelim 1:9", "Yoma 33b"],
+      "questions": [
+        {"he": "מי רשאי להיכנס להיכל ומתי?", "en": "Who may enter the Heichal, and when?"},
+        {"he": "מהם התאים שסביב ההיכל?", "en": "What were the side chambers (ta'im) around the Heichal?"},
+        {"he": "למה ההיכל צר מאחוריו ורחב מלפניו?", "en": "Why was the building narrow at the back and wide at the front, like a lion?"}
+      ],
+      "legacyId": "heichal"
+    },
+    {
+      "id": "kodesh_hakodashim",
+      "type": "area",
+      "name": {"he": "קודש הקודשים", "en": "Holy of Holies"},
+      "desc": {"he": "החדר המערבי של ההיכל, עשרים על עשרים אמה, מופרד בבית שני בשתי פרוכות. הארון נגנז, ובמקומו אבן השתיה גבוהה שלוש אצבעות. נכנס אליו רק כהן גדול ביום הכיפורים.", "en": "The westernmost chamber, 20×20 amos, separated in the Second Temple by two curtains. The Ark was hidden; only the Even HaShtiya, three fingerbreadths high, remained. Only the Kohen Gadol entered, on Yom Kippur."},
+      "period": ["bayis_sheni"],
+      "bounds": {"minX": -10, "maxX": 10, "minZ": -196, "maxZ": -172},
+      "dimensions": [
+        {"label": "width", "value": 20, "unit": "amah", "source": "Mishnah Middot 4:7"},
+        {"label": "length", "value": 20, "unit": "amah", "source": "Mishnah Middot 4:7"},
+        {"label": "ceiling height", "value": 40, "unit": "amah", "source": "Mishnah Middot 4:6"},
+        {"label": "Even HaShtiya height", "value": 3, "unit": "etzba", "source": "Mishnah Yoma 5:2"}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": 3, "z": -184, "unit": "amah", "source": "Mishnah Middot 4:7", "note": "legacy: converted from the pre-2026 scene coordinates (area centre); Middot-derived value is x 0, y 8.5, z -149 (y sums Middot 2:6 + 3:6 rises; z from Middot 5:1 + 4:7), geometry fix deferred"},
+      "sources": ["Mishnah Middot 4:6", "Mishnah Middot 4:7", "Mishnah Yoma 5:1", "Mishnah Yoma 5:2", "Mishnah Kelim 1:9", "Mishneh Torah, The Chosen Temple 4:1", "Yoma 52b"],
+      "disputes": [{"issue": "Amah Traksin status", "views": ["kodesh", "chol — hence two parochos (Yoma 51b–52a)"]}],
+      "questions": [
+        {"he": "היכן נגנז הארון?", "en": "Where was the Ark hidden?"},
+        {"he": "מדוע שתי פרוכות בבית שני?", "en": "Why two curtains in the Second Temple?"},
+        {"he": "מה עונש הנכנס שלא כדין?", "en": "What is the penalty for unauthorized entry?"}
+      ],
+      "legacyId": "kodesh-hakodashim"
+    },
+
+    {
+      "id": "menorah",
+      "type": "kli",
+      "name": {"he": "מנורה", "en": "Golden Menorah"},
+      "desc": {"he": "מנורת הזהב עמדה בדרום ההיכל: מקשה זהב טהור, שבעה קנים, וגובהה שמונה עשר טפחים. הכהן היטיב את הנרות בכל בוקר והדליקן בין הערביים, ולפניה אבן בת שלוש מעלות שעליה עמד.", "en": "The golden Menorah stood on the south side of the Heichal: seven branches of beaten pure gold, eighteen tefachim tall. A Kohen cleaned the lamps each morning and lit them toward evening, standing on a three-stepped stone in front of it."},
+      "period": ["bayis_rishon", "bayis_sheni"],
+      "dimensions": [
+        {"label": "height", "value": 18, "unit": "tefach", "source": "Menachot 28b", "note": ""},
+        {"label": "branches", "value": 7, "unit": "count", "source": "Exodus 25:32", "note": ""},
+        {"label": "stone steps before it", "value": 3, "unit": "count", "source": "Mishnah Tamid 3:9", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": -6, "y": 3, "z": -152, "unit": "amah", "source": "Yoma 33b", "note": "legacy: converted from the pre-2026 scene coordinates; south side (-x) agrees with Yoma 33b, z should follow the Heichal centre when it moves to -118"},
+      "sources": ["Exodus 25:31", "Menachot 28b", "Mishnah Tamid 3:9", "Yoma 33b", "Mishneh Torah, The Chosen Temple 3:17"],
+      "disputes": [{"issue": "shape of the branches", "views": ["straight, rising diagonally (Rashi and the Rambam's drawing)", "rounded arcs (as on the Arch of Titus)"]}],
+      "questions": [
+        {"he": "מדוע המנורה עומדת בדרום ההיכל?", "en": "Why does the Menorah stand on the south side of the Heichal?"},
+        {"he": "האם קני המנורה היו ישרים או עגולים?", "en": "Were the Menorah's branches straight or curved?"},
+        {"he": "מהו הנר המערבי ומה הנס שנעשה בו?", "en": "What was the 'western lamp' and what miracle was associated with it?"}
+      ],
+      "legacyId": "menorah",
+      "icon": "🕎"
+    },
+    {
+      "id": "shulchan",
+      "type": "kli",
+      "name": {"he": "שולחן הפנים", "en": "Showbread Table"},
+      "desc": {"he": "שולחן לחם הפנים עמד בצפון ההיכל: עצי שיטים מצופים זהב, אמתיים אורכו, אמה רוחבו ואמה וחצי קומתו. עליו שתים עשרה חלות בשתי מערכות של שש, שהוחלפו מדי שבת ונשארו חמות כביום אפייתן.", "en": "The Table of the Showbread stood on the north side of the Heichal: acacia wood overlaid with gold, two amos long, one wide and one and a half high. Twelve loaves lay on it in two stacks of six, replaced every Shabbos, and stayed as warm as on the day they were baked."},
+      "period": ["bayis_rishon", "bayis_sheni"],
+      "dimensions": [
+        {"label": "length", "value": 2, "unit": "amah", "source": "Exodus 25:23", "note": ""},
+        {"label": "width", "value": 1, "unit": "amah", "source": "Exodus 25:23", "note": ""},
+        {"label": "height", "value": 1.5, "unit": "amah", "source": "Exodus 25:23", "note": ""},
+        {"label": "loaves", "value": 12, "unit": "count", "source": "Mishnah Menachot 11:5", "note": "two stacks of six"}
+      ],
+      "position": {"frame": "azarah", "x": 6, "y": 3, "z": -152, "unit": "amah", "source": "Yoma 33b", "note": "legacy: converted from the pre-2026 scene coordinates; north side (+x) agrees with Yoma 33b"},
+      "sources": ["Exodus 25:23", "Mishnah Menachot 11:5", "Chagigah 26b", "Yoma 33b", "Mishneh Torah, The Chosen Temple 3:17"],
+      "disputes": [{"issue": "shape of the loaves", "views": ["like an open box (Rabbi Chanina, Menachot 94b)", "like a rocking ship (Rabbi Yochanan, Menachot 94b)"]}],
+      "questions": [
+        {"he": "איך נשאר הלחם טרי שבוע שלם?", "en": "How did the bread stay fresh for a whole week?"},
+        {"he": "מי אכל את לחם הפנים ומתי?", "en": "Who ate the showbread, and when?"},
+        {"he": "מה היו הבזיכים והסניפים שעל השולחן?", "en": "What were the bowls and the supporting rods on the Table?"}
+      ],
+      "legacyId": "shulchan",
+      "icon": "🍞"
+    },
+    {
+      "id": "mizbeach_hazahav",
+      "type": "kli",
+      "name": {"he": "מזבח הזהב", "en": "Golden Incense Altar"},
+      "desc": {"he": "מזבח הקטורת: אמה על אמה ואמתיים קומתו, עצי שיטים מצופה זהב. עליו הקטירו קטורת בכל בוקר ובין הערביים, ועמד בהיכל בין השולחן למנורה, משוך מעט כלפי חוץ.", "en": "The incense altar: one amah square and two amos tall, acacia overlaid with gold. Incense was burned on it every morning and afternoon. It stood in the Heichal between the Table and the Menorah, drawn slightly outward toward the entrance."},
+      "period": ["bayis_rishon", "bayis_sheni"],
+      "dimensions": [
+        {"label": "base", "value": 1, "unit": "amah", "source": "Exodus 30:2", "note": "square"},
+        {"label": "height", "value": 2, "unit": "amah", "source": "Exodus 30:2", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": 3, "z": -166, "unit": "amah", "source": "Yoma 33b", "note": "legacy: converted from the pre-2026 scene coordinates; legacy places it west of (deeper than) the Menorah and Table, but Yoma 33b and Rambam put it between them drawn east, geometry fix deferred"},
+      "sources": ["Exodus 30:1", "Exodus 30:7", "Yoma 33b", "Mishneh Torah, The Chosen Temple 3:17", "Mishnah Tamid 6:3"],
+      "questions": [
+        {"he": "למה מזבח הזהב משוך כלפי חוץ ולא באמצע?", "en": "Why is the inner altar drawn outward rather than centred between the Menorah and the Table?"},
+        {"he": "מה ההבדל בין הקטורת של יום הכיפורים לקטורת היומית?", "en": "How did the Yom Kippur incense differ from the daily incense?"},
+        {"he": "אילו דמים ניתנים על מזבח הזהב?", "en": "Which offerings' blood was applied to the golden altar?"}
+      ],
+      "legacyId": "mizbeiachHazahav",
+      "icon": "✨"
+    },
+    {
+      "id": "paroches",
+      "type": "kli",
+      "name": {"he": "פרוכת", "en": "Paroches (Curtain)"},
+      "desc": {"he": "הפרוכת מבדילה בין ההיכל לקודש הקודשים. בבית שני היו שתי פרוכות ואמה ביניהן, מפני הספק במעמדה של אמה טרקסין. עוביה טפח, ארבעים אמה אורכה ועשרים רוחבה, ושמונים ושתיים נערות ארגו אותה.", "en": "The curtain dividing the Heichal from the Kodesh HaKodashim. In the Second Temple there were two curtains an amah apart because of the doubt over the status of the Amah Traksin. Each was a tefach thick, forty amos long and twenty wide, woven by eighty-two maidens."},
+      "period": ["bayis_rishon", "bayis_sheni"],
+      "dimensions": [
+        {"label": "thickness", "value": 1, "unit": "tefach", "source": "Mishnah Shekalim 8:5", "note": ""},
+        {"label": "length", "value": 40, "unit": "amah", "source": "Mishnah Shekalim 8:5", "note": ""},
+        {"label": "width", "value": 20, "unit": "amah", "source": "Mishnah Shekalim 8:5", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": 3, "z": -172, "unit": "amah", "source": "Mishnah Middot 4:7", "note": "legacy: converted from the pre-2026 scene coordinates"},
+      "sources": ["Exodus 26:31", "Mishnah Shekalim 8:5", "Mishnah Yoma 5:1", "Yoma 51b", "Mishnah Middot 4:7"],
+      "disputes": [{"issue": "Amah Traksin status", "views": ["part of the Kodesh HaKodashim", "part of the Heichal", "undecided — hence two curtains in the Second Temple (Yoma 51b)"]}],
+      "questions": [
+        {"he": "מדוע היו שתי פרוכות בבית שני ורק אחת במשכן?", "en": "Why were there two curtains in the Second Temple but one in the Mishkan?"},
+        {"he": "איך נכנס הכהן הגדול בין הפרוכות ביום הכיפורים?", "en": "How did the Kohen Gadol pass between the curtains on Yom Kippur?"},
+        {"he": "מה עשו בפרוכת שנטמאה?", "en": "What was done with a curtain that became impure?"}
+      ],
+      "legacyId": "paroches",
+      "icon": "🪟"
+    },
+    {
+      "id": "aron",
+      "type": "kli",
+      "name": {"he": "ארון הקודש", "en": "Holy Ark"},
+      "desc": {"he": "ארון הברית: עצי שיטים מצופה זהב מבית ומחוץ, אמתיים וחצי אורכו ואמה וחצי רוחבו וקומתו, ועל כפורתו שני כרובים פורשי כנפיים פניהם איש אל אחיו; בתוכו הלוחות. הארון לא היה בבית שני: הוא נגנז בימי המלך יאשיהו, ומקומו נשאר ריק.", "en": "The Ark of the Covenant: acacia overlaid with gold inside and out, two and a half amos long and one and a half wide and high, with two winged Keruvim facing each other on its cover; inside lay the Tablets. It was not in the Second Temple: it was hidden away in the days of King Yoshiyahu, and its place stood empty."},
+      "period": ["bayis_rishon"],
+      "dimensions": [
+        {"label": "length", "value": 2.5, "unit": "amah", "source": "Exodus 25:10", "note": ""},
+        {"label": "width", "value": 1.5, "unit": "amah", "source": "Exodus 25:10", "note": ""},
+        {"label": "height", "value": 1.5, "unit": "amah", "source": "Exodus 25:10", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": 3, "z": -182, "unit": "amah", "source": "Mishnah Yoma 5:2", "note": "legacy: converted from the pre-2026 scene coordinates; shown only in the bayis_rishon period"},
+      "sources": ["Exodus 25:10", "Exodus 25:18", "Mishnah Yoma 5:2", "Yoma 52b", "Mishnah Shekalim 6:1", "Mishneh Torah, The Chosen Temple 4:1"],
+      "disputes": [{"issue": "where the Ark went", "views": ["hidden beneath the Temple, under the wood store (Mishnah Shekalim 6:1, Yoma 53b)", "carried off to Babylon (Yoma 53b)"]}],
+      "questions": [
+        {"he": "היכן נגנז הארון ומי גנזו?", "en": "Where was the Ark hidden, and who hid it?"},
+        {"he": "מה היה בתוך הארון מלבד הלוחות?", "en": "What was inside the Ark besides the Tablets?"},
+        {"he": "האם מקום הארון תופס מקום?", "en": "Did the Ark miraculously take up no space in the Holy of Holies?"}
+      ],
+      "legacyId": "aron",
+      "icon": "📦"
+    },
+    {
+      "id": "even_hashtiya",
+      "type": "kli",
+      "name": {"he": "אבן השתיה", "en": "Foundation Stone"},
+      "desc": {"he": "אבן השתייה בקודש הקודשים, שממנה הושתת העולם. בבית שני, משנגנז הארון, נשארה האבן לבדה, גבוהה שלוש אצבעות מן הרצפה, ועליה הניח הכהן הגדול את מחתת הקטורת ביום הכיפורים.", "en": "The Foundation Stone in the Holy of Holies, from which the world was founded. In the Second Temple, with the Ark hidden, the stone alone remained, three fingerbreadths above the floor; on it the Kohen Gadol set down the incense pan on Yom Kippur."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "height above floor", "value": 3, "unit": "etzba", "source": "Mishnah Yoma 5:2", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": 3, "z": -182, "unit": "amah", "source": "Mishnah Yoma 5:2", "note": "legacy: converted from the pre-2026 scene coordinates"},
+      "sources": ["Mishnah Yoma 5:2", "Yoma 54b", "Mishneh Torah, The Chosen Temple 4:1"],
+      "questions": [
+        {"he": "מדוע נקראת אבן השתייה?", "en": "Why is it called the Foundation Stone?"},
+        {"he": "מה עשה הכהן הגדול על האבן ביום הכיפורים?", "en": "What did the Kohen Gadol do at the stone on Yom Kippur?"},
+        {"he": "האם האבן הייתה כבר בבית ראשון?", "en": "Was the stone already there in the First Temple?"}
+      ],
+      "legacyId": "evenHashtiya",
+      "icon": "🪨"
+    },
+
+    {
+      "id": "yachin",
+      "type": "structure",
+      "name": {"he": "יכין", "en": "Yachin Pillar"},
+      "desc": {"he": "יכין, העמוד הדרומי משני עמודי הנחושת שיצק חירם לפתח האולם של מקדש שלמה: שמונה עשרה אמה קומתו וכותרת של חמש אמות עליו. שמו מלשון כינון, שיכונן ה' את הבית. העמודים נשברו בחורבן בית ראשון, ומסכת מידות אינה מזכירה אותם בבית שני.", "en": "Yachin, the southern of the two bronze pillars that Chiram cast for the entrance of Solomon's Ulam: eighteen amos tall with a five-amah capital. Its name means 'He will establish.' The pillars were broken up at the destruction of the First Temple, and Tractate Middot does not mention them in the Second."},
+      "period": ["bayis_rishon"],
+      "dimensions": [
+        {"label": "height", "value": 18, "unit": "amah", "source": "I Kings 7:15", "note": ""},
+        {"label": "circumference", "value": 12, "unit": "amah", "source": "I Kings 7:15", "note": ""},
+        {"label": "capital height", "value": 5, "unit": "amah", "source": "I Kings 7:16", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": -10, "y": 3, "z": -114, "unit": "amah", "source": "I Kings 7:21", "note": "legacy: converted from the pre-2026 scene coordinates; shown only in the bayis_rishon period"},
+      "sources": ["I Kings 7:15", "I Kings 7:21", "II Chronicles 3:15", "II Kings 25:13"],
+      "disputes": [{"issue": "height of the pillars", "views": ["18 amos each (I Kings 7:15)", "35 amos (II Chronicles 3:15), explained as both pillars together or as including the capital"]}],
+      "questions": [
+        {"he": "מה משמעות השמות יכין ובועז?", "en": "What do the names Yachin and Boaz mean?"},
+        {"he": "מדוע לא היו העמודים בבית שני?", "en": "Why were the pillars absent from the Second Temple?"},
+        {"he": "האם העמודים תמכו בגג האולם או עמדו לבדם?", "en": "Did the pillars support the Ulam roof or stand free?"}
+      ],
+      "legacyId": "yachin",
+      "icon": "🏛️"
+    },
+    {
+      "id": "boaz",
+      "type": "structure",
+      "name": {"he": "בועז", "en": "Boaz Pillar"},
+      "desc": {"he": "בועז, העמוד הצפוני משני עמודי הנחושת שבפתח אולם מקדש שלמה, שמונה עשרה אמה קומתו וכותרתו מעוטרת רימונים ושושנים. שמו מלשון עוז, שבו העוז. גם הוא לא עמד בבית שני, שנשבר ונלקח לבבל בחורבן הבית הראשון.", "en": "Boaz, the northern of the two bronze pillars at the entrance of Solomon's Ulam, eighteen amos tall, its capital decorated with pomegranates and lilies. Its name means 'In Him is strength.' It too was absent from the Second Temple, having been broken up and carried to Babylon at the destruction of the First."},
+      "period": ["bayis_rishon"],
+      "dimensions": [
+        {"label": "height", "value": 18, "unit": "amah", "source": "I Kings 7:15", "note": ""},
+        {"label": "circumference", "value": 12, "unit": "amah", "source": "I Kings 7:15", "note": ""},
+        {"label": "capital height", "value": 5, "unit": "amah", "source": "I Kings 7:16", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 10, "y": 3, "z": -114, "unit": "amah", "source": "I Kings 7:21", "note": "legacy: converted from the pre-2026 scene coordinates; shown only in the bayis_rishon period"},
+      "sources": ["I Kings 7:15", "I Kings 7:21", "II Chronicles 3:15", "II Kings 25:13"],
+      "disputes": [{"issue": "height of the pillars", "views": ["18 amos each (I Kings 7:15)", "35 amos (II Chronicles 3:15), explained as both pillars together or as including the capital"]}],
+      "questions": [
+        {"he": "למה עמודים בכניסה למקדש?", "en": "Why were there pillars at the entrance to the Sanctuary?"},
+        {"he": "מה קרה לעמודים בחורבן?", "en": "What happened to the pillars at the destruction?"}
+      ],
+      "legacyId": "boaz",
+      "icon": "🏛️"
+    },
+
+    {
+      "id": "mizbeach",
+      "type": "kli",
+      "name": {"he": "מזבח העולה", "en": "Outer Altar"},
+      "desc": {"he": "מזבח אבנים שלמות בעזרת כהנים. יסוד אמה, סובב, מערכה וקרנות; חוט הסיקרא חוגר באמצעו להבדיל דמים עליונים מתחתונים. אין לו יסוד בקרן דרומית מזרחית.", "en": "Stone altar of unhewn stones in the Kohanim's court. Yesod, sovev, ma'aracha and four keranos, with a red line at mid-height dividing upper and lower blood applications. It lacks a yesod at its southeast corner."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "base", "value": 32, "unit": "amah", "source": "Mishnah Middot 3:1"},
+        {"label": "height", "value": 10, "unit": "amah", "source": "Mishneh Torah, The Chosen Temple 2:5"},
+        {"label": "kevesh length", "value": 32, "unit": "amah", "source": "Mishnah Middot 3:3", "note": "16 wide, south side"}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": 1, "z": -72, "unit": "amah", "source": "Mishnah Middot 5:1", "note": "legacy: converted from the pre-2026 scene coordinates; Mishnah Middot 5:1 arithmetic puts the altar centre at z = -38 (review), geometry fix deferred"},
+      "sources": ["Mishnah Middot 3:1", "Mishnah Middot 3:3", "Mishnah Middot 5:2", "Mishneh Torah, The Chosen Temple 2:5", "Zevachim 54a"],
+      "disputes": [{"issue": "north-south offset relative to Heichal axis", "views": ["centered", "≈3.5 amos north per Mishnah Middot 5:2 arithmetic (Zevachim 58b–59a)"]}],
+      "questions": [
+        {"he": "מדוע אין יסוד בקרן דרומית מזרחית?", "en": "Why is there no yesod at the southeast corner?"},
+        {"he": "למה כבש ולא מדרגות?", "en": "Why a ramp rather than steps?"},
+        {"he": "מה ההבדל בין דמים עליונים לתחתונים?", "en": "Which offerings' blood goes above vs. below the red line?"}
+      ],
+      "legacyId": "mizbeiach",
+      "icon": "🔥"
+    },
+    {
+      "id": "kevesh",
+      "type": "structure",
+      "name": {"he": "כבש", "en": "Altar Ramp"},
+      "desc": {"he": "הכבש עולה אל המזבח מדרומו: שלושים ושתיים אמה אורכו ושש עשרה רוחבו, משופע וללא מדרגות, כמצוות התורה שלא לעלות במעלות על המזבח. שני כבשים קטנים יוצאים ממנו, אחד אל היסוד ואחד אל הסובב.", "en": "The ramp rises to the altar from its south side: thirty-two amos long and sixteen wide, a smooth incline without steps, as the Torah commands. Two small ramps branch off it, one to the yesod and one to the sovev."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "length", "value": 32, "unit": "amah", "source": "Mishnah Middot 3:3", "note": ""},
+        {"label": "width", "value": 16, "unit": "amah", "source": "Mishnah Middot 3:3", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": -32, "y": 1, "z": -72, "unit": "amah", "source": "Mishnah Middot 3:3", "note": "moved south per Mishnah Middot 3:3: centre 16 amos beyond the altar's south face, so the 32-amah run spans x -16..-48 (legacy scene position was x 0, z -50 amos, east of the altar)"},
+      "sources": ["Mishnah Middot 3:3", "Exodus 20:23", "Mishneh Torah, The Chosen Temple 2:13", "Zevachim 62b"],
+      "questions": [
+        {"he": "למה אסור לעלות למזבח במדרגות?", "en": "Why is it forbidden to ascend the altar by steps?"},
+        {"he": "מהם שני הכבשים הקטנים היוצאים מן הכבש?", "en": "What were the two small ramps branching off the main ramp?"},
+        {"he": "מהי הרבובה שבמערב הכבש?", "en": "What was the hollow (revuvah) on the west of the ramp used for?"}
+      ],
+      "legacyId": "kevesh",
+      "icon": "📐"
+    },
+    {
+      "id": "kiyor",
+      "type": "kli",
+      "name": {"he": "כיור", "en": "Copper Laver"},
+      "desc": {"he": "הכיור עמד בין האולם למזבח, משוך כלפי דרום, ובו קידשו הכהנים ידיהם ורגליהם לפני העבודה. במשכן נעשה ממראות הנשים הצובאות; בן קטין עשה לו שנים עשר דדים ומוכני, שיהיו מימיו משוקעים בבור ולא ייפסלו בלינה.", "en": "The laver stood between the Ulam and the altar, drawn toward the south; here the Kohanim sanctified their hands and feet before the service. In the Mishkan it was made from the mirrors of the women; Ben Katin added twelve spouts and a wheel (muchni) to lower it into a cistern overnight so its water would not be disqualified."},
+      "period": ["bayis_rishon", "bayis_sheni"],
+      "dimensions": [
+        {"label": "spouts", "value": 12, "unit": "count", "source": "Mishnah Yoma 3:10", "note": "Ben Katin's addition"}
+      ],
+      "position": {"frame": "azarah", "x": -16, "y": 1, "z": -92, "unit": "amah", "source": "Mishnah Middot 3:6", "note": "legacy: converted from the pre-2026 scene coordinates; Middot 3:6 places it between the Ulam and the altar drawn south, the review suggests x ≈ -20, geometry fix deferred"},
+      "sources": ["Exodus 30:18", "Exodus 38:8", "Mishnah Middot 3:6", "Mishnah Yoma 3:10", "Yoma 37a"],
+      "questions": [
+        {"he": "למה הכיור משוך לדרום ולא באמצע?", "en": "Why was the laver set off to the south rather than centred?"},
+        {"he": "מהי המוכני שעשה בן קטין?", "en": "What was the muchni that Ben Katin made?"},
+        {"he": "מה דין כהן שעבד בלי קידוש ידיים ורגליים?", "en": "What if a Kohen served without washing his hands and feet?"}
+      ],
+      "legacyId": "kiyor",
+      "icon": "💧"
+    },
+    {
+      "id": "slaughter_tables",
+      "type": "kli",
+      "name": {"he": "שולחנות השיש", "en": "Marble Slaughter Tables"},
+      "desc": {"he": "שמונה שולחנות של שיש עמדו בבית המטבחיים שבצפון המזבח, ועליהם הדיחו את הקרביים של הקרבנות. עשאום של שיש ולא של כסף וזהב, מפני שהשיש מצנן את הבשר ואינו מסריח.", "en": "Eight marble tables stood in the slaughtering area north of the altar, on which the innards of the offerings were rinsed. They were made of marble rather than silver or gold because marble keeps the meat cool and prevents spoilage."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "tables", "value": 8, "unit": "count", "source": "Mishnah Shekalim 6:4", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 28, "y": 1, "z": -92, "unit": "amah", "source": "Mishnah Middot 3:5", "note": "legacy: converted from the pre-2026 scene coordinates; north of the altar agrees with Middot 3:5"},
+      "sources": ["Mishnah Middot 3:5", "Mishnah Shekalim 6:4", "Mishnah Middot 5:2", "Mishnah Tamid 4:3"],
+      "questions": [
+        {"he": "למה שולחנות של שיש ולא של כסף?", "en": "Why marble tables rather than silver?"},
+        {"he": "כמה שולחנות היו במקדש בסך הכול?", "en": "How many tables were there in the Temple altogether?"},
+        {"he": "מה עשו לקרביים לפני שהעלום למזבח?", "en": "What was done to the innards before they went up to the altar?"}
+      ],
+      "legacyId": "slaughterTables",
+      "icon": "🔪"
+    },
+    {
+      "id": "slaughter_rings",
+      "type": "kli",
+      "name": {"he": "טבעות", "en": "Slaughter Rings"},
+      "desc": {"he": "עשרים וארבע טבעות קבועות ברצפה מצפון למזבח, שבהן מכניסים את צוואר הבהמה לשחיטה. יוחנן כהן גדול תיקן אותן במקום ההלמה בקורנס בין קרניה, שהיו עושים לפני כן.", "en": "Twenty-four rings set in the floor north of the altar, into which the animal's neck was placed for slaughter. Yochanan Kohen Gadol introduced them in place of the earlier practice of stunning the animal with a mallet between its horns."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "rings", "value": 24, "unit": "count", "source": "Mishnah Middot 3:5", "note": ""},
+        {"label": "ring area depth", "value": 24, "unit": "amah", "source": "Mishnah Middot 5:2", "note": "beis hataba'os, north of the altar"}
+      ],
+      "position": {"frame": "azarah", "x": 16, "y": 1, "z": -86, "unit": "amah", "source": "Mishnah Middot 3:5", "note": "legacy: converted from the pre-2026 scene coordinates"},
+      "sources": ["Mishnah Middot 3:5", "Mishnah Middot 5:2", "Mishnah Sotah 9:10", "Sotah 48a"],
+      "disputes": [{"issue": "arrangement of the rings", "views": ["four rows of six (Mishnah Middot 3:5)", "six rows of four (Mishnah Middot 3:5)"]}],
+      "questions": [
+        {"he": "למה ביטל יוחנן כהן גדול את ההלמה בקורנס?", "en": "Why did Yochanan Kohen Gadol abolish stunning the animal with a mallet?"},
+        {"he": "על איזו טבעת נשחט התמיד של שחר?", "en": "At which ring was the morning Tamid slaughtered?"},
+        {"he": "האם כל הקרבנות נשחטו בטבעות?", "en": "Were all the offerings slaughtered at the rings?"}
+      ],
+      "legacyId": "slaughterRings",
+      "icon": "⭕"
+    },
+    {
+      "id": "hanging_pillars",
+      "type": "kli",
+      "name": {"he": "עמודים", "en": "Hanging Pillars"},
+      "desc": {"he": "שמונה עמודים ננסים של אבן עמדו בצפון המזבח, ועליהם חתיכות של ארז ובהן אונקליות של ברזל, שלושה סדרים לכל אחד, שבהן תולים את הקרבנות ומפשיטים את עורם. בערב פסח, כשלא היה מקום לכולם, הפשיטו על מקלות דקים המונחים על כתפי שני אנשים.", "en": "Eight short stone pillars stood north of the altar, topped with blocks of cedar holding iron hooks, three rows to each pillar; on these the carcasses were hung and flayed. On Erev Pesach, when there was not room for everyone, thin poles resting on two men's shoulders were used instead."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "pillars", "value": 8, "unit": "count", "source": "Mishnah Middot 3:5", "note": "short (nanasin), of stone, with cedar blocks"},
+        {"label": "rows of hooks per pillar", "value": 3, "unit": "count", "source": "Mishnah Middot 3:5", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 12, "y": 1, "z": -88, "unit": "amah", "source": "Mishnah Middot 3:5", "note": "legacy: converted from the pre-2026 scene coordinates"},
+      "sources": ["Mishnah Middot 3:5", "Mishnah Tamid 3:5", "Mishnah Pesachim 5:9", "Mishnah Shekalim 6:4"],
+      "questions": [
+        {"he": "למה היו העמודים נמוכים ומה היה עליהם?", "en": "Why were the pillars short, and what sat on top of them?"},
+        {"he": "איך הפשיטו את קרבן הפסח כשחל בשבת?", "en": "How was the Pesach offering flayed when Erev Pesach fell on Shabbos?"},
+        {"he": "מה עשו בעורות הקרבנות?", "en": "What was done with the hides of the offerings?"}
+      ],
+      "legacyId": "hangingPillars",
+      "icon": "🪝"
+    },
+    {
+      "id": "tamid_lamb",
+      "type": "kli",
+      "name": {"he": "כבש התמיד", "en": "Daily Tamid Lamb"},
+      "desc": {"he": "קרבן התמיד: שני כבשים בני שנה בכל יום, אחד בבוקר ואחד בין הערביים, עם מנחה ונסך יין. תמיד של שחר נשחט בקרן צפונית מערבית של המזבח ושל בין הערביים בקרן צפונית מזרחית; הוא פותח את עבודת היום וחותם אותה, ולא בטל מעולם עד שנחרב הבית.", "en": "The Tamid offering: two yearling lambs every day, one at dawn and one toward evening, each with a meal offering and a wine libation. The morning lamb was slaughtered at the altar's northwest corner and the afternoon lamb at the northeast; it opened and closed each day's service and never ceased until the Temple fell."},
+      "period": ["bayis_rishon", "bayis_sheni"],
+      "dimensions": [
+        {"label": "lambs per day", "value": 2, "unit": "count", "source": "Numbers 28:3", "note": ""},
+        {"label": "inspected lambs kept ready", "value": 6, "unit": "count", "source": "Mishnah Arakhin 2:5", "note": "minimum, in the Chamber of Lambs"}
+      ],
+      "position": {"frame": "azarah", "x": 20, "y": 1, "z": -92, "unit": "amah", "source": "Mishnah Tamid 4:1", "note": "legacy: converted from the pre-2026 scene coordinates; the hotspot stands by the marble tables north of the altar"},
+      "sources": ["Numbers 28:3", "Mishnah Tamid 4:1", "Mishnah Tamid 3:3", "Mishnah Arakhin 2:5", "Pesachim 58b"],
+      "questions": [
+        {"he": "למה נשחט תמיד של שחר בצפון מערב ושל בין הערביים בצפון מזרח?", "en": "Why was the morning Tamid slaughtered at the northwest and the afternoon one at the northeast?"},
+        {"he": "כמה ימים בדקו את הכבש לפני הקרבתו?", "en": "For how many days was the lamb inspected before being offered?"},
+        {"he": "מה קרה כשלא היה כבש לתמיד?", "en": "What happened when there was no lamb available for the Tamid?"}
+      ],
+      "legacyId": "tamidLamb",
+      "icon": "🐑"
+    },
+
+    {
+      "id": "lishkas_hagazis",
+      "type": "chamber",
+      "name": {"he": "לשכת הגזית", "en": "Chamber of Hewn Stone"},
+      "desc": {"he": "לשכת הגזית, מושב הסנהדרין הגדולה של שבעים ואחד זקנים, שממנה יוצאת הוראה לכל ישראל; שם גם בדקו את ייחוסי הכהונה. חציה בקודש וחציה בחול ושני פתחים לה, והכהנים הפיסו בה על העבודות בכל בוקר וקראו בה את שמע.", "en": "The Chamber of Hewn Stone, seat of the Great Sanhedrin of seventy-one from which rulings went out to all Israel; priestly lineage was examined here too. Half of it lay within the sacred Azarah and half outside, with a door to each, and the Kohanim held their daily lotteries for the service and recited the Shema here."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "judges", "value": 71, "unit": "count", "source": "Mishnah Sanhedrin 1:6", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": -42, "y": 1, "z": -86, "unit": "amah", "source": "Mishnah Middot 5:4", "note": "legacy: converted from the pre-2026 scene coordinates; south side (-x) agrees with Middot 5:4, but the chamber should straddle the Azarah wall (Yoma 25a), geometry fix deferred"},
+      "sources": ["Mishnah Middot 5:4", "Mishnah Sanhedrin 1:6", "Yoma 25a", "Mishnah Tamid 4:3"],
+      "questions": [
+        {"he": "למה ישבה הסנהדרין דווקא במקדש?", "en": "Why did the Sanhedrin sit in the Temple itself?"},
+        {"he": "מדוע חצי הלשכה בחול?", "en": "Why was half the chamber outside the sacred area?"},
+        {"he": "מה נבדק בייחוס הכהנים?", "en": "What was examined when checking a Kohen's lineage?"}
+      ],
+      "legacyId": "lishkasHagazis",
+      "icon": "⚖️"
+    },
+    {
+      "id": "beis_hamoked",
+      "type": "chamber",
+      "name": {"he": "בית המוקד", "en": "Chamber of the Hearth"},
+      "desc": {"he": "בית המוקד, בית גדול וכיפה על גביו בצפון העזרה, ובו מדורה שהכהנים מתחממים בה בלילות. זקני בית האב ישנו על רובדי האבן וקטני המשמר על הארץ, ומפתחות העזרה תלויים בידם. ארבע לשכות סביבו: לשכת הטלאים, לשכת עושי לחם הפנים, לשכת אבני המזבח שגנזום בני חשמונאי, ובית הטבילה.", "en": "The Chamber of the Hearth, a large domed hall on the north of the Azarah with a fire where the Kohanim warmed themselves at night. The elders of the priestly family slept on stone ledges and the younger men on the ground, keeping the keys of the Azarah. Four smaller chambers opened off it: for the lambs, for the showbread bakers, for the altar stones hidden away by the Chashmonaim, and for the ritual bath."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "side chambers", "value": 4, "unit": "count", "source": "Mishnah Middot 1:6", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 42, "y": 1, "z": -56, "unit": "amah", "source": "Mishnah Middot 1:5", "note": "legacy: converted from the pre-2026 scene coordinates; north side (+x) agrees with Middot 1:5, but the hall should straddle the Azarah wall with gates to both Cheil and Azarah (Middot 1:6-7), geometry fix deferred"},
+      "sources": ["Mishnah Tamid 1:1", "Mishnah Middot 1:5", "Mishnah Middot 1:6", "Mishnah Middot 1:7", "Mishnah Middot 1:8"],
+      "questions": [
+        {"he": "למה ישנו הכהנים דווקא בבית המוקד?", "en": "Why did the Kohanim sleep in Beis HaMoked in particular?"},
+        {"he": "מהן אבני המזבח שגנזו החשמונאים?", "en": "What were the altar stones the Chashmonaim hid away?"},
+        {"he": "מה עשה כהן שראה קרי בלילה?", "en": "What did a Kohen do if he became impure during the night?"}
+      ],
+      "legacyId": "beisHamoked",
+      "icon": "🏠"
+    },
+
+    {
+      "id": "duchan",
+      "type": "structure",
+      "name": {"he": "דוכן", "en": "Duchan (Levite Platform)"},
+      "desc": {"he": "הדוכן, במת הלוויים שבין עזרת ישראל לעזרת כהנים. עזרת הכהנים גבוהה מעזרת ישראל אמתיים וחצי: מעלה של אמה, ועליה הדוכן ובו שלוש מדרגות של חצי אמה. עליו עמדו הלוויים ושרו בשעת ניסוך היין של התמיד.", "en": "The Duchan, the Levites' platform between the Ezras Yisrael and the Ezras Kohanim. The Kohanim's court stood two and a half amos above the Israelites' court: a one-amah step, then the Duchan with three half-amah steps. The Levites stood on it to sing while the Tamid's wine libation was poured."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "first rise", "value": 1, "unit": "amah", "source": "Mishnah Middot 2:6", "note": ""},
+        {"label": "steps on the Duchan", "value": 3, "unit": "count", "source": "Mishnah Middot 2:6", "note": "half an amah each; 2.5 amos total rise"}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": 0, "z": -40, "unit": "amah", "source": "Mishnah Middot 2:6", "note": "legacy: converted from the pre-2026 scene coordinates; the scene's rise between the two courts is 1 amah, Middot 2:6 gives 2.5, geometry fix deferred"},
+      "sources": ["Mishnah Middot 2:6", "Mishnah Arakhin 2:6", "Mishnah Tamid 7:3"],
+      "questions": [
+        {"he": "מתי שרו הלוויים ומה שרו בכל יום?", "en": "When did the Levites sing, and what did they sing each day?"},
+        {"he": "כמה לוויים לפחות עמדו על הדוכן?", "en": "What was the minimum number of Levites on the platform?"},
+        {"he": "האם ילדי הלוויים השתתפו בשירה?", "en": "Did the Levites' children join in the singing?"}
+      ],
+      "legacyId": "duchan",
+      "icon": "🎵"
+    },
+
+    {
+      "id": "chamber_oils",
+      "type": "chamber",
+      "name": {"he": "לשכת השמנים", "en": "Chamber of Oils"},
+      "desc": {"he": "לשכת השמנים, בקרן דרומית מערבית של עזרת נשים, ארבעים אמה על ארבעים ואינה מקורה. שם החזיקו את היין והשמן לנסכים, למנחות ולמנורה.", "en": "The Chamber of Oils in the southwest corner of the Ezras Nashim, forty amos square and unroofed. Wine and oil for the libations, the meal offerings and the Menorah were stored here."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "side", "value": 40, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "square, unroofed"}
+      ],
+      "position": {"frame": "azarah", "x": -54, "y": -6, "z": 88, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "legacy: converted from the pre-2026 scene coordinates; legacy corner is southeast, Middot 2:5 places it southwest, geometry fix deferred"},
+      "sources": ["Mishnah Middot 2:5"],
+      "questions": [
+        {"he": "איזה שמן היה כשר למנורה?", "en": "Which oil was fit for the Menorah?"},
+        {"he": "למה לא קירו את הלשכות שבפינות עזרת נשים?", "en": "Why were the corner chambers of the Ezras Nashim left unroofed?"}
+      ],
+      "legacyId": "chamberOils",
+      "icon": "🫒"
+    },
+    {
+      "id": "chamber_lepers",
+      "type": "chamber",
+      "name": {"he": "לשכת המצורעים", "en": "Chamber of Lepers"},
+      "desc": {"he": "לשכת המצורעים, בקרן צפונית מערבית של עזרת נשים. המצורע שנרפא טבל כאן ביום השמיני לטהרתו, לפני שהביא את קרבנותיו ועמד בשער ניקנור לתת מן הדם ומן השמן על בהונותיו.", "en": "The Chamber of the Metzora'im in the northwest corner of the Ezras Nashim. A healed metzora immersed here on the eighth day of his purification before bringing his offerings and standing at the Nicanor Gate for the blood and oil to be placed on his thumb and toe."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "side", "value": 40, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "square, unroofed"}
+      ],
+      "position": {"frame": "azarah", "x": 54, "y": -6, "z": 88, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "legacy: converted from the pre-2026 scene coordinates; legacy corner is northeast, Middot 2:5 places it northwest, geometry fix deferred"},
+      "sources": ["Mishnah Middot 2:5", "Mishnah Negaim 14:8"],
+      "questions": [
+        {"he": "למה טבל המצורע שוב אף שכבר טבל ביום השביעי?", "en": "Why did the metzora immerse again if he had already immersed on the seventh day?"},
+        {"he": "היכן עמד המצורע בשעת מתן הדם?", "en": "Where did the metzora stand when the blood was applied?"},
+        {"he": "אילו קרבנות מביא המצורע?", "en": "Which offerings does a metzora bring?"}
+      ],
+      "legacyId": "chamberLepers",
+      "icon": "🏥"
+    },
+    {
+      "id": "chamber_nazirites",
+      "type": "chamber",
+      "name": {"he": "לשכת הנזירים", "en": "Chamber of Nazarites"},
+      "desc": {"he": "לשכת הנזירים, בקרן דרומית מזרחית של עזרת נשים. שם בישלו הנזירים את שלמיהם בסוף ימי נזירותם, גילחו את שערם והשליכוהו אל האש שתחת הדוד.", "en": "The Nazirites' Chamber in the southeast corner of the Ezras Nashim. Here Nazirites completing their vow cooked their shelamim, shaved their hair and cast it into the fire under the pot."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "side", "value": 40, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "square, unroofed"}
+      ],
+      "position": {"frame": "azarah", "x": -54, "y": -6, "z": 12, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "legacy: converted from the pre-2026 scene coordinates; legacy corner is southwest, Middot 2:5 places it southeast, geometry fix deferred"},
+      "sources": ["Mishnah Middot 2:5", "Numbers 6:18"],
+      "questions": [
+        {"he": "למה שורף הנזיר את שערו תחת הדוד?", "en": "Why does the Nazirite burn his hair under the pot?"},
+        {"he": "אילו קרבנות מביא הנזיר בסוף נזירותו?", "en": "Which offerings does a Nazirite bring at the end of his vow?"}
+      ],
+      "legacyId": "chamberNazarites",
+      "icon": "✂️"
+    },
+    {
+      "id": "chamber_wood",
+      "type": "chamber",
+      "name": {"he": "לשכת העצים", "en": "Chamber of Wood"},
+      "desc": {"he": "לשכת העצים, בקרן צפונית מזרחית של עזרת נשים. כהנים בעלי מומין, הפסולים לעבודה, בדקו כאן את העצים למערכה, שכל עץ שנמצאה בו תולעת פסול למזבח.", "en": "The Wood Chamber in the northeast corner of the Ezras Nashim. Kohanim with physical blemishes, who could not serve at the altar, inspected the firewood here, since any log found to contain a worm was unfit for the altar."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "side", "value": 40, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "square, unroofed"}
+      ],
+      "position": {"frame": "azarah", "x": 54, "y": -6, "z": 12, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "legacy: converted from the pre-2026 scene coordinates; legacy corner is northwest, Middot 2:5 places it northeast, geometry fix deferred"},
+      "sources": ["Mishnah Middot 2:5"],
+      "questions": [
+        {"he": "למה דווקא כהנים בעלי מומין בדקו את העצים?", "en": "Why was it specifically blemished Kohanim who inspected the wood?"},
+        {"he": "אילו עצים כשרים למערכה?", "en": "Which kinds of wood were fit for the altar fire?"}
+      ],
+      "legacyId": "chamberWood",
+      "icon": "🪵"
+    },
+
+    {
+      "id": "nicanor_gate",
+      "type": "gate",
+      "name": {"he": "שער ניקנור", "en": "Nicanor Gate"},
+      "desc": {"he": "השער המזרחי של העזרה, בראש חמש עשרה המעלות מעזרת נשים. דלתותיו נחושת שהובאו מאלכסנדריא ונעשה בהן נס בים; לכן לא ציפום זהב. שם משקים סוטות ומטהרים יולדות ומצורעים.", "en": "The Azarah's eastern gate, atop the fifteen steps from the Ezras Nashim. Its bronze doors were brought from Alexandria and saved miraculously at sea, so they alone were not gilded. Sotah, yoledes and metzora rites took place here."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "height", "value": 20, "unit": "amah", "source": "Mishnah Middot 2:3"},
+        {"label": "width", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:3"},
+        {"label": "steps below", "value": 15, "unit": "count", "source": "Mishnah Middot 2:5", "note": "½-amah rise each, Mishnah Middot 2:3"}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": 0, "z": 0, "unit": "amah", "source": "Mishnah Middot 1:4", "note": "legacy: converted from the pre-2026 scene coordinates (the frame origin)"},
+      "sources": ["Mishnah Middot 1:4", "Mishnah Middot 2:3", "Mishnah Middot 2:6", "Yoma 38a", "Mishnah Sotah 1:5"],
+      "disputes": [{"issue": "gate dimensions", "views": ["20×10 (Mishnah Middot 2:3)", "50×40 (Josephus, War 5.5.3)"]}],
+      "questions": [
+        {"he": "מדוע דלתות ניקנור לא צופו זהב?", "en": "Why weren't Nicanor's doors gilded?"},
+        {"he": "האם שער ניקנור קדוש כעזרה?", "en": "Does the gateway itself have the sanctity of the Azarah?"},
+        {"he": "היכן עומדת הסוטה?", "en": "Where does the Sotah stand?"}
+      ],
+      "legacyId": "nicanorGate",
+      "icon": "🏛️"
+    },
+    {
+      "id": "ezras_nashim_gate",
+      "type": "gate",
+      "name": {"he": "שער עזרת נשים המזרחי", "en": "East Gate of the Ezras Nashim"},
+      "desc": {"he": "השער המזרחי של עזרת נשים, שדרכו נכנסים מן החיל אל העזרה החיצונה בעלייה של שתים עשרה מעלות. המשנה במסכת מידות אינה נוקבת בשמו; הכינוי 'השער היפה' אינו מן המקורות התורניים, ו'שער שושן' הוא השער המזרחי של הר הבית, שער אחר.", "en": "The eastern gate of the Ezras Nashim, entered from the Cheil by a flight of twelve steps. Tractate Middot does not give this gate a name; 'Beautiful Gate' comes from a non-rabbinic source, and the Shushan Gate is the separate eastern gate of Har HaBayis."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "height", "value": 20, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""},
+        {"label": "width", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""},
+        {"label": "steps from the Cheil", "value": 12, "unit": "count", "source": "Mishnah Middot 2:3", "note": "half-amah rise each"}
+      ],
+      "position": {"frame": "azarah", "x": 0, "y": -6, "z": 100, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "legacy: converted from the pre-2026 scene coordinates"},
+      "sources": ["Mishnah Middot 2:3", "Mishnah Middot 2:5", "Mishnah Middot 1:3"],
+      "disputes": [{"issue": "name of the gate", "views": ["unnamed in Mishnah Middot 2:5", "'Beautiful Gate' is from Acts 3:2, not a rabbinic source", "not to be confused with the Shushan Gate of Har HaBayis (Mishnah Middot 1:3)"]}],
+      "questions": [
+        {"he": "מה שמו של השער הזה במקורות?", "en": "What is this gate called in the sources?"},
+        {"he": "מהו החיל שממנו עולים לשער?", "en": "What was the Cheil from which one climbed to the gate?"},
+        {"he": "מי רשאי לעבור את הסורג והחיל?", "en": "Who was permitted past the Soreg and the Cheil?"}
+      ],
+      "legacyId": "beautifulGate",
+      "icon": "🏛️"
+    },
+    {
+      "id": "chuldah_gate_west",
+      "type": "gate",
+      "name": {"he": "שער חולדה", "en": "Chuldah Gate (West)"},
+      "desc": {"he": "שני שערי חולדה בדרום הר הבית, האחד לכניסה והאחד ליציאה, שדרכם נכנסו רוב עולי הרגל מן העיר. שמם אינו מתפרש במשנה; הקשר לחולדה הנביאה הוא מסורת מאוחרת ואינו מדברי חז״ל.", "en": "The two Chuldah Gates in the southern wall of Har HaBayis, one for entering and one for leaving, through which most pilgrims arrived from the city. The Mishnah does not explain the name; the link to the prophetess Chuldah is a later tradition, not found in Chazal."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "height", "value": 20, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""},
+        {"label": "width", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": -54, "y": -10, "z": 120, "unit": "amah", "source": "Mishnah Middot 1:3", "note": "legacy: converted from the pre-2026 scene coordinates; legacy places the pair on the eastern approach, Middot 1:3 puts both in the south wall of Har HaBayis, geometry fix deferred"},
+      "sources": ["Mishnah Middot 1:3", "Mishnah Middot 2:2"],
+      "disputes": [{"issue": "origin of the name Chuldah", "views": ["unexplained in the Mishnah", "later tradition connecting it with the prophetess Chuldah", "later tradition deriving it from the burrowing weasel (chuldah), for the tunnels beneath"]}],
+      "questions": [
+        {"he": "למה היו שני שערי חולדה?", "en": "Why were there two Chuldah Gates?"},
+        {"he": "כמה שערים היו להר הבית?", "en": "How many gates did Har HaBayis have?"}
+      ],
+      "legacyId": "chuldahL",
+      "icon": "🚪"
+    },
+    {
+      "id": "chuldah_gate_east",
+      "type": "gate",
+      "name": {"he": "שער חולדה", "en": "Chuldah Gate (East)"},
+      "desc": {"he": "השני משני שערי חולדה שבדרום הר הבית. הנכנסים נכנסים דרך ימין ומקיפים ויוצאים דרך שמאל, ושני השערים משמשים כניסה ויציאה.", "en": "The second of the two Chuldah Gates in the southern wall of Har HaBayis. Those entering turned right, circled the mount and left by the left, the two gates serving for entry and exit."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "height", "value": 20, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""},
+        {"label": "width", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 54, "y": -10, "z": 120, "unit": "amah", "source": "Mishnah Middot 1:3", "note": "legacy: converted from the pre-2026 scene coordinates; legacy places the pair on the eastern approach, Middot 1:3 puts both in the south wall of Har HaBayis, geometry fix deferred"},
+      "sources": ["Mishnah Middot 1:3", "Mishnah Middot 2:2"],
+      "questions": [
+        {"he": "מי נכנס דרך שמאל ולמה?", "en": "Who entered by the left, and why?"},
+        {"he": "מה אמרו לאבל הנכנס דרך שמאל?", "en": "What was said to a mourner who entered by the left?"}
+      ],
+      "legacyId": "chuldahR",
+      "icon": "🚪"
+    },
+
+    {
+      "id": "delek_gate",
+      "type": "gate",
+      "name": {"he": "שער הדלק", "en": "Kindling Gate"},
+      "desc": {"he": "שער הדלק, המערבי מבין שלושת שערי הדרום של העזרה, שדרכו הכניסו את העצים למערכת המזבח.", "en": "The Kindling Gate (Sha'ar HaDelek), westernmost of the three gates on the south side of the Azarah, through which firewood for the altar pyre was brought in."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "height", "value": 20, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""},
+        {"label": "width", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": -52, "y": 1, "z": -52, "unit": "amah", "source": "Mishnah Middot 1:4", "note": "legacy: converted from the pre-2026 scene coordinates; legacy makes it the easternmost south gate, Middot 1:4 lists from the west Delek, Bechoros, Mayim, geometry fix deferred"},
+      "sources": ["Mishnah Middot 1:4", "Mishnah Middot 2:6", "Mishneh Torah, The Chosen Temple 5:4"],
+      "disputes": [{"issue": "names and order of the southern gates", "views": ["Delek, Bechoros, Mayim (Mishnah Middot 1:4)", "Elyon, Delek, Bechoros, Mayim among thirteen gates (Abba Yose ben Chanan, Mishnah Middot 2:6)"]}],
+      "questions": [
+        {"he": "כמה שערים היו לעזרה, שבעה או שלושה עשר?", "en": "How many gates did the Azarah have, seven or thirteen?"},
+        {"he": "מאין הביאו את העצים למערכה?", "en": "Where did the altar firewood come from?"}
+      ],
+      "legacyId": "kindlingGate",
+      "icon": "🚪"
+    },
+    {
+      "id": "water_gate",
+      "type": "gate",
+      "name": {"he": "שער המים", "en": "Water Gate"},
+      "desc": {"he": "שער המים, המזרחי מבין שערי הדרום של העזרה, שדרכו הכניסו את צלוחית המים לניסוך המים בחג הסוכות. רבי אליעזר בן יעקב אומר: על שם המים המפכים שעתידים לצאת מתחת מפתן הבית.", "en": "The Water Gate, easternmost of the Azarah's southern gates, through which the flask of water for the Sukkos water libation was brought in. Rabbi Eliezer ben Yaakov says it is named for the trickling waters that will one day flow out from beneath the threshold of the House."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "height", "value": 20, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""},
+        {"label": "width", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": -52, "y": 1, "z": -74, "unit": "amah", "source": "Mishnah Middot 1:4", "note": "legacy: converted from the pre-2026 scene coordinates; legacy makes it the middle south gate, Middot 1:4 makes it the easternmost, geometry fix deferred"},
+      "sources": ["Mishnah Middot 1:4", "Mishnah Middot 2:6", "Mishnah Sukkah 4:9", "Mishnah Shekalim 6:3"],
+      "questions": [
+        {"he": "מהו ניסוך המים ומאין שאבו את המים?", "en": "What is the water libation, and where was the water drawn from?"},
+        {"he": "מה הם המים העתידים לצאת מבית קודשי הקודשים?", "en": "What are the waters that will one day flow from the Holy of Holies?"}
+      ],
+      "legacyId": "waterGate",
+      "icon": "🚪"
+    },
+    {
+      "id": "bechoros_gate",
+      "type": "gate",
+      "name": {"he": "שער הבכורות", "en": "Gate of Firstlings"},
+      "desc": {"he": "שער הבכורות, האמצעי מבין שערי הדרום של העזרה, שדרכו הכניסו את בכורות הבהמה הטהורה להקרבה. הבכור קדשים קלים הוא ונשחט בכל מקום בעזרה, ולפיכך נכנס מדרום.", "en": "The Gate of Firstborn Animals (Sha'ar HaBechoros), the middle of the three southern gates of the Azarah, through which firstborn animals were brought to be offered. A firstborn animal is a kodashim kalim offering that may be slaughtered anywhere in the Azarah, so it could enter from the south."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "height", "value": 20, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""},
+        {"label": "width", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": -52, "y": 1, "z": -92, "unit": "amah", "source": "Mishnah Middot 1:4", "note": "legacy: converted from the pre-2026 scene coordinates; legacy makes it the westernmost south gate, Middot 1:4 makes it the middle one, geometry fix deferred"},
+      "sources": ["Mishnah Middot 1:4", "Mishnah Middot 2:6", "Mishnah Zevachim 5:8", "Numbers 18:17"],
+      "questions": [
+        {"he": "האם בכור בהמה נפדה או קרב?", "en": "Is a firstborn animal redeemed or offered?"},
+        {"he": "למה בכור נשחט בדרום ולא בצפון?", "en": "Why may a firstborn be slaughtered on the south and not only the north?"}
+      ],
+      "legacyId": "firstlingsGate",
+      "icon": "🚪"
+    },
+    {
+      "id": "beis_hamoked_gate",
+      "type": "gate",
+      "name": {"he": "שער בית המוקד", "en": "Hearth Gate"},
+      "desc": {"he": "שער בית המוקד, המזרחי מבין שלושת שערי הצפון של העזרה, נפתח מבית המוקד אל העזרה. דרכו יצאו הכהנים משנתם בבית המוקד אל עבודת השחר.", "en": "The Beis HaMoked Gate, easternmost of the three northern gates of the Azarah, opening from the Chamber of the Hearth into the court. Through it the Kohanim who slept in Beis HaMoked went out to the morning service."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "height", "value": 20, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""},
+        {"label": "width", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 52, "y": 1, "z": -52, "unit": "amah", "source": "Mishnah Middot 1:5", "note": "legacy: converted from the pre-2026 scene coordinates; easternmost north gate agrees with Middot 1:5"},
+      "sources": ["Mishnah Middot 1:5", "Mishnah Middot 1:7", "Mishnah Tamid 1:3"],
+      "questions": [
+        {"he": "מי פתח את שערי העזרה בבוקר?", "en": "Who opened the Azarah gates in the morning?"},
+        {"he": "למה היו לבית המוקד שני פתחים?", "en": "Why did Beis HaMoked have two entrances?"}
+      ],
+      "legacyId": "hearthGate",
+      "icon": "🚪"
+    },
+    {
+      "id": "nitzotz_gate",
+      "type": "gate",
+      "name": {"he": "שער הניצוץ", "en": "Flame Gate"},
+      "desc": {"he": "שער הניצוץ, המערבי מבין שערי הצפון של העזרה, בנוי כמין אכסדרה ועלייה על גביו: הכהנים שומרים מלמעלה והלוויים מלמטה, ופתח היה לו אל החיל. טעם שמו אינו מפורש במשנה.", "en": "The Nitzotz (Spark) Gate, westernmost of the Azarah's northern gates, built like a portico with an upper storey where Kohanim kept watch above and Levites below; it had an opening to the Cheil. The Mishnah does not explain the name."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "height", "value": 20, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""},
+        {"label": "width", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 52, "y": 1, "z": -74, "unit": "amah", "source": "Mishnah Middot 1:5", "note": "legacy: converted from the pre-2026 scene coordinates; legacy makes it the middle north gate, Middot 1:5 lists from the west Nitzotz, Korban, Beis HaMoked, geometry fix deferred"},
+      "sources": ["Mishnah Middot 1:5", "Mishnah Middot 2:6", "Mishnah Tamid 1:1"],
+      "disputes": [{"issue": "origin of the name Nitzotz", "views": ["unexplained in the Mishnah", "some commentators connect it with a fire (nitzotz, spark) kept in the guardroom"]}, {"issue": "names of the northern gates", "views": ["Nitzotz, Korban, Beis HaMoked (Mishnah Middot 1:5)", "Yechonia, Korban, Nashim, Shir among thirteen gates (Mishnah Middot 2:6)"]}],
+      "questions": [
+        {"he": "היכן שמרו הכהנים והלוויים במקדש בלילה?", "en": "Where did the Kohanim and Levites keep watch at night?"},
+        {"he": "למה שמרו על המקדש בכלל?", "en": "Why was the Temple guarded at all?"}
+      ],
+      "legacyId": "flameGate",
+      "icon": "🚪"
+    },
+    {
+      "id": "korban_gate",
+      "type": "gate",
+      "name": {"he": "שער הקרבן", "en": "Sacrifice Gate"},
+      "desc": {"he": "שער הקרבן, האמצעי מבין שערי הצפון של העזרה. דרכו הכניסו את קדשי הקדשים, ששחיטתם בצפון המזבח בלבד.", "en": "The Sacrifice Gate (Sha'ar HaKorban), the middle of the Azarah's northern gates. Through it the kodshei kodashim were brought in, since they may be slaughtered only on the north side of the altar."},
+      "period": ["bayis_sheni"],
+      "dimensions": [
+        {"label": "height", "value": 20, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""},
+        {"label": "width", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:3", "note": ""}
+      ],
+      "position": {"frame": "azarah", "x": 52, "y": 1, "z": -92, "unit": "amah", "source": "Mishnah Middot 1:5", "note": "legacy: converted from the pre-2026 scene coordinates; legacy makes it the westernmost north gate, Middot 1:5 makes it the middle one, geometry fix deferred"},
+      "sources": ["Mishnah Middot 1:5", "Mishnah Middot 2:6", "Mishnah Zevachim 5:1", "Leviticus 1:11"],
+      "questions": [
+        {"he": "אילו קרבנות הם קדשי קדשים?", "en": "Which offerings are kodshei kodashim?"},
+        {"he": "למה נשחטים קדשי קדשים דווקא בצפון?", "en": "Why are kodshei kodashim slaughtered specifically on the north?"}
+      ],
+      "legacyId": "sacrificeGate",
+      "icon": "🚪"
+    }
+  ]
+}

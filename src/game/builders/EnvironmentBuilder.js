@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../../config.js';
 import { BaseBuilder } from './BaseBuilder.js';
+import { mulberry32 } from '../random.js';
 
 // ============================================================================
 // ENVIRONMENT BUILDER - Sky, ground, and distant scenery
@@ -25,7 +26,9 @@ export class EnvironmentBuilder extends BaseBuilder {
   }
 
   buildSky() {
-    const skyGeo = new THREE.SphereGeometry(CONFIG.RENDER_DISTANCE, 32, 32);
+    // Kept inside the far plane and re-centred on the camera every frame (TempleGame),
+    // so no part of it is ever clipped when the player stands far from the origin.
+    const skyGeo = new THREE.SphereGeometry(CONFIG.RENDER_DISTANCE * 0.9, 32, 32);
     const skyMat = new THREE.ShaderMaterial({
       uniforms: {
         topColor: { value: new THREE.Color(0x4A90C8) },
@@ -51,25 +54,28 @@ export class EnvironmentBuilder extends BaseBuilder {
           gl_FragColor = vec4(sky, 1.0);
         }
       `,
-      side: THREE.BackSide
+      side: THREE.BackSide,
+      depthWrite: false,
+      fog: false
     });
-    this.scene.add(new THREE.Mesh(skyGeo, skyMat));
+    const sky = new THREE.Mesh(skyGeo, skyMat);
+    sky.name = 'sky';
+    sky.frustumCulled = false;
+    sky.renderOrder = -1;
+    this.scene.add(sky);
+    this.scene.fog = new THREE.Fog(0xd8e2ec, 140, CONFIG.RENDER_DISTANCE * 0.88);
   }
 
   buildDistantHills() {
+    const rand = mulberry32(7); // same hills on every load
+    const hillMat = new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.1, 0.2, 0.55), roughness: 0.9 });
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2;
-      const dist = 180 + Math.random() * 40;
-      const height = 15 + Math.random() * 25;
-      const m = new THREE.Mesh(
-        new THREE.ConeGeometry(30 + Math.random() * 20, height, 6),
-        new THREE.MeshStandardMaterial({
-          color: new THREE.Color().setHSL(0.1, 0.2, 0.5 + Math.random() * 0.1),
-          roughness: 0.9
-        })
-      );
-      m.position.set(Math.cos(angle) * dist, height/2 - 5, Math.sin(angle) * dist);
-      m.rotation.y = Math.random() * Math.PI;
+      const dist = 180 + rand() * 40;
+      const height = 15 + rand() * 25;
+      const m = new THREE.Mesh(new THREE.ConeGeometry(30 + rand() * 20, height, 6), hillMat);
+      m.position.set(Math.cos(angle) * dist, height / 2 - 5, Math.sin(angle) * dist);
+      m.rotation.y = rand() * Math.PI;
       this.scene.add(m);
     }
   }

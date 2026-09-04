@@ -1,44 +1,65 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { store } from '../store.js';
+import { areas, worldBounds } from '../content/index.js';
 
-// ============================================================================
-// MINIMAP COMPONENT
-// ============================================================================
-export const Minimap = ({ pos, rot }) => {
-  const sc = 1.2;
-  const cx = 95;
-  const cy = 105;
-  const px = cx + (pos?.x || 0) * sc * 0.55;
-  const py = cy + (pos?.z || 100) * sc * 0.4;
-  const r = ((rot || 0) * 57.3 + 180) % 360;
+// Map a 240 x 240 m world window (x: -70..70, z: -95..145) onto the 190 x 190 viewBox.
+const WORLD = { minX: -70, maxX: 70, minZ: -95, maxZ: 145 };
+const SIZE = 190;
+const sx = (x) => ((x - WORLD.minX) / (WORLD.maxX - WORLD.minX)) * SIZE;
+const sz = (z) => ((z - WORLD.minZ) / (WORLD.maxZ - WORLD.minZ)) * SIZE;
+
+const FILL = {
+  outside: 'none',
+  har_habayis: '#C9B896',
+  ezras_nashim: '#DED0B8',
+  azaras_yisrael: '#E8DCC8',
+  azaras_kohanim: '#E8DCC8',
+  heichal: 'url(#goldG)',
+  kodesh_hakodashim: '#FFD700',
+};
+
+// The map is drawn in the world's own axes: x (north) across, z (east) down, so the
+// Heichal (west, -z) is at the top and the Ezras Nashim (east, +z) at the bottom.
+const rects = areas
+  .filter((a) => a.id !== 'outside')
+  .map((a) => {
+    const b = worldBounds(a);
+    return { id: a.id, x: sx(b.minX), y: sz(b.minZ), w: sx(b.maxX) - sx(b.minX), h: sz(b.maxZ) - sz(b.minZ) };
+  });
+
+/**
+ * Player marker follows the transient `frame` slice without re-rendering React:
+ * the subscription writes the SVG transform directly.
+ */
+export const Minimap = React.memo(function Minimap() {
+  const marker = useRef(null);
+  useEffect(() => {
+    const apply = (f) => {
+      if (!marker.current) return;
+      const deg = (f.yaw * 57.3 + 180) % 360;
+      marker.current.setAttribute('transform', `translate(${sx(f.x).toFixed(1)},${sz(f.z).toFixed(1)}) rotate(${-deg})`);
+    };
+    apply(store.getState().frame);
+    return store.subscribe((s) => s.frame, apply);
+  }, []);
 
   return (
-    <div className="minimap">
-      <svg viewBox="0 0 190 190">
+    <div className="minimap" aria-hidden="true">
+      <svg viewBox={`0 0 ${SIZE} ${SIZE}`}>
         <defs>
           <linearGradient id="goldG" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FFD700"/>
-            <stop offset="100%" stopColor="#DAA520"/>
+            <stop offset="0%" stopColor="#FFD700" />
+            <stop offset="100%" stopColor="#DAA520" />
           </linearGradient>
         </defs>
-        {/* Ground */}
-        <rect x="5" y="5" width="180" height="180" fill="#B8A080" rx="4"/>
-        {/* Har HaBayis */}
-        <rect x="15" y="40" width="160" height="110" fill="#C9B896"/>
-        {/* Ezras Nashim */}
-        <rect x="40" y="80" width="110" height="50" fill="#DED0B8"/>
-        {/* Azara */}
-        <rect x="40" y="55" width="110" height="25" fill="#E8DCC8"/>
-        {/* Azara inner */}
-        <rect x="75" y="62" width="40" height="12" fill="#6B5A4A"/>
-        {/* Heichal */}
-        <rect x="70" y="30" width="50" height="25" fill="url(#goldG)"/>
-        {/* Kodesh HaKodashim */}
-        <rect x="78" y="15" width="34" height="15" fill="#FFD700"/>
-        {/* Player marker */}
-        <g transform={`translate(${px},${py}) rotate(${-r})`}>
-          <polygon points="0,-9 6,6 -6,6" className="player-marker"/>
+        <rect x="0" y="0" width={SIZE} height={SIZE} fill="#B8A080" rx="4" />
+        {rects.map((r) => (
+          <rect key={r.id} x={r.x} y={r.y} width={r.w} height={r.h} fill={FILL[r.id] ?? '#D8CDB8'} />
+        ))}
+        <g ref={marker}>
+          <polygon points="0,-7 5,5 -5,5" className="player-marker" />
         </g>
       </svg>
     </div>
   );
-};
+});

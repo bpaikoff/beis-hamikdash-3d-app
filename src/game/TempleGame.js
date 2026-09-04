@@ -5,199 +5,272 @@ import { TempleBuilder } from './TempleBuilder.js';
 import { PlayerController } from './PlayerController.js';
 import { CharacterSystem } from './CharacterSystem.js';
 import { ParticleSystem } from './ParticleSystem.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { mulberry32 } from './random.js';
+import { areas, byId, hotspots, worldBounds, worldPos } from '../content/index.js';
+
+const HOTSPOT_RADIUS = 8; // metres; the nearest entry within this shows in the HUD
+
+/** Let the browser paint (loading text) between build phases. */
+const nextFrame = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+
+/** Parse `?cam=x,y,z,yaw,pitch` (metres, degrees) and `?at=<hotspot id>`. */
+function readSpawn(search) {
+  const q = new URLSearchParams(search);
+  const cam = q.get('cam');
+  if (cam) {
+    const [x, y, z, yaw = 0, pitch = 0] = cam.split(',').map(Number);
+    if ([x, y, z].every(Number.isFinite)) return { pos: [x, y, z], yaw, pitch };
+  }
+  const at = q.get('at');
+  if (at && byId[at]) {
+    const [x, y, z] = worldPos(byId[at]);
+    // 4 m east of the item, at eye height, facing west toward it.
+    return { pos: [x, y + CONFIG.PLAYER_HEIGHT, z + 4], yaw: 0, pitch: 0 };
+  }
+  return null;
+}
 
 // ============================================================================
 // MAIN GAME
 // ============================================================================
 export class TempleGame {
-  constructor(container, callbacks) {
+  /**
+   * @param {HTMLElement} container  the element the canvas is appended to
+   * @param {import('zustand/vanilla').StoreApi} store  app store (see ../store.js)
+   */
+  constructor(container, store) {
     this.container = container;
-    this.callbacks = callbacks;
+    this.store = store;
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(CONFIG.FOV, window.innerWidth / window.innerHeight, 0.1, CONFIG.RENDER_DISTANCE);
+    this.camera = new THREE.PerspectiveCamera(
+      CONFIG.FOV,
+      container.clientWidth / Math.max(container.clientHeight, 1),
+      0.1,
+      CONFIG.RENDER_DISTANCE
+    );
     this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     this.clock = new THREE.Clock();
-    this.tex = new TextureFactory();
+    this.tex = new TextureFactory({ maxAnisotropy: this.renderer.capabilities.getMaxAnisotropy() });
     this.currentArea = null;
     this.nearbyKli = null;
-    this.init();
+    this.raf = 0;
+    this.disposed = false;
+    this.listeners = [];
+    this.areaBounds = areas.map((a) => ({ entry: a, bounds: worldBounds(a) }));
+    this.refreshHotspots();
+    this.unsubPeriod = store.subscribe((s) => s.period, () => this.refreshHotspots());
+    this.ready = this.init().catch((e) => {
+      console.error(e);
+      store.setState({ loading: null, error: e.message });
+    });
   }
 
-  init() {
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.2;
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.container.appendChild(this.renderer.domElement);
+  refreshHotspots() {
+    this.hotspotList = hotspots(this.store.getState().period).map((e) => {
+      const [x, y, z] = worldPos(e);
+      return { entry: e, x, y, z };
+    });
+  }
+
+  setLoading(msg) {
+    this.store.setState({ loading: msg });
+    return nextFrame();
+  }
+
+  async init() {
+    const r = this.renderer;
+    r.setSize(this.container.clientWidth, this.container.clientHeight);
+    r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    r.shadowMap.enabled = true;
+    r.shadowMap.type = THREE.PCFSoftShadowMap;
+    r.toneMapping = THREE.ACESFilmicToneMapping;
+    r.toneMappingExposure = 1.2;
+    r.outputColorSpace = THREE.SRGBColorSpace;
+    r.domElement.style.display = 'block';
+    // Static scene: render the shadow map once, then refresh it every few frames for the
+    // moving Kohanim instead of every frame.
+    r.shadowMap.autoUpdate = false;
+    this.container.appendChild(r.domElement);
     this.camera.position.set(0, CONFIG.PLAYER_HEIGHT + 1.8, 62);
 
-    this.callbacks.onLoad('Generating 30+ textures...');
-    this.callbacks.onLoad('Building Beis Hamikdash...');
+    // Image-based lighting: without an environment the PBR gold and copper have nothing
+    // to reflect and render almost black. RoomEnvironment ships with three (no download).
+    const pmrem = new THREE.PMREMGenerator(r);
+    this.envTexture = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    this.scene.environment = this.envTexture;
+    pmrem.dispose();
+
+    await this.setLoading('Generating textures...');
     const builder = new TempleBuilder(this.scene, this.tex);
+    await this.setLoading('Building the Beis HaMikdash...');
     const { floors, walls } = builder.build();
-    this.player = new PlayerController(this.camera, floors, walls);
+    this.sky = this.scene.getObjectByName('sky');
+    const all = this.areaBounds.map((a) => a.bounds);
+    const bounds = {
+      minX: Math.min(...all.map((b) => b.minX)),
+      maxX: Math.max(...all.map((b) => b.maxX)),
+      minZ: Math.min(...all.map((b) => b.minZ)),
+      maxZ: Math.max(...all.map((b) => b.maxZ)),
+    };
+    this.player = new PlayerController(this.camera, floors, walls, { bounds });
+    if (this.disposed) return;
 
-    this.callbacks.onLoad('Creating Kohanim & animals...');
+    await this.setLoading('Placing Kohanim and animals...');
     this.characters = new CharacterSystem(this.scene, this.tex);
-    // Kohen Gadol in Heichal
-    this.characters.createKohen(0, 8.3, -68, true);
-    // Kohanim in various areas with correct floor heights
-    // Azaras Kohanim (y=7.3): z=-13 to z=-45
-    [[10, -18], [-10, -18], [8, -28], [-8, -28], [12, -36], [-12, -36], [15, -42], [-15, -42]].forEach(([x, z]) =>
-      this.characters.createKohen(x, 7.3, z));
-    // Azaras Yisrael (y=6.8): z=-7 to z=-11
-    [[8, -9], [-8, -9], [0, -9]].forEach(([x, z]) =>
-      this.characters.createKohen(x, 6.8, z));
-    // Ezras Nashim (y=3.8)
-    [[0, 30], [15, 35], [-15, 35], [10, 20], [-10, 20]].forEach(([x, z]) =>
-      this.characters.createKohen(x, 3.8, z));
-
-    // Animals
-    for (let i = 0; i < 8; i++) this.characters.createAnimal('sheep', 20 + (Math.random() - 0.5) * 10 * (i % 2 === 0 ? 1 : -1), 30 + (Math.random() - 0.5) * 10);
-    for (let i = 0; i < 4; i++) this.characters.createAnimal('goat', 25 + (Math.random() - 0.5) * 8 * (i % 2 === 0 ? 1 : -1), 35 + (Math.random() - 0.5) * 8);
+    this.characters.createKohen(0, 8.3, -68, true); // Kohen Gadol in the Heichal
+    // Azaras Kohanim (y=7.3), Azaras Yisrael (y=6.8), Ezras Nashim (y=3.8)
+    [[10, -18], [-10, -18], [8, -28], [-8, -28], [12, -36], [-12, -36], [15, -42], [-15, -42]]
+      .forEach(([x, z]) => this.characters.createKohen(x, 7.3, z));
+    [[8, -9], [-8, -9], [0, -9]].forEach(([x, z]) => this.characters.createKohen(x, 6.8, z));
+    [[0, 30], [15, 35], [-15, 35], [10, 20], [-10, 20]].forEach(([x, z]) => this.characters.createKohen(x, 3.8, z));
+    const rand = mulberry32(11); // same flock on every load
+    for (let i = 0; i < 8; i++) this.characters.createAnimal('sheep', 20 + (rand() - 0.5) * 10 * (i % 2 === 0 ? 1 : -1), 30 + (rand() - 0.5) * 10);
+    for (let i = 0; i < 4; i++) this.characters.createAnimal('goat', 25 + (rand() - 0.5) * 8 * (i % 2 === 0 ? 1 : -1), 35 + (rand() - 0.5) * 8);
     for (let i = 0; i < 2; i++) this.characters.createAnimal('bull', 30 + i * 5, 45);
-    for (let i = 0; i < 12; i++) this.characters.createDove((Math.random() - 0.5) * 60, 25 + Math.random() * 15, (Math.random() - 0.5) * 60);
+    for (let i = 0; i < 12; i++) this.characters.createDove((rand() - 0.5) * 60, 25 + rand() * 15, (rand() - 0.5) * 60);
 
-    this.callbacks.onLoad('Adding fire & smoke...');
+    await this.setLoading('Lighting the fire...');
     this.particles = new ParticleSystem(this.scene);
     this.particles.createFire(0, 17, -28, 4);
     this.particles.createSmoke(0, 10, -75, 0.3);
+    if (this.disposed) return;
+
+    const spawn = readSpawn(window.location.search);
+    if (spawn) {
+      this.camera.position.set(...spawn.pos);
+      this.camera.rotation.set(THREE.MathUtils.degToRad(spawn.pitch), THREE.MathUtils.degToRad(spawn.yaw), 0, 'YXZ');
+      this.player.euler.setFromQuaternion(this.camera.quaternion, 'YXZ');
+    }
 
     this.setupControls();
-    this.callbacks.onLoad(null);
+    this.store.setState({ loading: null });
+    window.__mikdash = {
+      ready: false,
+      info: this.renderer.info.render,
+      camera: this.camera,
+      game: this,
+    };
     this.animate();
+    // Ready once one full frame has been rendered.
+    await nextFrame();
+    window.__mikdash.ready = true;
+  }
+
+  on(target, type, fn, opts) {
+    target.addEventListener(type, fn, opts);
+    this.listeners.push(() => target.removeEventListener(type, fn, opts));
   }
 
   setupControls() {
-    document.addEventListener('keydown', e => {
-      if (e.code === 'KeyW' || e.code === 'ArrowUp') this.player.moveF = true;
-      if (e.code === 'KeyS' || e.code === 'ArrowDown') this.player.moveB = true;
-      if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.player.moveL = true;
-      if (e.code === 'KeyD' || e.code === 'ArrowRight') this.player.moveR = true;
-      if (e.code === 'ShiftLeft') this.player.isRun = true;
-      if (e.code === 'Space') { e.preventDefault(); this.player.jump(); }
-      if (e.code === 'KeyG') { this.player.toggleDebug(this.callbacks.onDebug); }
+    const p = this.player;
+    this.on(document, 'keydown', (e) => {
+      if (e.code === 'KeyW' || e.code === 'ArrowUp') p.moveF = true;
+      if (e.code === 'KeyS' || e.code === 'ArrowDown') p.moveB = true;
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') p.moveL = true;
+      if (e.code === 'KeyD' || e.code === 'ArrowRight') p.moveR = true;
+      if (e.code === 'ShiftLeft') p.isRun = true;
+      if (e.code === 'Space') { e.preventDefault(); p.jump(); }
+      if (e.code === 'KeyG') p.toggleDebug((debug) => this.store.setState({ debug }));
     });
-    document.addEventListener('keyup', e => {
-      if (e.code === 'KeyW' || e.code === 'ArrowUp') this.player.moveF = false;
-      if (e.code === 'KeyS' || e.code === 'ArrowDown') this.player.moveB = false;
-      if (e.code === 'KeyA' || e.code === 'ArrowLeft') this.player.moveL = false;
-      if (e.code === 'KeyD' || e.code === 'ArrowRight') this.player.moveR = false;
-      if (e.code === 'ShiftLeft') this.player.isRun = false;
+    this.on(document, 'keyup', (e) => {
+      if (e.code === 'KeyW' || e.code === 'ArrowUp') p.moveF = false;
+      if (e.code === 'KeyS' || e.code === 'ArrowDown') p.moveB = false;
+      if (e.code === 'KeyA' || e.code === 'ArrowLeft') p.moveL = false;
+      if (e.code === 'KeyD' || e.code === 'ArrowRight') p.moveR = false;
+      if (e.code === 'ShiftLeft') p.isRun = false;
     });
-    document.addEventListener('mousemove', e => this.player.onMouseMove(e));
-    window.addEventListener('resize', () => {
-      this.camera.aspect = window.innerWidth / window.innerHeight;
-      this.camera.updateProjectionMatrix();
-      this.renderer.setSize(window.innerWidth, window.innerHeight);
+    this.on(document, 'mousemove', (e) => p.onMouseMove(e));
+    this.on(this.container, 'click', () => this.requestLock());
+    this.on(document, 'pointerlockchange', () => {
+      p.isLocked = document.pointerLockElement === this.container;
+      this.store.setState({ locked: p.isLocked });
     });
-    this.container.addEventListener('click', () => this.container.requestPointerLock());
-    document.addEventListener('pointerlockchange', () => { this.player.isLocked = document.pointerLockElement === this.container; });
+    this.resizeObserver = new ResizeObserver(() => this.resize());
+    this.resizeObserver.observe(this.container);
+  }
+
+  async requestLock() {
+    if (document.pointerLockElement === this.container) return;
+    try {
+      await this.container.requestPointerLock();
+    } catch (e) {
+      // Chrome rejects rapid re-locks and some embeds forbid it; the HUD falls back to drag-look.
+      console.warn('pointer lock unavailable:', e.message);
+    }
+  }
+
+  resize() {
+    const w = this.container.clientWidth;
+    const h = this.container.clientHeight;
+    if (!w || !h) return;
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(w, h);
   }
 
   checkLocation() {
     const p = this.camera.position;
-    const AREAS = {
-      'outside': { name: 'מחוץ לחומות', nameEn: 'Outside the Walls', desc: 'The steps lead up through the Chuldah Gates into the Temple.', bounds: { minX: -100, maxX: 100, minZ: 60, maxZ: 150 } },
-      'har-habayis': { name: 'הר הבית', nameEn: 'Temple Mount', desc: 'The vast plaza of Har HaBayis, where all of Israel gathers.', bounds: { minX: -70, maxX: 70, minZ: 58, maxZ: 70 } },
-      'ezras-nashim': { name: 'עזרת נשים', nameEn: "Women's Court", desc: "The outer court. Levi'im sing on the 15 steps.", bounds: { minX: -32, maxX: 32, minZ: -7, maxZ: 58 } },
-      'azaras-yisrael': { name: 'עזרת ישראל', nameEn: 'Israelites Court', desc: 'Men bringing Korbanos stand here to observe.', bounds: { minX: -26, maxX: 26, minZ: -12, maxZ: -7 } },
-      'azaras-kohanim': { name: 'עזרת כהנים', nameEn: 'Kohanim Court', desc: 'The inner courtyard. The Mizbeiach burns eternally.', bounds: { minX: -26, maxX: 26, minZ: -45, maxZ: -12 } },
-      'heichal': { name: 'היכל', nameEn: 'Sanctuary', desc: 'The golden hall. Menorah, Shulchan, and Golden Altar.', bounds: { minX: -9, maxX: 9, minZ: -78, maxZ: -45 } },
-      'kodesh-hakodashim': { name: 'קודש הקודשים', nameEn: 'Holy of Holies', desc: 'The Aron HaKodesh rests upon the Even HaShtiya.', bounds: { minX: -5, maxX: 5, minZ: -90, maxZ: -78 } }
-    };
-
-    let newArea = 'outside';
-    for (const [id, area] of Object.entries(AREAS)) {
-      if (id === 'outside') continue;
-      const b = area.bounds;
-      if (p.x >= b.minX && p.x <= b.maxX && p.z >= b.minZ && p.z <= b.maxZ) newArea = id;
+    let area = this.areaBounds.find((a) => a.entry.id === 'outside')?.entry ?? null;
+    for (const { entry, bounds: b } of this.areaBounds) {
+      if (entry.id === 'outside') continue;
+      if (p.x >= b.minX && p.x <= b.maxX && p.z >= b.minZ && p.z <= b.maxZ) area = entry;
     }
-    if (newArea !== this.currentArea) {
-      this.currentArea = newArea;
-      const a = AREAS[newArea];
-      this.callbacks.onLoc({ name: a.name, nameEn: a.nameEn, desc: a.desc });
+    if (area?.id !== this.currentArea) {
+      this.currentArea = area?.id ?? null;
+      this.store.setState({ location: area });
     }
 
-    // Holy vessels
-    const KEILIM = {
-      // === HEICHAL INTERIOR ===
-      menorah: { name: 'מנורה', nameEn: 'Golden Menorah', icon: '🕎', desc: 'Seven branches, 18 tefachim tall, pure beaten gold. Lit daily by the Kohen.', pos: { x: -3, z: -68 } },
-      shulchan: { name: 'שולחן הפנים', nameEn: 'Showbread Table', icon: '🍞', desc: '12 loaves arranged in two stacks, changed every Shabbos. Miraculously stayed fresh.', pos: { x: 3, z: -68 } },
-      mizbeiachHazahav: { name: 'מזבח הזהב', nameEn: 'Golden Incense Altar', icon: '✨', desc: 'For the Ketores (incense), offered morning and afternoon. One amah square.', pos: { x: 0, z: -75 } },
-      paroches: { name: 'פרוכת', nameEn: 'Paroches (Curtain)', icon: '🪟', desc: 'The sacred curtain separating the Heichal from the Kodesh Hakodashim. Embroidered with Keruvim.', pos: { x: 0, z: -78 } },
-
-      // === KODESH HAKODASHIM ===
-      aron: { name: 'ארון הקודש', nameEn: 'Holy Ark', icon: '📦', desc: 'Contains the Luchos. Golden Keruvim spread wings above, facing each other.', pos: { x: 0, z: -83 } },
-      evenHashtiya: { name: 'אבן השתיה', nameEn: 'Foundation Stone', icon: '🪨', desc: 'The rock from which the world was created. The Ark rested upon it.', pos: { x: 0, z: -83 } },
-
-      // === ULAM (ENTRANCE HALL) ===
-      yachin: { name: 'יכין', nameEn: 'Yachin Pillar', icon: '🏛️', desc: 'Southern copper pillar at the Ulam entrance. 18 amos tall. Name means "He establishes."', pos: { x: -5, z: -49 } },
-      boaz: { name: 'בועז', nameEn: 'Boaz Pillar', icon: '🏛️', desc: 'Northern copper pillar at the Ulam entrance. 18 amos tall. Name means "In Him is strength."', pos: { x: 5, z: -49 } },
-
-      // === AZARAS KOHANIM ===
-      mizbeiach: { name: 'מזבח העולה', nameEn: 'Great Altar', icon: '🔥', desc: '32 amos square at base, 10 amos tall. The eternal fire burned here continuously.', pos: { x: 0, z: -28 } },
-      kevesh: { name: 'כבש', nameEn: 'Altar Ramp', icon: '📐', desc: 'The ramp for ascending the altar. 32 amos long, on the south side. No steps, as commanded.', pos: { x: 0, z: -17 } },
-      kiyor: { name: 'כיור', nameEn: 'Copper Laver', icon: '💧', desc: 'Made from copper mirrors. Kohanim sanctify hands and feet before the Avodah.', pos: { x: -8, z: -38 } },
-      slaughterTables: { name: 'שולחנות השיש', nameEn: 'Marble Slaughter Tables', icon: '🔪', desc: 'Eight marble tables for preparing the sacrifices. Intestines were washed here.', pos: { x: 14, z: -38 } },
-      slaughterRings: { name: 'טבעות', nameEn: 'Slaughter Rings', icon: '⭕', desc: '24 rings set in the floor for securing animals during slaughter.', pos: { x: 8, z: -35 } },
-      hangingPillars: { name: 'עמודים', nameEn: 'Hanging Pillars', icon: '🪝', desc: 'Cedar pillars with iron hooks for hanging and skinning sacrifices.', pos: { x: 6, z: -36 } },
-      tamidLamb: { name: 'כבש התמיד', nameEn: 'Daily Tamid Lamb', icon: '🐑', desc: 'The Korban Tamid: Two yearling lambs offered daily—one at dawn, one at dusk. The perpetual offering that never ceased.', pos: { x: 10, z: -38 } },
-
-      // === CHAMBERS ===
-      lishkasHagazis: { name: 'לשכת הגזית', nameEn: 'Chamber of Hewn Stone', icon: '⚖️', desc: 'The Sanhedrin of 71 sat here, half inside the Azara. The supreme court of Israel.', pos: { x: -21, z: -35 } },
-      beisHamoked: { name: 'בית המוקד', nameEn: 'Chamber of the Hearth', icon: '🏠', desc: 'Kohanim on duty slept here. Fire burned constantly to warm them.', pos: { x: 21, z: -20 } },
-
-      // === DUCHAN & TRANSITION AREAS ===
-      duchan: { name: 'דוכן', nameEn: 'Duchan (Levite Platform)', icon: '🎵', desc: 'The Levites stood here to sing during the Avodah, between Yisrael and Kohanim.', pos: { x: 0, z: -12 } },
-
-      // === EZRAS NASHIM CHAMBERS ===
-      chamberOils: { name: 'לשכת השמנים', nameEn: 'Chamber of Oils', icon: '🫒', desc: 'Storage for oil and wine used in the Temple service.', pos: { x: -27, z: 52 } },
-      chamberLepers: { name: 'לשכת המצורעים', nameEn: 'Chamber of Lepers', icon: '🏥', desc: 'Healed metzora\'im (lepers) immersed here before bringing their offerings.', pos: { x: 27, z: 52 } },
-      chamberNazarites: { name: 'לשכת הנזירים', nameEn: 'Chamber of Nazarites', icon: '✂️', desc: 'Nazarites cooked their shelamim offerings and shaved their hair here.', pos: { x: -27, z: 14 } },
-      chamberWood: { name: 'לשכת העצים', nameEn: 'Chamber of Wood', icon: '🪵', desc: 'Kohanim with blemishes inspected wood for the altar fire here.', pos: { x: 27, z: 14 } },
-
-      // === GATES ===
-      nicanorGate: { name: 'שער ניקנור', nameEn: 'Nicanor Gate', icon: '🏛️', desc: 'The great copper gate from Alexandria. Miraculously survived a storm at sea.', pos: { x: 0, z: 8 } },
-      beautifulGate: { name: 'שער היפה', nameEn: 'Beautiful Gate', icon: '🏛️', desc: 'Main gate to Ezras Nashim, plated with Corinthian bronze.', pos: { x: 0, z: 58 } },
-      chuldahL: { name: 'שער חולדה', nameEn: 'Chuldah Gate (West)', icon: '🚪', desc: 'Southern entrance from the City of David. Named for the prophetess.', pos: { x: -27, z: 68 } },
-      chuldahR: { name: 'שער חולדה', nameEn: 'Chuldah Gate (East)', icon: '🚪', desc: 'Southern entrance from the City of David. Named for the prophetess.', pos: { x: 27, z: 68 } },
-      // Azara side gates - West
-      kindlingGate: { name: 'שער הדלק', nameEn: 'Kindling Gate', icon: '🚪', desc: 'Wood for the altar fire was brought through here.', pos: { x: -26, z: -18 } },
-      waterGate: { name: 'שער המים', nameEn: 'Water Gate', icon: '🚪', desc: 'Water for Nisuch HaMayim (water libation) on Sukkos entered here.', pos: { x: -26, z: -29 } },
-      firstlingsGate: { name: 'שער הבכורות', nameEn: 'Gate of Firstlings', icon: '🚪', desc: 'Firstborn animals for redemption were brought through this gate.', pos: { x: -26, z: -38 } },
-      // Azara side gates - East
-      hearthGate: { name: 'שער בית המוקד', nameEn: 'Hearth Gate', icon: '🚪', desc: 'Entrance to the Chamber of the Hearth where Kohanim slept.', pos: { x: 26, z: -18 } },
-      flameGate: { name: 'שער הניצוץ', nameEn: 'Flame Gate', icon: '🚪', desc: 'Fire from here was used to relight the altar if needed.', pos: { x: 26, z: -29 } },
-      sacrificeGate: { name: 'שער הקרבן', nameEn: 'Sacrifice Gate', icon: '🚪', desc: 'Kodshei Kodashim sacrifices were brought through this gate.', pos: { x: 26, z: -38 } }
-    };
-
-    let closest = null, minDist = 8;
-    for (const [id, kli] of Object.entries(KEILIM)) {
-      const d = Math.sqrt((p.x - kli.pos.x) ** 2 + (p.z - kli.pos.z) ** 2);
-      if (d < minDist) { minDist = d; closest = { id, ...kli }; }
+    let closest = null;
+    let minDist = HOTSPOT_RADIUS;
+    for (const h of this.hotspotList) {
+      const d = Math.hypot(p.x - h.x, p.z - h.z);
+      if (d < minDist) { minDist = d; closest = h.entry; }
     }
     if (closest?.id !== this.nearbyKli?.id) {
       this.nearbyKli = closest;
-      this.callbacks.onKli(closest);
+      this.store.setState({ nearbyKli: closest });
     }
   }
 
   animate() {
-    requestAnimationFrame(() => this.animate());
+    if (this.disposed) return;
+    this.raf = requestAnimationFrame(() => this.animate());
     const delta = Math.min(this.clock.getDelta(), 0.1);
     this.player.update(delta);
     this.characters.update(delta);
     this.particles.update(delta);
     this.checkLocation();
-    this.callbacks.onUpd({ position: this.camera.position, rotation: this.player.euler.y, elevation: this.player.getElevation() });
+    if (this.sky) this.sky.position.copy(this.camera.position);
+    this.frameCount = (this.frameCount ?? 0) + 1;
+    if (this.frameCount % 6 === 1) this.renderer.shadowMap.needsUpdate = true;
+    const c = this.camera.position;
+    this.store.setState({
+      frame: { x: c.x, y: c.y, z: c.z, yaw: this.player.euler.y, elev: Number(this.player.getElevation()) },
+    });
     this.renderer.render(this.scene, this.camera);
   }
 
   dispose() {
+    this.disposed = true;
+    cancelAnimationFrame(this.raf);
+    this.unsubPeriod?.();
+    this.resizeObserver?.disconnect();
+    for (const off of this.listeners) off();
+    this.listeners = [];
+    if (document.pointerLockElement === this.container) document.exitPointerLock();
+    this.scene.traverse((o) => {
+      o.geometry?.dispose?.();
+      const mats = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];
+      for (const m of mats) {
+        for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap', 'alphaMap', 'envMap']) m[k]?.dispose?.();
+        m.dispose?.();
+      }
+    });
+    this.scene.clear();
+    this.envTexture?.dispose();
     this.renderer.dispose();
+    this.renderer.domElement.remove();
+    if (window.__mikdash?.game === this) delete window.__mikdash;
   }
 }

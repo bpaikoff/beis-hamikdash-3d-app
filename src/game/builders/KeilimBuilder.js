@@ -60,33 +60,43 @@ export class KeilimBuilder extends BaseBuilder {
   }
 
   buildKevesh(baseY) {
-    // Kevesh (ramp) goes from Azaras Kohanim (z=-13) up to the altar (z=-21)
-    // Ramp must stay within Azaras Kohanim area, not extend into Azaras Yisrael
-    const rampLength = 8;  // From z=-21 to z=-13 (was 14, extending to z=-7)
-    const rampHeight = 6;
-    const rampWidth = 5;
-    const rampSteps = 16;  // Fewer steps for shorter ramp
+    // The kevesh is a smooth ramp on the SOUTH side of the altar (Mishnah Middot 3:3,
+    // Rambam Beit HaBechirah 2:13): as long as the altar is wide, rising to its top.
+    // South is -x in this scene. It is one sloped slab (walkable) over a solid wedge.
+    const altarHalf = 7; // half of the current 14 m altar footprint
+    const run = 14; // ramp length along -x
+    const rise = 9; // to the top of the ma'aracha
+    const width = 8;
+    const angle = Math.atan2(rise, run);
+    const hyp = Math.hypot(run, rise);
 
-    for (let i = 0; i < rampSteps; i++) {
-      const progress = i / rampSteps;
-      const stepY = baseY + rampHeight * (1 - progress);
-      const stepZ = -28 + 7 + progress * rampLength;  // Goes from z=-21 to z=-13
-      const stepMesh = new THREE.Mesh(
-        new THREE.BoxGeometry(rampWidth, 0.4, rampLength / rampSteps + 0.1),
-        this.mat.stone
-      );
-      stepMesh.position.set(0, stepY + 0.2, stepZ);
-      stepMesh.receiveShadow = true;
-      stepMesh.userData = { isFloor: true };
-      this.scene.add(stepMesh);
-      this.floors.push(stepMesh);
-    }
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(hyp, 0.4, width), this.mat.stone);
+    slab.position.set(-(altarHalf + run / 2), baseY + rise / 2, -28);
+    slab.rotation.z = angle; // rising toward +x (toward the altar)
+    slab.castShadow = true;
+    slab.receiveShadow = true;
+    slab.userData = { isFloor: true, isRamp: true };
+    this.scene.add(slab);
+    this.floors.push(slab);
 
-    // Ramp side walls
-    const rampSideGeo = new THREE.BoxGeometry(0.3, 1, rampLength);
-    [-rampWidth/2 - 0.15, rampWidth/2 + 0.15].forEach(sx => {
-      const side = new THREE.Mesh(rampSideGeo, this.mat.stone);
-      side.position.set(sx, baseY + rampHeight/2, -28 + 7 + rampLength/2);
+    // Solid body under the slab: a right triangle in the x-y plane extruded along z.
+    const tri = new THREE.Shape();
+    tri.moveTo(-(altarHalf + run), 0);
+    tri.lineTo(-altarHalf, 0);
+    tri.lineTo(-altarHalf, rise - 0.2);
+    tri.closePath();
+    const wedgeGeo = new THREE.ExtrudeGeometry(tri, { depth: width, bevelEnabled: false });
+    const wedge = new THREE.Mesh(wedgeGeo, this.mat.stone);
+    wedge.position.set(0, baseY, -28 - width / 2);
+    wedge.castShadow = true;
+    wedge.receiveShadow = true;
+    this.scene.add(wedge);
+
+    // Low parapets along both edges of the ramp.
+    [-width / 2 - 0.15, width / 2 + 0.15].forEach((dz) => {
+      const side = new THREE.Mesh(new THREE.BoxGeometry(hyp, 0.8, 0.3), this.mat.stone);
+      side.position.set(-(altarHalf + run / 2), baseY + rise / 2 + 0.4, -28 + dz);
+      side.rotation.z = angle;
       side.castShadow = true;
       this.scene.add(side);
     });
@@ -170,9 +180,6 @@ export class KeilimBuilder extends BaseBuilder {
       const flame = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.18, 8), new THREE.MeshBasicMaterial({ color: 0xFFDD44 }));
       flame.position.set(bx, bh + 0.26, 0);
       g.add(flame);
-      const light = new THREE.PointLight(0xFFBB44, 0.4, 4);
-      light.position.set(bx, bh + 0.3, 0);
-      g.add(light);
     });
 
     g.position.set(-3, baseY, -68);
@@ -240,7 +247,7 @@ export class KeilimBuilder extends BaseBuilder {
       g.add(ring);
     });
 
-    const glow = new THREE.PointLight(0xFFEEDD, 0.6, 5);
+    const glow = new THREE.PointLight(0xFFEEDD, 30, 0, 2); // candela, physical falloff
     glow.position.y = 1.8;
     g.add(glow);
 
@@ -290,7 +297,7 @@ export class KeilimBuilder extends BaseBuilder {
       g.add(pole);
     });
 
-    const divineLight = new THREE.PointLight(0xFFFFFF, 1.5, 15);
+    const divineLight = new THREE.PointLight(0xFFFFFF, 120, 0, 2);
     divineLight.position.y = 2.5;
     g.add(divineLight);
 

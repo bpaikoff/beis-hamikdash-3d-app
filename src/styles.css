@@ -1063,3 +1063,85 @@ canvas {
     max-height: 60dvh;
   }
 }
+
+/* Touch controls (TouchControls.js; only mounted on coarse pointers) -------- */
+.touch-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 0; /* above the canvas, below the hotspot labels (1) and the HUD */
+  pointer-events: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.touch-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.touch-move {
+  left: 0;
+}
+
+.touch-look {
+  right: 0;
+}
+
+.joystick {
+  position: absolute;
+  width: 128px;
+  height: 128px;
+  margin: -64px 0 0 -64px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: rgba(30, 30, 51, 0.35);
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.joystick.active {
+  opacity: 1;
+}
+
+.joystick-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.55);
+  border: 1px solid var(--gold);
+  box-shadow: var(--glow);
+  transform: translate(-50%, -50%);
+}
+
+.touch-jump {
+  position: absolute;
+  right: max(24px, env(safe-area-inset-right));
+  bottom: calc(max(24px, env(safe-area-inset-bottom)) + 96px);
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 1px solid var(--gold);
+  background: rgba(30, 30, 51, 0.7);
+  color: var(--gold);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-jump:active {
+  background: var(--gold-soft);
+}

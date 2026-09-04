@@ -13,6 +13,7 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { mulberry32 } from './random.js';
 import { areas, byId, hotspots, worldBounds, worldPos } from '../content/index.js';
 import { Hotspots } from './Hotspots.js'; // HUD: in-scene labels
+import { TouchControls, isTouchDevice } from './TouchControls.js'; // HUD: virtual joystick
 
 const HOTSPOT_RADIUS = 8; // metres; the nearest entry within this shows in the HUD
 
@@ -176,6 +177,7 @@ export class TempleGame {
 
     this.setupControls();
     this.hotspotLabels = new Hotspots(this.camera, this.container, this.store); // HUD: in-scene labels
+    if (isTouchDevice()) this.touch = new TouchControls(this.container, this.player); // HUD: joystick + drag-look
     this.store.setState({ loading: null });
     window.__mikdash = {
       ready: false,
@@ -248,6 +250,9 @@ export class TempleGame {
       p.isLocked = document.pointerLockElement === this.container;
       this.store.setState({ locked: p.isLocked });
     });
+    // HUD: the start screen may have locked the pointer during the build; sync that state.
+    p.isLocked = document.pointerLockElement === this.container;
+    this.store.setState({ locked: p.isLocked });
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(this.container);
   }
@@ -336,6 +341,8 @@ export class TempleGame {
     if (document.pointerLockElement === this.container) document.exitPointerLock();
     this.hotspotLabels?.dispose(); // HUD
     this.hotspotLabels = null;
+    this.touch?.dispose(); // HUD
+    this.touch = null;
     this.particles?.dispose();
     this.scene.traverse((o) => {
       o.geometry?.dispose?.();

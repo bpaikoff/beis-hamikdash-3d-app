@@ -66,6 +66,10 @@ export class PlayerController {
     this.moveR = false;
     this.isRun = false;
     this.isLocked = false;
+    // HUD: analog input from the touch joystick ({x: strafe right, y: forward}, -1..1);
+    // touchActive lets the controller move without pointer lock.
+    this.moveVec = { x: 0, y: 0 };
+    this.touchActive = false;
     this.groundY = 0;
     this.verticalVelocity = 0;
     this.isJumping = false;
@@ -80,7 +84,7 @@ export class PlayerController {
   }
 
   jump() {
-    if (!this.isJumping && this.isLocked && !this.debugMode) {
+    if (!this.isJumping && (this.isLocked || this.touchActive) && !this.debugMode) {
       this.verticalVelocity = 7;
       this.isJumping = true;
     }
@@ -106,7 +110,7 @@ export class PlayerController {
   }
 
   update(delta) {
-    if (!this.isLocked) return;
+    if (!this.isLocked && !this.touchActive) return;
     const speed = (this.isRun ? CONFIG.RUN_SPEED : CONFIG.MOVE_SPEED) * delta;
     const cam = this.camera;
 
@@ -118,13 +122,14 @@ export class PlayerController {
       if (this.moveB) _move.addScaledVector(_forward, -speed * 2);
       if (this.moveR) _move.addScaledVector(_right, speed * 2);
       if (this.moveL) _move.addScaledVector(_right, -speed * 2);
+      _move.addScaledVector(_forward, this.moveVec.y * speed * 2).addScaledVector(_right, this.moveVec.x * speed * 2); // HUD: joystick
       cam.position.add(_move);
       return;
     }
 
-    const dx = Number(this.moveR) - Number(this.moveL);
-    const dz = Number(this.moveF) - Number(this.moveB);
-    const len = Math.hypot(dx, dz) || 1;
+    const dx = Number(this.moveR) - Number(this.moveL) + this.moveVec.x; // HUD: joystick
+    const dz = Number(this.moveF) - Number(this.moveB) + this.moveVec.y; // HUD: joystick
+    const len = Math.max(1, Math.hypot(dx, dz)); // clamp to unit speed; a half-pushed stick walks slower
     cam.getWorldDirection(_forward);
     _forward.y = 0;
     _forward.normalize();

@@ -88,13 +88,15 @@ try {
     const file = `${outDir}/${v.name}.png`;
     log(`view ${v.name}: capture`);
     await page.screenshot({ path: file, timeout: 90000, animations: 'disabled' });
-    await page.evaluate(() => { if (window.__mikdash) window.__mikdash.paused = false; });
+    // Do not talk to the page again: after a capture the software renderer can wedge and any
+    // further page call hangs. The next view navigates away anyway.
     results.push({ view: v.name, file, calls: info?.calls, triangles: info?.triangles });
     console.log(`${v.name.padEnd(20)} ${file}${info ? `  calls=${info.calls} tris=${info.triangles}` : ''}`);
   }
 } finally {
   log('closing browser');
-  await Promise.race([browser.close(), new Promise((r) => setTimeout(r, 15000))]);
+  await Promise.race([browser.close().catch(() => {}), new Promise((r) => setTimeout(r, 10000))]);
   preview?.kill('SIGKILL');
 }
 console.log(JSON.stringify(results));
+process.exit(results.length ? 0 : 1);

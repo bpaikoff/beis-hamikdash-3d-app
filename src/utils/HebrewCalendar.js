@@ -1,89 +1,163 @@
 // ============================================================================
-// HEBREW CALENDAR
+// HEBREW CALENDAR  (backed by @hebcal/core)
+// ----------------------------------------------------------------------------
+// The Hebrew day begins at sunset, so `getDate(instant)` first works out the
+// civil date in Jerusalem for that instant, computes sunset there with
+// `Zmanim`, and rolls to the next Hebrew day once the sun has set.  Holidays
+// are resolved with the Israel calendar (`il = true`): no second-day yom tov.
 // ============================================================================
-export const HebrewCalendar = {
-  months: ['ניסן','אייר','סיון','תמוז','אב','אלול','תשרי','חשון','כסלו','טבת','שבט','אדר'],
-  monthsLeap: ['ניסן','אייר','סיון','תמוז','אב','אלול','תשרי','חשון','כסלו','טבת','שבט','אדר א׳','אדר ב׳'],
-  days: ['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'],
+import {
+  HDate,
+  HebrewCalendar as Hebcal,
+  Location,
+  Locale,
+  Zmanim,
+  flags,
+  gematriya,
+  months,
+} from '@hebcal/core';
 
+const JERUSALEM_TZ = 'Asia/Jerusalem';
+const jerusalem = Location.lookup('Jerusalem');
+
+const DAY_NAMES = ['יום ראשון', 'יום שני', 'יום שלישי', 'יום רביעי', 'יום חמישי', 'יום שישי', 'שבת קודש'];
+
+// Events that should never be shown as the day's `special` label: they are
+// not the day's identity (Rosh Chodesh has its own field; the rest are
+// diaspora-only, modern, or purely calendrical markers).
+const SPECIAL_EXCLUDE =
+  flags.ROSH_CHODESH |
+  flags.SHABBAT_MEVARCHIM |
+  flags.SPECIAL_SHABBAT |
+  flags.PARSHA_HASHAVUA |
+  flags.MODERN_HOLIDAY |
+  flags.MOLAD |
+  flags.YOM_KIPPUR_KATAN |
+  flags.CHUL_ONLY |
+  flags.DAF_YOMI |
+  flags.MISHNA_YOMI |
+  flags.NACH_YOMI |
+  flags.YERUSHALMI_YOMI |
+  flags.DAILY_LEARNING |
+  flags.HEBREW_DATE |
+  flags.USER_EVENT |
+  flags.OMER_COUNT;
+
+// Ordered by how strongly the event defines the day; the first match wins.
+const SPECIAL_PRIORITY = [
+  flags.CHAG,
+  flags.CHOL_HAMOED,
+  flags.MAJOR_FAST,
+  flags.EREV,
+  flags.CHANUKAH_CANDLES,
+  flags.MINOR_HOLIDAY,
+  flags.MINOR_FAST,
+];
+
+const civilPartsFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: JERUSALEM_TZ,
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+});
+
+/** The Jerusalem civil date (y, m, d) of an instant, as a machine-local Date at midnight. */
+function jerusalemCivilDate(instant) {
+  const parts = {};
+  for (const p of civilPartsFormatter.formatToParts(instant)) {
+    if (p.type !== 'literal') parts[p.type] = Number(p.value);
+  }
+  // HDate and Zmanim read only the local Y/M/D components of the Date they
+  // are given, so a local-midnight Date carrying Jerusalem's civil date is
+  // exactly what they need.
+  return new Date(parts.year, parts.month - 1, parts.day);
+}
+
+/** Strip the year that hebcal appends to a few names ("ראש השנה 5787"). */
+function cleanHebrewName(str) {
+  return str.replace(/\s+\d{4}\s*$/, '').trim();
+}
+
+// Customs that hebcal reports as minor holidays but that do not change the
+// day's identity in the Mikdash.
+const SPECIAL_EXCLUDE_DESC = new Set(['Leil Selichot']);
+
+function pickSpecial(events) {
+  const candidates = events.filter(
+    (ev) => !(ev.getFlags() & SPECIAL_EXCLUDE) && !SPECIAL_EXCLUDE_DESC.has(ev.getDesc())
+  );
+  for (const mask of SPECIAL_PRIORITY) {
+    const ev = candidates.find((e) => e.getFlags() & mask);
+    if (ev) return ev;
+  }
+  return candidates[0] || null;
+}
+
+function omerDayOf(hd) {
+  const diff = hd.abs() - new HDate(15, months.NISAN, hd.getFullYear()).abs();
+  return diff >= 1 && diff <= 49 ? diff : null;
+}
+
+export const HebrewCalendar = {
+  /** hebcal month numbering: Nissan = 1 ... Adar I = 12, Adar II = 13. */
+  months,
+  days: DAY_NAMES,
+
+  /** Hebrew numeral with geresh/gershayim, e.g. 15 -> ט״ו, 5787 -> תשפ״ז. */
   toHebrew(n) {
-    const o = ['', 'א','ב','ג','ד','ה','ו','ז','ח','ט'];
-    const t = ['', 'י','כ','ל','מ','נ','ס','ע','פ','צ'];
-    if (n < 10) return o[n];
-    if (n === 15) return 'ט״ו';
-    if (n === 16) return 'ט״ז';
-    return t[Math.floor(n/10)] + (n%10 ? '״' + o[n%10] : '');
+    return gematriya(n);
   },
 
   isLeapYear(y) {
-    return (y % 19 === 0 || y % 19 === 3 || y % 19 === 6 || y % 19 === 8 || y % 19 === 11 || y % 19 === 14 || y % 19 === 17);
+    return HDate.isLeapYear(y);
   },
 
-  getMonthLengths(year) {
-    // Correct month lengths: Nissan(30), Iyar(29), Sivan(30), Tammuz(29), Av(30), Elul(29),
-    // Tishrei(30), Cheshvan(29), Kislev(30), Teves(29), Shevat(30), Adar(29)
-    const isLeap = this.isLeapYear(year);
-    let ml = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];
-    if (isLeap) {
-      // Adar I(30), Adar II(29)
-      ml = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 30, 29];
-    }
-    return ml;
+  /** Sunset in Jerusalem (a Date) for the Jerusalem civil day containing `instant`. */
+  sunsetJerusalem(instant = new Date()) {
+    return new Zmanim(jerusalem, jerusalemCivilDate(instant), false).sunset();
   },
 
+  /**
+   * The Hebrew date in Jerusalem for an instant.  After sunset in Jerusalem
+   * the date rolls to the next Hebrew day.  An `HDate` may be passed directly
+   * (no sunset roll-over), which is what the tests and Korbanos use.
+   */
   getDate(date = new Date()) {
-    const ref = new Date(2023, 8, 16); // September 16, 2023 = Tishrei 1, 5784
-    let y = 5784, m = 7, d = 1 + Math.floor((date - ref) / 86400000);
-    let ml = this.getMonthLengths(y);
-
-    // Handle dates in the future
-    while (d > ml[m-1]) {
-      d -= ml[m-1];
-      m++;
-      if (m > ml.length) {
-        m = 1;
-        y++;
-        ml = this.getMonthLengths(y);
-      }
+    if (date instanceof HDate) return this.fromHDate(date);
+    const civil = jerusalemCivilDate(date);
+    const sunset = this.sunsetJerusalem(date);
+    let hd = new HDate(civil);
+    if (!Number.isNaN(sunset.getTime()) && date.getTime() >= sunset.getTime()) {
+      hd = hd.next();
     }
+    return this.fromHDate(hd);
+  },
 
-    // Handle dates before reference
-    while (d < 1) {
-      m--;
-      if (m < 1) {
-        y--;
-        ml = this.getMonthLengths(y);
-        m = ml.length;
-      }
-      d += ml[m-1];
-    }
-
-    const dow = date.getDay();
-    let special = null;
-    const isLeap = this.isLeapYear(y);
-    const monthName = isLeap ? this.monthsLeap[m-1] : this.months[m-1];
-
-    // Check for special days
-    if (m===7 && d<=2) special = 'ראש השנה';
-    else if (m===7 && d===10) special = 'יום הכיפורים';
-    else if (m===7 && d>=15 && d<=21) special = 'סוכות';
-    else if (m===7 && d===22) special = 'שמיני עצרת';
-    else if (m===9 && d>=25) special = 'חנוכה';
-    else if (m===10 && d<=2) special = 'חנוכה';
-    else if (m===1 && d>=15 && d<=22) special = 'פסח';
-    else if (m===3 && (d===6||d===7)) special = 'שבועות';
-    else if (m===5 && d===9) special = 'תשעה באב';
+  /** Build the HUD's date record from an HDate, using the Israel calendar. */
+  fromHDate(hd) {
+    const events = Hebcal.getHolidaysOnDate(hd, true) || [];
+    const specialEv = pickSpecial(events);
+    const dow = hd.getDay();
+    const day = hd.getDate();
+    const month = hd.getMonth();
+    const year = hd.getFullYear();
+    const holidays = events.map((ev) => cleanHebrewName(ev.render('he-x-NoNikud')));
 
     return {
-      year: y,
-      month: m,
-      day: d,
-      monthName,
-      dayName: 'יום ' + this.days[dow],
+      year,
+      month,
+      day,
+      monthName: Locale.gettext(hd.getMonthName(), 'he-x-NoNikud'),
+      dayName: DAY_NAMES[dow],
       isShabbos: dow === 6,
-      isRoshChodesh: d === 1 || d === 30,
-      formatted: this.toHebrew(d) + ' ' + monthName + ' ' + y,
-      special
+      isRoshChodesh: day === 1 || day === 30,
+      formatted: hd.renderGematriya(true),
+      special: specialEv ? cleanHebrewName(specialEv.render('he-x-NoNikud')) : null,
+      holidays,
+      omerDay: omerDayOf(hd),
+      flags: events.reduce((acc, ev) => acc | ev.getFlags(), 0),
+      isLeapYear: HDate.isLeapYear(year),
+      hdate: hd,
     };
-  }
+  },
 };

@@ -97,9 +97,15 @@ export class TempleGame {
 
   /** Show/hide groups the builders tagged with userData.period (e.g. Aron, Yachin/Boaz). */
   applyPeriod(period = this.store.getState().period) {
+    // Only vessels and free-standing structures switch with the period (Aron, keruvim,
+    // Yachin/Boaz, the Amah Traksin wall vs the two parochos). Courts, gates and chambers
+    // are tagged bayis_sheni because that is what is modelled, but they stay visible.
     this.scene.traverse((o) => {
       const p = o.userData?.period;
-      if (Array.isArray(p) && p.length) o.visible = p.includes(period);
+      if (!Array.isArray(p) || !p.length) return;
+      const type = o.userData.entryId ? byId[o.userData.entryId]?.type : 'kli';
+      if (type === 'area' || type === 'gate' || type === 'chamber') return;
+      o.visible = p.includes(period);
     });
   }
 

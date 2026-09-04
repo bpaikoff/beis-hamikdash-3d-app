@@ -7,7 +7,6 @@ import { Minimap } from './components/Minimap.jsx';
 import { Compass } from './components/Compass.jsx';
 import { Telemetry } from './components/Telemetry.jsx';
 import { store, useStore } from './store.js';
-import { styles } from './styles.js';
 
 const hasWebGL2 = () => {
   try {
@@ -55,7 +54,6 @@ export default function BeisHamikdash3D() {
 
   return (
     <>
-      <style>{styles}</style>
       <div className="game-container" ref={containerRef}>
         {started && !loading && !error && (
           <div className="overlay">

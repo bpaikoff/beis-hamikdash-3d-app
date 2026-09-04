@@ -313,6 +313,7 @@ export class TempleGame {
     for (const off of this.listeners) off();
     this.listeners = [];
     if (document.pointerLockElement === this.container) document.exitPointerLock();
+    this.particles?.dispose();
     this.scene.traverse((o) => {
       o.geometry?.dispose?.();
       const mats = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];

@@ -40,9 +40,8 @@ export class TempleBuilder {
       water: new THREE.MeshStandardMaterial({ map: this.tex.get('water'), roughness: 0.1, metalness: 0.3, transparent: true, opacity: 0.8 }),
       altar: new THREE.MeshStandardMaterial({ color: 0x5A4A40, roughness: 0.9 })
     };
-    this.tex.get('jerusalemStone').repeat.set(4, 4);
-    this.tex.get('floorTiles').repeat.set(8, 8);
-    this.tex.get('marbleWhite').repeat.set(4, 4);
+    // Tiling is per mesh (BaseBuilder.scaleBoxUVs / TILE_METRES), not texture.repeat:
+    // the textures and materials stay shared, which keeps them instancing-safe.
   }
 
   build() {

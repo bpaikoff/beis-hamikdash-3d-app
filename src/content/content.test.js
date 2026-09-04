@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { levelWorldY, levels } from './index.js';
 import { entries, areas, keilim, hotspots, worldPos, worldBounds, byId } from './index.js';
 import { toWorld, toAmos, formatLength } from './units.js';
 import data from './temple.json';

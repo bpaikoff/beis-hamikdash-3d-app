@@ -90,14 +90,21 @@ Conventions:
   inside the Azarah bounds test. `beis_hamoked_gate` is in the hall's south wall (x 52.5).
   Chambers that straddle a wall (`lishkas_hagazis`, `beis_hamoked`) are centred on the wall
   line; the two that stand wholly outside it (`lishkas_haetz`, `lishkas_palhedrin`) carry
-  `outsideWall` and may reach the Cheil's outer edge (x ±83.5).
+  `outsideWall` and are 10 wide so they fill the Cheil strip exactly to its outer edge
+  (x ±83.5, the Soreg line) and no further. Palhedrin is beside the Water Gate in the south
+  and Beis Avtinas an upper storey on the north wall (Yoma 19a); the Kohen Gadol's first
+  immersion was on the Water Gate's roof beside Palhedrin (Yoma 31a).
 - The thirteen-gate count (Abba Yose ben Chanan, Middot 2:6) is fully represented.
   Gates with `gateScheme: ["middos_2_6"]` only are optional for the builders; two of them
   (`shaar_yechonya`, `shaar_hashir`) share an opening with `nitzotz_gate` and
   `beis_hamoked_gate` — build one opening, label both. The dispute is recorded on every
   gate involved.
 - Bayis Rishon-only items (`aron`, `keruvim`, `yachin`, `boaz`) carry `period: ["bayis_rishon"]`;
-  `amah_traksin` and `paroches` describe both periods in their notes.
+  `amah_traksin` and `paroches` describe both periods in their notes. `ulam`, `heichal` and
+  `kodesh_hakodashim` carry both periods (their measures are Bayis Sheni, Middot 4:6-7) so the
+  Bayis Rishon items have a building to stand in.
+- `beis_hamoked` and everything in it sit at y 2.5: its Azarah gate opens onto the Ezras
+  Kohanim strip (z −11 .. −22), whose floor is at that level.
 - Sefaria spellings: `Mishnah Middot 3:1`, `Mishnah Tamid 3:9`, `Mishnah Yoma 3:3`,
   `Yoma 51b`, `Mishneh Torah, The Chosen Temple 5:4`, `Mishnah Shekalim 6:4`, `Numbers 28:15`,
   `I Kings 7:21`, `II Chronicles 3:14`. One ref per string (no ranges).
@@ -134,3 +141,38 @@ Unique ids; bilingual name/desc; azarah frame; areas have bounds; ref-shaped sou
 entries and children; required ids exist; ≥2 sources, 2-4 questions, icon and parent area
 on every non-area; known `geometry.kind` and units; Azarah items inside x ±67.5, z −187..0;
 the Middot 5:1 arithmetic (altar −38, Heichal −118, Kodesh HaKodashim −149, levels).
+
+## Review log
+
+### 2026-09-04 — content-reviewer (94 rows, 39 "fix")
+
+Applied 36 rows in full (every high/medium row and the low-confidence wording rows):
+Heichal door / Ulam beams and vine (Middot 3:7-8, 4:1-2); Ulam paroches moved out of
+`disputes`; altar offset dispute corrected (Zevachim 58b, Yoma 16b) and the 28 × 28 tier
+distinguished from the 24 × 24 ma'aracha; Tamid ceased on 17 Tammuz (Taanit 4:6); small
+kevesh shirayim on the southern yesod (Zevachim 5:3); Tadi Gate per Middot 1:9; menorah
+duplicate dimension; paroches 82 ribo; ring-area and table notes; unsourced `maalos_shir`
+dispute removed; Gazis girsa stated; `ulam`/`heichal`/`kodesh_hakodashim` in both periods;
+Palhedrin south beside the Water Gate and Beis Avtinas north (Yoma 19a, 31a); Etz and
+Palhedrin 10 wide inside the Soreg; Beis HaMoked at y 2.5; Yachin/Boaz at z −74; Aron
+north-south (Menachot 98a); Ulam steps 4/3/4/3/4/4 = 22; ta'im storey 15. Sources added
+where the reviewer named them (Yoma 31a, Yoma 16b, Zevachim 58b, Mishnah Taanit 4:6,
+Menachot 98a, Mishnah Middot 3:8, 4:5, Mishnah Zevachim 5:3, Mishnah Shekalim 8:4,
+I Kings 6:2, 6:10, II Chronicles 3:17); all 166 refs verified on Sefaria.
+
+Applied as notes only (low-confidence geometry/position rows, nothing moved):
+- `kevesh_katan_west` / `kevesh_katan_east` geometry: the builder already builds these as
+  level walkways leaving the kevesh where it reaches yesod / sovev height, which is the
+  reviewer's reconstruction; the JSON notes now say so and `position` is documented as the
+  hotspot only. Dimension `rise` relabelled `height at the altar` (builder follows).
+- `slaughter_tables` geometry: the Middot 3:5 "between the pillars" tension is stated in
+  `geometry.notes`; the column at x 52 stays.
+- `duchan` position: the area/bounds mismatch is stated in `position.note`; `area` stays
+  `azaras_yisrael` and the flight stays at z −11 .. −14.
+
+Builder adjustments made so the geometry follows the JSON: Beis Avtinas door/corbels are
+side-aware and its mikveh moved to the wall top over the Water Gate; the Beis HaMoked
+flight is built only if the hall lies below the court; the Ulam steps group 4-4-4 with a
+top rovad; the ta storey height is read from `geometry.h`; Yachin/Boaz use their content z;
+the Aron's keruvim stand at the ends of its long (north-south) side. Two test waypoints
+moved with the entries (Beis HaMoked hall level; Lishkas HaEtz west wall).

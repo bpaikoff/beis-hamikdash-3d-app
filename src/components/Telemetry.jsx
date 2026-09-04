@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { store } from '../store.js';
 import { toAmos } from '../content/units.js';
 

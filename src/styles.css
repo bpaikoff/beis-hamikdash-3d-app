@@ -791,3 +791,275 @@ canvas {
     display: none;
   }
 }
+
+/* Hotspot card (expanded) -------------------------------------------------- */
+.hotspot-card {
+  width: 400px;
+  max-width: calc(100vw - 2 * var(--hud-gap));
+  max-height: calc(100vh - 130px);
+  max-height: calc(100dvh - 130px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 22px 22px;
+  outline: none;
+}
+
+.hotspot-card:focus-visible {
+  outline: 2px solid var(--gold);
+}
+
+.card-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin: -6px -8px 6px 0;
+}
+
+.card-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.card-close:hover,
+.card-close:focus-visible {
+  background: var(--gold);
+  color: #241a05;
+}
+
+.lang-btn {
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.lang-btn:hover,
+.lang-btn:focus-visible {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.hotspot-card .icon {
+  font-size: 2.6rem;
+  margin: 0;
+  flex: none;
+}
+
+.card-titles {
+  min-width: 0;
+}
+
+.hotspot-card .name-heb {
+  font-size: 1.7rem;
+  line-height: 1.15;
+}
+
+.hotspot-card .name-en {
+  margin-bottom: 2px;
+}
+
+[dir='rtl'] .card-head {
+  flex-direction: row;
+}
+
+[dir='rtl'] .card-titles {
+  text-align: right;
+}
+
+.period-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--gold-soft);
+  color: var(--gold);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+}
+
+.hotspot-card .desc {
+  font-size: 0.98rem;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+.card-section {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.card-section h4,
+.card-section summary {
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+[lang='he'] .card-section h4,
+[lang='he'] .card-section summary {
+  letter-spacing: 0;
+  font-size: 0.95rem;
+}
+
+.dims .dim {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+  padding: 4px 0;
+}
+
+.dims dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+  min-width: 90px;
+  text-transform: capitalize;
+}
+
+.dims dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+}
+
+.dim-value {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.dim-note {
+  color: var(--faint);
+  font-size: 0.8rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.source-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  padding: 2px 9px;
+  border-radius: 12px;
+  background: var(--gold-soft);
+  color: var(--gold);
+  border: 1px solid var(--line);
+  direction: ltr;
+  transition: background 0.15s, color 0.15s;
+}
+
+.source-chip:hover,
+.source-chip:focus-visible {
+  background: var(--gold);
+  color: var(--surface);
+  text-decoration: none;
+}
+
+.disputes summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.disputes summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform 0.15s;
+}
+
+[dir='rtl'] .disputes summary::before {
+  margin-right: 0;
+  margin-left: 6px;
+}
+
+.disputes[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.disputes ul {
+  list-style: none;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.disputes > ul > li {
+  padding: 4px 0;
+}
+
+.disputes ul ul {
+  color: var(--muted);
+  padding-left: 14px;
+  margin-top: 2px;
+}
+
+.disputes ul ul li::before {
+  content: '– ';
+}
+
+.questions ul {
+  list-style: none;
+}
+
+.questions li {
+  padding: 3px 0;
+}
+
+.questions a {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.questions a:hover,
+.questions a:focus-visible {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+  text-decoration: none;
+}
+
+.questions .ext {
+  color: var(--gold);
+}
+
+@media (max-width: 900px) {
+  .hotspot-card {
+    width: auto;
+    max-width: none;
+    max-height: 60vh;
+    max-height: 60dvh;
+  }
+}

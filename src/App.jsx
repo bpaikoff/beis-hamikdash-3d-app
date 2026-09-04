@@ -6,8 +6,8 @@ import { TempleGame } from './game/TempleGame.js';
 import { Minimap } from './components/Minimap.jsx';
 import { Compass } from './components/Compass.jsx';
 import { Telemetry } from './components/Telemetry.jsx';
+import { HotspotCard } from './components/HotspotCard.jsx';
 import { store, useStore } from './store.js';
-import { byId } from './content/index.js';
 
 const hasWebGL2 = () => {
   try {
@@ -36,7 +36,6 @@ export default function BeisHamikdash3D() {
   const nearbyKli = useStore((s) => s.nearbyKli);
   const selected = useStore((s) => s.selected);
   const focused = useStore((s) => s.focused);
-  const selectedEntry = selected ? byId[selected] : null;
   const debug = useStore((s) => s.debug);
   const lang = useStore((s) => s.lang);
 
@@ -75,19 +74,11 @@ export default function BeisHamikdash3D() {
               <Minimap />
             </div>
 
-            {focused && !selectedEntry && (
+            {focused && !selected && (
               <div className="interact-hint"><kbd>E</kbd>Inspect</div>
             )}
 
-            {selectedEntry && (
-              <div className="panel kli-panel" key={selectedEntry.id}>
-                <button type="button" className="card-close" aria-label="Close" onClick={() => store.setState({ selected: null })}>×</button>
-                <div className="icon" aria-hidden="true">{selectedEntry.icon}</div>
-                <div className="name-heb" dir="rtl">{selectedEntry.name.he}</div>
-                <div className="name-en">{selectedEntry.name.en}</div>
-                <div className="desc" dir={lang === 'he' ? 'rtl' : 'ltr'}>{t(selectedEntry.desc)}</div>
-              </div>
-            )}
+            <HotspotCard />
 
             {showKorbanos && (
               <div className="panel korbanos-panel">

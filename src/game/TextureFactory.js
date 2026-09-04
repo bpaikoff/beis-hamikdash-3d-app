@@ -1,29 +1,83 @@
 import * as THREE from 'three';
 import { mulberry32 } from './random.js';
 
+/**
+ * Every procedural texture, in bake order. `scripts/bake_textures.mjs` renders each one to
+ * public/textures/<name>.webp; at runtime get(name) loads that file and only falls back
+ * to the canvas generator when the file is missing or the page runs with ?bake=0.
+ */
+export const TEXTURE_NAMES = [
+  'jerusalemStone', 'goldPolished', 'goldEngraved', 'copper', 'copperPatina', 'cedarWood',
+  'acaciaWood', 'marbleWhite', 'marbleRose', 'techeiles', 'argaman', 'whiteLinen', 'paroches',
+  'groundSand', 'floorTiles', 'mosaic', 'water', 'sheepWool', 'bullHide', 'goatHide', 'normalMap',
+];
+
+/** Per-texture settings that apply to both the baked and the canvas path. */
+const META = {
+  normalMap: { srgb: false },
+};
+
+export const BAKED_PATH = '/textures/';
+
 // ============================================================================
-// TEXTURE FACTORY - 30 REALISTIC TEXTURES
+// TEXTURE FACTORY - 21 procedural textures, baked to WebP at build time
 // ============================================================================
 export class TextureFactory {
-  /** @param {{maxAnisotropy?: number}} [opts] renderer.capabilities.getMaxAnisotropy() */
+  /**
+   * @param {{maxAnisotropy?: number, baked?: boolean, manager?: THREE.LoadingManager}} [opts]
+   *   maxAnisotropy: renderer.capabilities.getMaxAnisotropy();
+   *   baked: try public/textures/<name>.webp first (default true; pass false for ?bake=0);
+   *   manager: shared LoadingManager (one is created when omitted).
+   */
   constructor(opts = {}) {
     this.cache = new Map();
     this.size = 1024;
     this.maxAnisotropy = opts.maxAnisotropy ?? 4;
+    this.baked = opts.baked ?? true;
+    this.manager = opts.manager ?? new THREE.LoadingManager();
+    this.loader = new THREE.TextureLoader(this.manager);
     this.rand = mulberry32(1);
+    this.loaded = 0; // baked files finished (ok or fallen back)
+    this.total = 0; // baked files requested
+    this.progressHandlers = [];
+    this.waiters = [];
   }
 
   /**
    * Every colour texture is authored in sRGB; telling three so keeps the colours from
    * washing out under the sRGB output. Anisotropy keeps the 8x-repeated floors sharp at
    * grazing angles. Normal maps are linear data and skip the colour-space tag.
+   * `update` is false for a texture whose image has not arrived yet (the loader flags
+   * it when the file lands).
    */
-  finish(tex, { srgb = true } = {}) {
+  finish(tex, { srgb = true, update = true } = {}) {
     tex.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     tex.anisotropy = this.maxAnisotropy;
-    tex.needsUpdate = true;
+    if (update) tex.needsUpdate = true;
     return tex;
+  }
+
+  /** @param {(loaded: number, total: number) => void} fn called after each baked file. */
+  onProgress(fn) {
+    this.progressHandlers.push(fn);
+    return () => { this.progressHandlers = this.progressHandlers.filter((h) => h !== fn); };
+  }
+
+  /** Resolves once every baked texture requested so far has loaded or fallen back. */
+  whenLoaded() {
+    if (this.loaded >= this.total) return Promise.resolve();
+    return new Promise((resolve) => this.waiters.push(resolve));
+  }
+
+  settle() {
+    this.loaded++;
+    for (const h of this.progressHandlers) h(this.loaded, this.total);
+    if (this.loaded >= this.total) {
+      const w = this.waiters;
+      this.waiters = [];
+      for (const r of w) r();
+    }
   }
 
   perlin(w, h, scale = 1, octaves = 4, persistence = 0.5) {
@@ -398,7 +452,6 @@ export class TextureFactory {
     }
     const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(8, 8);
     return tex;
   }
 
@@ -532,14 +585,51 @@ export class TextureFactory {
     return this.finish(new THREE.CanvasTexture(c), { srgb: false });
   }
 
-  get(name) {
-    if (this.cache.has(name)) return this.cache.get(name);
+  /** Run the canvas generator for `name` (deterministic: seeded by the name). */
+  generate(name) {
+    if (!TEXTURE_NAMES.includes(name)) return undefined;
     // Seed per texture name so each texture is identical on every load, in any order.
     let seed = 0;
     for (const ch of name) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
     this.rand = mulberry32(seed || 1);
-    const tex = this[name]?.();
-    if (tex) this.cache.set(name, tex);
+    return this[name]();
+  }
+
+  /**
+   * Shared texture for `name`. With `baked` on, returns a texture that fills in from
+   * /textures/<name>.webp (through the LoadingManager) and silently regenerates on the
+   * canvas when the file is missing; the returned object is stable either way, so
+   * materials can hold it immediately.
+   */
+  get(name) {
+    if (this.cache.has(name)) return this.cache.get(name);
+    if (!TEXTURE_NAMES.includes(name)) return undefined;
+    let tex;
+    if (this.baked) {
+      this.total++;
+      tex = this.loader.load(
+        `${BAKED_PATH}${name}.webp`,
+        () => this.settle(),
+        undefined,
+        () => {
+          const fallback = this.generate(name);
+          tex.image = fallback.image;
+          tex.needsUpdate = true;
+          fallback.dispose();
+          this.settle();
+        }
+      );
+      this.finish(tex, { ...META[name], update: false });
+    } else {
+      tex = this.generate(name);
+    }
+    this.cache.set(name, tex);
     return tex;
+  }
+
+  /** Release every cached texture. */
+  dispose() {
+    for (const t of this.cache.values()) t.dispose();
+    this.cache.clear();
   }
 }

@@ -82,7 +82,7 @@ export class TempleGame {
     const r = this.renderer;
     r.setSize(this.container.clientWidth, this.container.clientHeight);
     r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    r.shadowMap.enabled = true;
+    r.shadowMap.enabled = new URLSearchParams(window.location.search).get('shadows') !== '0';
     r.shadowMap.type = THREE.PCFSoftShadowMap;
     r.toneMapping = THREE.ACESFilmicToneMapping;
     r.toneMappingExposure = 1.2;

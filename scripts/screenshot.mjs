@@ -24,6 +24,15 @@ const VIEWS = [
   { name: 'kodesh_hakodashim', cam: '0,10,-80,0,0' },
 ];
 
+// Hard watchdog: SwiftShader can wedge a renderer so that even browser.close() never
+// returns; never let a CI job sit for hours.
+const WATCHDOG_MS = 15 * 60 * 1000;
+setTimeout(() => {
+  console.error(`screenshot: watchdog fired after ${WATCHDOG_MS / 60000} min, exiting`);
+  process.exit(2);
+}, WATCHDOG_MS).unref();
+const log = (m) => console.log(`[${new Date().toISOString().slice(11, 19)}] ${m}`);
+
 const args = process.argv.slice(2);
 const opt = (k, d) => (args.includes(k) ? args[args.indexOf(k) + 1] : d);
 const only = opt('--only');
@@ -56,13 +65,17 @@ const results = [];
 try {
   for (const v of VIEWS) {
     if (only && v.name !== only) continue;
-    await page.goto(`${base}/?cam=${v.cam}&autostart=1`, { waitUntil: 'load' });
+    log(`view ${v.name}: goto`);
+    await page.goto(`${base}/?cam=${v.cam}&autostart=1&shadows=0&bloom=0`, { waitUntil: 'load', timeout: 60000 });
     // Older builds have no ?autostart; click through the start screen if it is there.
     const btn = page.locator('.start-btn');
     if (await btn.count()) await btn.first().click();
-    await page
-      .waitForFunction(() => window.__mikdash?.ready === true, null, { timeout: 60000 })
-      .catch(() => page.waitForTimeout(8000));
+    const ready = await page
+      .waitForFunction(() => window.__mikdash?.ready === true, null, { timeout: 90000 })
+      .then(() => true)
+      .catch(() => false);
+    log(`view ${v.name}: ready=${ready}`);
+    if (!ready) await page.waitForTimeout(5000);
     await page.waitForTimeout(500); // one settled frame
     const info = await page.evaluate(() => {
       const m = window.__mikdash;
@@ -73,13 +86,15 @@ try {
     });
     await page.waitForTimeout(300);
     const file = `${outDir}/${v.name}.png`;
-    await page.screenshot({ path: file, timeout: 120000, animations: 'disabled' });
+    log(`view ${v.name}: capture`);
+    await page.screenshot({ path: file, timeout: 90000, animations: 'disabled' });
     await page.evaluate(() => { if (window.__mikdash) window.__mikdash.paused = false; });
     results.push({ view: v.name, file, calls: info?.calls, triangles: info?.triangles });
     console.log(`${v.name.padEnd(20)} ${file}${info ? `  calls=${info.calls} tris=${info.triangles}` : ''}`);
   }
 } finally {
-  await browser.close();
-  preview?.kill();
+  log('closing browser');
+  await Promise.race([browser.close(), new Promise((r) => setTimeout(r, 15000))]);
+  preview?.kill('SIGKILL');
 }
 console.log(JSON.stringify(results));

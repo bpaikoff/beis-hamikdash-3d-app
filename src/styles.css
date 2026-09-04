@@ -1145,3 +1145,48 @@ canvas {
 .touch-jump:active {
   background: var(--gold-soft);
 }
+
+/* Pointer-lock prompt ------------------------------------------------------ */
+.lock-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none; /* clicks fall through to the container, which locks the pointer */
+  background: rgba(13, 13, 26, 0.35);
+  animation: fadeIn 0.2s ease;
+}
+
+.lock-overlay-inner {
+  background: var(--panel-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+  padding: 18px 28px;
+  text-align: center;
+  box-shadow: var(--card-shadow), var(--glow);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.lock-overlay-title {
+  color: var(--gold);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.lock-overlay-sub {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 6px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

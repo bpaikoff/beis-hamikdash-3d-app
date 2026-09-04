@@ -7,6 +7,7 @@ import { Minimap } from './components/Minimap.jsx';
 import { Compass } from './components/Compass.jsx';
 import { Telemetry } from './components/Telemetry.jsx';
 import { HotspotCard } from './components/HotspotCard.jsx';
+import { LockOverlay } from './components/LockOverlay.jsx';
 import { store, useStore } from './store.js';
 
 const hasWebGL2 = () => {
@@ -55,6 +56,18 @@ export default function BeisHamikdash3D() {
 
   const t = (obj) => (obj ? obj[lang] ?? obj.en : '');
 
+  // Start and take the pointer in the same user gesture; the game syncs the lock state once
+  // its controls exist. Browsers without pointer lock (touch) just start.
+  const enter = () => {
+    setStarted(true);
+    const el = containerRef.current;
+    try {
+      el?.requestPointerLock?.()?.catch?.(() => {});
+    } catch {
+      /* unsupported */
+    }
+  };
+
   return (
     <>
       <div className="game-container" ref={containerRef}>
@@ -79,6 +92,7 @@ export default function BeisHamikdash3D() {
             )}
 
             <HotspotCard />
+            <LockOverlay />
 
             {showKorbanos && (
               <div className="panel korbanos-panel">
@@ -152,7 +166,7 @@ export default function BeisHamikdash3D() {
               </div>
 
               {webgl ? (
-                <button className="start-btn" onClick={() => setStarted(true)}>Enter the Temple</button>
+                <button className="start-btn" onClick={enter}>Enter the Temple</button>
               ) : (
                 <p className="footer">This walkthrough needs WebGL 2, which this browser does not provide.</p>
               )}

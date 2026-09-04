@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../../config.js';
 import { BaseBuilder } from './BaseBuilder.js';
+import { byId, worldPos } from '../../content/index.js';
 
 // ============================================================================
 // LIGHTING BUILDER - Scene lighting setup
@@ -37,7 +38,8 @@ export class LightingBuilder extends BaseBuilder {
 
     // Heichal interior: candela, no cutoff, physical decay.
     const heichalLight = new THREE.PointLight(0xffdd88, 250, 0, 2);
-    heichalLight.position.set(0, 18, -62);
+    const [hx, hy, hz] = worldPos(byId.heichal); // the Heichal's centre, from the content JSON
+    heichalLight.position.set(hx, hy + 9, hz);
     heichalLight.name = 'heichalLight';
     this.scene.add(heichalLight);
   }

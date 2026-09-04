@@ -325,7 +325,7 @@
       "type": "kli",
       "name": {"he": "אבן השתיה", "en": "Foundation Stone"},
       "desc": {"he": "אבן השתייה בקודש הקודשים, שממנה הושתת העולם. בבית שני, משנגנז הארון, נשארה האבן לבדה, גבוהה שלוש אצבעות מן הרצפה, ועליה הניח הכהן הגדול את מחתת הקטורת ביום הכיפורים.", "en": "The Foundation Stone in the Holy of Holies, from which the world was founded. In the Second Temple, with the Ark hidden, the stone alone remained, three fingerbreadths above the floor; on it the Kohen Gadol set down the incense pan on Yom Kippur."},
-      "period": ["bayis_sheni"],
+      "period": ["bayis_rishon", "bayis_sheni"],
       "dimensions": [
         {"label": "height above floor", "value": 3, "unit": "etzba", "source": "Mishnah Yoma 5:2", "note": ""}
       ],

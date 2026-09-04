@@ -1255,3 +1255,7 @@ canvas {
 .start-panel .footer a {
   color: var(--gold-dim);
 }
+
+.game-container:focus {
+  outline: none; /* programmatic focus target only (card close) */
+}

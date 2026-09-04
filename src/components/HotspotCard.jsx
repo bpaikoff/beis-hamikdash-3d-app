@@ -48,7 +48,9 @@ export function HotspotCard() {
   useEffect(() => {
     if (!entry) return;
     restoreFocus.current = document.activeElement;
-    ref.current?.focus({ preventScroll: true });
+    const card = ref.current;
+    const canvasHost = card?.closest('.game-container') ?? null;
+    card?.focus({ preventScroll: true });
     const onKey = (e) => {
       if (e.key !== 'Escape' || document.pointerLockElement) return;
       e.preventDefault();
@@ -57,10 +59,11 @@ export function HotspotCard() {
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
+      // Focus goes back where it came from, or to the game container (the canvas host,
+      // tabIndex -1) so keyboard movement and Escape keep reaching the game.
       const prev = restoreFocus.current;
-      if (prev && prev.isConnected && typeof prev.focus === 'function' && prev !== document.body) {
-        prev.focus({ preventScroll: true });
-      }
+      const target = prev && prev.isConnected && prev !== document.body && !card?.contains(prev) ? prev : canvasHost;
+      if (target && typeof target.focus === 'function') target.focus({ preventScroll: true });
     };
   }, [entry]);
 

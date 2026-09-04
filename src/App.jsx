@@ -80,13 +80,13 @@ export default function BeisHamikdash3D() {
 
   return (
     <>
-      <div className="game-container" ref={containerRef}>
+      <div className="game-container" ref={containerRef} tabIndex={-1}>
         {started && !loading && !error && (
           <div className="overlay">
-            <div className="crosshair"><div className="crosshair-dot"></div></div>
+            <div className="crosshair" aria-hidden="true"><div className="crosshair-dot"></div></div>
 
             <div className="hud-top">
-              <div className="panel date-panel" dir="rtl">
+              <div className="panel date-panel" dir="rtl" lang="he">
                 <div className="date-hebrew">{hebrewDate.formatted}</div>
                 <div className="date-day">{hebrewDate.dayName}</div>
                 {hebrewDate.special && <div className="date-special">{hebrewDate.special}</div>}
@@ -106,30 +106,30 @@ export default function BeisHamikdash3D() {
 
             {showKorbanos && (
               <div className="panel korbanos-panel">
-                <h3 dir="rtl">קרבנות היום</h3>
+                <h3 dir="rtl" lang="he">קרבנות היום</h3>
                 {korbanos.map((k, i) => (
                   <div key={i} className="korban-item">
-                    <div className="korban-name" dir="rtl">{k.name}</div>
-                    <div className="korban-name-en">{k.en}</div>
-                    <div className="korban-desc">{k.desc}</div>
-                    <span className="korban-type">{k.type}</span>
+                    <div className="korban-name" dir="rtl" lang="he">{k.name}</div>
+                    <div className="korban-name-en" lang="en">{k.en}</div>
+                    <div className="korban-desc" lang="en">{k.desc}</div>
+                    <span className="korban-type" lang="en">{k.type}</span>
                   </div>
                 ))}
               </div>
             )}
 
             <div className="hud-bottom">
-              <div className="panel location-panel">
+              <div className="panel location-panel" aria-live="polite" aria-atomic="true">
                 {location && (
                   <>
-                    <div className="location-hebrew" dir="rtl">{location.name.he}</div>
-                    <div className="location-english">{location.name.en}</div>
-                    <div className="location-desc" dir={lang === 'he' ? 'rtl' : 'ltr'}>{t(location.desc)}</div>
+                    <div className="location-hebrew" dir="rtl" lang="he">{location.name.he}</div>
+                    <div className="location-english" lang="en">{location.name.en}</div>
+                    <div className="location-desc" dir={lang === 'he' ? 'rtl' : 'ltr'} lang={location.desc?.[lang] ? lang : 'en'}>{t(location.desc)}</div>
                     {debug && <Telemetry />}
                   </>
                 )}
               </div>
-              <div className="controls-hint">
+              <div className="controls-hint" lang="en">
                 <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move •{' '}
                 <kbd>Space</kbd> Jump •{' '}
                 <kbd>Shift</kbd> Run •{' '}

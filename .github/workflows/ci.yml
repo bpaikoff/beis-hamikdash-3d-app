@@ -17,8 +17,15 @@ jobs:
       - run: npm test -- --run
       - run: npm run build
       - run: npx playwright install --with-deps chromium
+      - run: npm run bake
+      - run: npm run build
       - run: npm run screenshot
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: screenshots
           path: screenshots/auto
+      - uses: actions/upload-artifact@v4
+        with:
+          name: textures
+          path: public/textures

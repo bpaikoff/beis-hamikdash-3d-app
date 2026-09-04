@@ -17,7 +17,7 @@ import { TouchControls, isTouchDevice } from './TouchControls.js'; // HUD: virtu
 
 const HOTSPOT_RADIUS = 8; // metres; the nearest entry within this shows in the HUD
 
-const BLOOM = { strength: 0.35, radius: 0.6, threshold: 0.9 };
+const BLOOM = { strength: 0.18, radius: 0.35, threshold: 1.0 };
 
 /**
  * Bloom needs WebGL2 (MSAA + half-float render targets) and is skipped on phones/tablets
@@ -107,7 +107,7 @@ export class TempleGame {
     r.shadowMap.enabled = new URLSearchParams(window.location.search).get('shadows') !== '0';
     r.shadowMap.type = THREE.PCFSoftShadowMap;
     r.toneMapping = THREE.ACESFilmicToneMapping;
-    r.toneMappingExposure = 1.2;
+    r.toneMappingExposure = 0.85; // 1.2 blew out the sand and stone once the IBL and physical sun arrived
     r.outputColorSpace = THREE.SRGBColorSpace;
     r.domElement.style.display = 'block';
     // Static scene: render the shadow map once, then refresh it every few frames for the

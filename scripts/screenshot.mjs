@@ -16,7 +16,7 @@ import { mkdirSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 
 const VIEWS = [
-  { name: 'hero', cam: '0,4,110,0,-4' },              // Har HaBayis, looking west at the complex
+  { name: 'hero', cam: '0,4,66,0,-3' },               // Har HaBayis, looking west at the Ezras Nashim gate
   { name: 'ezras_nashim_steps', cam: '0,6,22,0,-6' },  // toward Nicanor and the 15 steps
   { name: 'mizbeach_kevesh', cam: '14,10,-14,45,-8' }, // altar with the ramp on its south
   { name: 'ulam_facade', cam: '0,9,-36,0,4' },         // Ulam entrance

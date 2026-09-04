@@ -14,7 +14,7 @@ export class LightingBuilder extends BaseBuilder {
   build() {
     this.scene.add(new THREE.AmbientLight(0xfff8f0, 0.15));
 
-    const sun = new THREE.DirectionalLight(0xfffaf0, 2.2);
+    const sun = new THREE.DirectionalLight(0xfffaf0, 1.6);
     sun.position.set(60, 120, 50);
     sun.castShadow = true;
     sun.shadow.mapSize.set(CONFIG.SHADOW_MAP_SIZE, CONFIG.SHADOW_MAP_SIZE);

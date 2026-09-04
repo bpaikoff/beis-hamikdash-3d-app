@@ -212,7 +212,7 @@ export class KeilimBuilder extends BaseBuilder {
     for (const id of ['kevesh_katan_east', 'kevesh_katan_west']) {
       const e = byId[id];
       const g = this.groupFor(e);
-      const target = e.dimensions.find((d) => d.label === 'rise').value; // 6 (sovev) or 1 (yesod)
+      const target = e.dimensions.find((d) => d.label === 'height at the altar').value; // 6 (sovev) or 1 (yesod)
       const xStart = xFoot + (target / rise) * len; // where the kevesh is `target` high
       const xEnd = id === 'kevesh_katan_east' ? xFace + 1 : xFace; // sovev face is 1 in from the base edge
       const b = {

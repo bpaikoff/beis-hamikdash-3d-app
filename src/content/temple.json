@@ -126,7 +126,7 @@
       "type": "area",
       "name": {"he": "היכל", "en": "Sanctuary"},
       "desc": {"he": "הבית עצמו: אולם, היכל וקודש הקודשים. ההיכל ארבעים אמה אורכו ועשרים רוחבו ומאה אמה גובהו, ובו המנורה בדרום, השולחן בצפון ומזבח הזהב ביניהם. נכנסים אליו רק לעבודה.", "en": "The Temple building itself: Ulam, Heichal and Kodesh HaKodashim. The Heichal was forty amos long, twenty wide and a hundred tall, holding the Menorah on the south, the Table on the north and the golden altar between them. Kohanim entered only for the service."},
-      "period": ["bayis_sheni"],
+      "period": ["bayis_rishon","bayis_sheni"],
       "bounds": {"minX": -10, "maxX": 10, "minZ": -138, "maxZ": -98},
       "dimensions": [
         {"label": "length", "value": 40, "unit": "amah", "source": "Mishnah Middot 4:7", "note": ""},
@@ -137,8 +137,8 @@
         {"label": "building width", "value": 70, "unit": "amah", "source": "Mishnah Middot 4:7", "note": "north to south, including walls, ta'im, mesibah and the water channel"},
         {"label": "building length", "value": 100, "unit": "amah", "source": "Mishnah Middot 4:7", "note": "east to west, from the Ulam wall to the back wall of the western ta"}
       ],
-      "position": {"frame": "azarah", "x": 0, "y": 8.5, "z": -118, "unit": "amah", "source": "Mishnah Middot 4:7", "note": "legacy: x 0, y 3, z -139 (pre-2026 scene coordinates converted to amos); now interior 20 x 40 (Middot 4:7): x -10 .. 10, z -98 .. -138 (Ulam wall 5, Ulam 11, Heichal wall 6 west of the building front at z -76); floor 8.5 above the Azarah (Middot 2:6 + 3:6)"},
-      "sources": ["Mishnah Middot 4:6","Mishnah Middot 4:7","Mishnah Kelim 1:9","Yoma 33b"],
+      "position": {"frame": "azarah", "x": 0, "y": 8.5, "z": -118, "unit": "amah", "source": "Mishnah Middot 4:7", "note": "legacy: x 0, y 3, z -139 (pre-2026 scene coordinates converted to amos); now interior 20 x 40 (Middot 4:7): x -10 .. 10, z -98 .. -138 (Ulam wall 5, Ulam 11, Heichal wall 6 west of the building front at z -76); floor 8.5 above the Azarah (Middot 2:6 + 3:6). Shown in both periods so that the Bayis Rishon items (aron, keruvim, yachin, boaz) have a building to stand in; the measures are Bayis Sheni (Middot 4:7), the Bayis Rishon house was 60 x 20 x 30 (I Kings 6:2)"},
+      "sources": ["Mishnah Middot 4:6","Mishnah Middot 4:7","Mishnah Kelim 1:9","Yoma 33b","I Kings 6:2"],
       "questions": [
         {"he": "מי רשאי להיכנס להיכל ומתי?", "en": "Who may enter the Heichal, and when?"},
         {"he": "מהם התאים שסביב ההיכל?", "en": "What were the side chambers (ta'im) around the Heichal?"},
@@ -153,7 +153,7 @@
       "type": "area",
       "name": {"he": "קודש הקודשים", "en": "Holy of Holies"},
       "desc": {"he": "החדר המערבי של ההיכל, עשרים על עשרים אמה, מופרד בבית שני בשתי פרוכות. הארון נגנז, ובמקומו אבן השתיה גבוהה שלוש אצבעות. נכנס אליו רק כהן גדול ביום הכיפורים.", "en": "The westernmost chamber, 20×20 amos, separated in the Second Temple by two curtains. The Ark was hidden; only the Even HaShtiya, three fingerbreadths high, remained. Only the Kohen Gadol entered, on Yom Kippur."},
-      "period": ["bayis_sheni"],
+      "period": ["bayis_rishon","bayis_sheni"],
       "bounds": {"minX": -10, "maxX": 10, "minZ": -159, "maxZ": -139},
       "dimensions": [
         {"label": "width", "value": 20, "unit": "amah", "source": "Mishnah Middot 4:7"},
@@ -161,8 +161,8 @@
         {"label": "ceiling height", "value": 40, "unit": "amah", "source": "Mishnah Middot 4:6"},
         {"label": "Even HaShtiya height", "value": 3, "unit": "etzba", "source": "Mishnah Yoma 5:2"}
       ],
-      "position": {"frame": "azarah", "x": 0, "y": 8.5, "z": -149, "unit": "amah", "source": "Mishnah Middot 4:7", "note": "legacy: x 0, y 3, z -184 (pre-2026 scene coordinates converted to amos); now 20 x 20 (Middot 4:7): z -139 .. -159 behind the one-amah Amah Traksin at z -138 .. -139; y sums the Middot 2:6 and 3:6 rises"},
-      "sources": ["Mishnah Middot 4:6","Mishnah Middot 4:7","Mishnah Yoma 5:1","Mishnah Yoma 5:2","Mishnah Kelim 1:9","Mishneh Torah, The Chosen Temple 4:1","Yoma 52b"],
+      "position": {"frame": "azarah", "x": 0, "y": 8.5, "z": -149, "unit": "amah", "source": "Mishnah Middot 4:7", "note": "legacy: x 0, y 3, z -184 (pre-2026 scene coordinates converted to amos); now 20 x 20 (Middot 4:7): z -139 .. -159 behind the one-amah Amah Traksin at z -138 .. -139; y sums the Middot 2:6 and 3:6 rises. Shown in both periods so that the aron and keruvim have a room to stand in; the measures are Bayis Sheni (Middot 4:7), the Bayis Rishon house was 20 wide and 30 tall (I Kings 6:2)"},
+      "sources": ["Mishnah Middot 4:6","Mishnah Middot 4:7","Mishnah Yoma 5:1","Mishnah Yoma 5:2","Mishnah Kelim 1:9","Mishneh Torah, The Chosen Temple 4:1","Yoma 52b","I Kings 6:2"],
       "disputes": [
         {
           "issue": "Amah Traksin status",
@@ -187,7 +187,6 @@
       "dimensions": [
         {"label": "height", "value": 18, "unit": "tefach", "source": "Menachot 28b", "note": ""},
         {"label": "branches", "value": 7, "unit": "count", "source": "Exodus 25:32", "note": ""},
-        {"label": "stone steps before it", "value": 3, "unit": "count", "source": "Mishnah Tamid 3:9", "note": ""},
         {"label": "distance from the south wall", "value": 2.5, "unit": "amah", "source": "Yoma 33b"},
         {"label": "stone steps before it", "value": 3, "unit": "count", "source": "Mishnah Tamid 3:9", "note": "the Kohen stood on the stone to prepare the lamps"}
       ],
@@ -266,7 +265,7 @@
       "id": "paroches",
       "type": "kli",
       "name": {"he": "פרוכת", "en": "Paroches (Curtain)"},
-      "desc": {"he": "הפרוכת מבדילה בין ההיכל לקודש הקודשים. בבית שני היו שתי פרוכות ואמה ביניהן, מפני הספק במעמדה של אמה טרקסין. עוביה טפח, ארבעים אמה אורכה ועשרים רוחבה, ושמונים ושתיים נערות ארגו אותה.", "en": "The curtain dividing the Heichal from the Kodesh HaKodashim. In the Second Temple there were two curtains an amah apart because of the doubt over the status of the Amah Traksin. Each was a tefach thick, forty amos long and twenty wide, woven by eighty-two maidens."},
+      "desc": {"he": "הפרוכת מבדילה בין ההיכל לקודש הקודשים. בבית שני היו שתי פרוכות ואמה ביניהן, מפני הספק במעמדה של אמה טרקסין. עוביה טפח, ארבעים אמה אורכה ועשרים רוחבה, ומשמונים ושתי ריבוא נעשית — לפי הברטנורא שמונים ושתי ריבוא דינרים, ויש מפרשים ששמונים ושתיים נערות ארגו אותה.", "en": "The curtain dividing the Heichal from the Kodesh HaKodashim. In the Second Temple there were two curtains an amah apart because of the doubt over the status of the Amah Traksin. Each was a tefach thick, forty amos long and twenty wide, made at a cost of eighty-two ribo (820,000 dinars) — or, on another reading, by eighty-two maidens."},
       "period": ["bayis_rishon","bayis_sheni"],
       "dimensions": [
         {"label": "thickness", "value": 1, "unit": "tefach", "source": "Mishnah Shekalim 8:5", "note": ""},
@@ -415,11 +414,11 @@
         {"label": "south-east yesod", "value": 0, "unit": "amah", "source": "Mishnah Middot 3:1", "note": "no yesod at the south-east corner, since that corner lay outside the portion of Binyamin (Zevachim 53b)"}
       ],
       "position": {"frame": "azarah", "x": 0, "y": 2.5, "z": -38, "unit": "amah", "source": "Mishnah Middot 5:1", "note": "legacy: x 0, y 1, z -72 (pre-2026 scene coordinates converted to amos); now Middot 5:1: 11 (Ezras Yisrael) + 11 (Ezras Kohanim) west of the Nicanor Gate, then 32 for the altar: z -22 .. -54, centre -38; centred on the Heichal axis (see disputes); base on the Ezras Kohanim floor"},
-      "sources": ["Mishnah Middot 3:1","Mishnah Middot 3:3","Mishnah Middot 5:2","Mishneh Torah, The Chosen Temple 2:5","Zevachim 54a","Zevachim 53b","Mishnah Middot 3:2"],
+      "sources": ["Mishnah Middot 3:1","Mishnah Middot 3:3","Mishnah Middot 5:2","Mishneh Torah, The Chosen Temple 2:5","Zevachim 54a","Zevachim 53b","Mishnah Middot 3:2","Zevachim 58b","Yoma 16b"],
       "disputes": [
         {
-          "issue": "north-south offset relative to Heichal axis",
-          "views": ["centered","≈3.5 amos north per Mishnah Middot 5:2 arithmetic (Zevachim 58b–59a)"]
+          "issue": "north-south position relative to the Heichal axis",
+          "views": ["centred: 10 opposite the doorway and 11 to either side (Rabbi Yehudah, Zevachim 58b) — as built here, taking the Middot 5:2 remainder as 21.5 + 3.5","not centred but drawn to the south: Middot's tanna is Rabbi Eliezer ben Yaakov (Yoma 16b), and splitting the 25-amah remainder of Middot 5:2 evenly puts the altar's north face only 7 amos north of the axis, most of the altar south of the doorway (Rashi, Yoma 16b)"]
         },
         {
           "issue": "missing south-east yesod",
@@ -434,7 +433,7 @@
       "legacyId": "mizbeiach",
       "icon": "🔥",
       "area": "azaras_kohanim",
-      "geometry": {"kind": "box", "w": 32, "d": 32, "h": 10, "notes": "tiers: yesod 32 x 32 x 1 (absent on the south-east corner and along the south and east faces except one amah from each adjoining corner, Middot 3:1), sovev 30 x 30 to 6, ma'aracha 28 x 28 to 9, four 1 x 1 x 1 keranos to 10; red line (chut hasikra) at 5; ash heap (tapuach) in the middle; SW corner has the two drainage holes (shitin) and the marble slab (Middot 3:2-3)."}
+      "geometry": {"kind": "box", "w": 32, "d": 32, "h": 10, "notes": "tiers: yesod 32 x 32 x 1 (absent on the south-east corner and along the south and east faces except one amah from each adjoining corner, Middot 3:1), sovev 30 x 30 to 6, the tier above the sovev 28 x 28 to 9 (on it the keranos, 1, and the Kohanim's walkway, 1, leave the ma'aracha proper 24 x 24, Middot 3:1), four 1 x 1 x 1 keranos to 10; red line (chut hasikra) at 5; ash heap (tapuach) in the middle; SW corner has the two drainage holes (shitin) and the marble slab (Middot 3:2-3)."}
     },
     {
       "id": "kevesh",
@@ -501,7 +500,7 @@
       "legacyId": "slaughterTables",
       "icon": "🔪",
       "area": "azaras_kohanim",
-      "geometry": {"kind": "box", "w": 1, "d": 2, "h": 1.5, "notes": "eight marble tables 1 x 2 in a north-south column at x 52 spread over z -26 .. -50; size of each not given."}
+      "geometry": {"kind": "box", "w": 1, "d": 2, "h": 1.5, "notes": "eight marble tables 1 x 2 in a north-south column at x 52 spread over z -26 .. -50; size of each not given. Middot 3:5 says the marble tables stood 'between the pillars'; the 4-amah gap between tables and pillars in Middot 5:2 is the Tosafos Yom Tov reconciliation used here."}
     },
     {
       "id": "slaughter_rings",
@@ -512,7 +511,7 @@
       "dimensions": [
         {"label": "rings", "value": 24, "unit": "count", "source": "Mishnah Middot 3:5", "note": ""},
         {"label": "ring area depth", "value": 24, "unit": "amah", "source": "Mishnah Middot 5:2", "note": "beis hataba'os, north of the altar"},
-        {"label": "ring area width", "value": 24, "unit": "amah", "source": "Mishnah Middot 5:2"}
+        {"label": "ring area width", "value": 24, "unit": "amah", "source": "Mishnah Middot 5:2", "note": "east-west extent not given; 24 is a reconstruction (5:2 measures north-south only)"}
       ],
       "position": {"frame": "azarah", "x": 36, "y": 2.5, "z": -38, "unit": "amah", "source": "Mishnah Middot 5:2", "note": "legacy: x 16, y 1, z -86 (pre-2026 scene coordinates converted to amos); now Middot 5:2: 8 amos north of the altar face at x 16, then 24 amos for the rings: x 24 .. 48, aligned with the altar, z -26 .. -50"},
       "sources": ["Mishnah Middot 3:5","Mishnah Middot 5:2","Mishnah Sotah 9:10","Sotah 48a"],
@@ -558,14 +557,14 @@
       "id": "tamid_lamb",
       "type": "kli",
       "name": {"he": "כבש התמיד", "en": "Daily Tamid Lamb"},
-      "desc": {"he": "קרבן התמיד: שני כבשים בני שנה בכל יום, אחד בבוקר ואחד בין הערביים, עם מנחה ונסך יין. תמיד של שחר נשחט בקרן צפונית מערבית של המזבח ושל בין הערביים בקרן צפונית מזרחית; הוא פותח את עבודת היום וחותם אותה, ולא בטל מעולם עד שנחרב הבית.", "en": "The Tamid offering: two yearling lambs every day, one at dawn and one toward evening, each with a meal offering and a wine libation. The morning lamb was slaughtered at the altar's northwest corner and the afternoon lamb at the northeast; it opened and closed each day's service and never ceased until the Temple fell."},
+      "desc": {"he": "קרבן התמיד: שני כבשים בני שנה בכל יום, אחד בבוקר ואחד בין הערביים, עם מנחה ונסך יין. תמיד של שחר נשחט בקרן צפונית מערבית של המזבח ושל בין הערביים בקרן צפונית מזרחית; הוא פותח את עבודת היום וחותם אותה, ובטל בשבעה עשר בתמוז, שלושה שבועות לפני החורבן.", "en": "The Tamid offering: two yearling lambs every day, one at dawn and one toward evening, each with a meal offering and a wine libation. The morning lamb was slaughtered at the altar's northwest corner and the afternoon lamb at the northeast; it opened and closed each day's service and ceased only on the seventeenth of Tammuz, three weeks before the destruction."},
       "period": ["bayis_rishon","bayis_sheni"],
       "dimensions": [
         {"label": "lambs per day", "value": 2, "unit": "count", "source": "Numbers 28:3", "note": ""},
         {"label": "inspected lambs kept ready", "value": 6, "unit": "count", "source": "Mishnah Arakhin 2:5", "note": "minimum, in the Chamber of Lambs"}
       ],
       "position": {"frame": "azarah", "x": 22, "y": 2.5, "z": -50, "unit": "amah", "source": "Mishnah Tamid 4:1", "note": "legacy: x 20, y 1, z -92 (pre-2026 scene coordinates converted to amos); now the morning Tamid was slaughtered at the north-west corner of the altar at the second ring (Mishnah Tamid 4:1): hotspot at the west edge of the ring area beside the altar's NW corner (x 16, z -54)"},
-      "sources": ["Numbers 28:3","Mishnah Tamid 4:1","Mishnah Tamid 3:3","Mishnah Arakhin 2:5","Pesachim 58b"],
+      "sources": ["Numbers 28:3","Mishnah Tamid 4:1","Mishnah Tamid 3:3","Mishnah Arakhin 2:5","Pesachim 58b","Mishnah Taanit 4:6"],
       "questions": [
         {"he": "למה נשחט תמיד של שחר בצפון מערב ושל בין הערביים בצפון מזרח?", "en": "Why was the morning Tamid slaughtered at the northwest and the afternoon one at the northeast?"},
         {"he": "כמה ימים בדקו את הכבש לפני הקרבתו?", "en": "For how many days was the lamb inspected before being offered?"},
@@ -599,7 +598,7 @@
       "disputes": [
         {
           "issue": "north or south",
-          "views": ["south, with Lishkas HaEtz and HaGolah (Mishnah Middot 5:4 as printed)","north, with the sides of Middot 5:3-4 exchanged (the Bavli's text in Yoma 19a and the Rambam, Beis HaBechirah 5:17)"]
+          "views": ["south, with Lishkas HaEtz and HaGolah (Mishnah Middot 5:4 as printed) — followed here; Yoma 19a's own conclusion that Parhedrin was in the south fits this text via Abba Shaul","north, with the sides of Middot 5:3-4 exchanged (the Bavli's text in Yoma 19a and the Rambam, Beis HaBechirah 5:17)"]
         }
       ]
     },
@@ -666,7 +665,7 @@
         {"label": "steps on the Duchan", "value": 3, "unit": "count", "source": "Mishnah Middot 2:6", "note": "half an amah each; 2.5 amos total rise"},
         {"label": "total rise", "value": 2.5, "unit": "amah", "source": "Mishnah Middot 2:6"}
       ],
-      "position": {"frame": "azarah", "x": 0, "y": 1, "z": -12.5, "unit": "amah", "source": "Mishnah Middot 2:6", "note": "legacy: x 0, y 0, z -40 (pre-2026 scene coordinates converted to amos); now at the west edge of the Ezras Yisrael (z -11): a one-amah step, the Duchan on it, then three half-amah steps to the Ezras Kohanim floor at 2.5 (Middot 2:6, Rabbi Eliezer ben Yaakov); z -11 .. -14"},
+      "position": {"frame": "azarah", "x": 0, "y": 1, "z": -12.5, "unit": "amah", "source": "Mishnah Middot 2:6", "note": "legacy: x 0, y 0, z -40 (pre-2026 scene coordinates converted to amos); now at the west edge of the Ezras Yisrael (z -11): a one-amah step, the Duchan on it, then three half-amah steps to the Ezras Kohanim floor at 2.5 (Middot 2:6, Rabbi Eliezer ben Yaakov); z -11 .. -14. The flight lies inside the azaras_kohanim bounds (maxZ -11) but is listed under azaras_yisrael, whose floor it rises from: Middot does not say which strip absorbs the 3 amos of the rise, and here the Ezras Kohanim's 11 amos are counted from the Duchan's foot"},
       "sources": ["Mishnah Middot 2:6","Mishnah Arakhin 2:6","Mishnah Tamid 7:3"],
       "questions": [
         {"he": "מתי שרו הלוויים ומה שרו בכל יום?", "en": "When did the Levites sing, and what did they sing each day?"},
@@ -1046,7 +1045,7 @@
       "id": "shaar_tadi",
       "type": "gate",
       "name": {"he": "שער טדי", "en": "Tadi Gate"},
-      "desc": {"he": "השער הצפוני של הר הבית, שלא שימש לכניסת הרבים. במקום משקוף היו לו שתי אבנים מוטות זו על זו. כהן שאירע בו קרי בלילה יצא דרכו לאחר טבילתו, לפי שלא נפתחו שערי העזרה עדיין.", "en": "The northern gate of Har HaBayis, not used by the public. Instead of a lintel it had two stones leaning against each other. A Kohen who became impure at night left the Temple through it after immersing, since the Azarah gates were still shut."},
+      "desc": {"he": "השער הצפוני של הר הבית, שלא שימש לכניסת הרבים. במקום משקוף היו לו שתי אבנים מוטות זו על זו. כהן שאירע בו קרי בלילה טבל, ישב אצל אחיו הכהנים בבית המוקד עד שנפתחו השערים, ויצא דרכו, לפי שטבול יום אינו עובר בעזרה.", "en": "The northern gate of Har HaBayis, not used by the public. Instead of a lintel it had two stones leaning against each other. A Kohen who became impure at night immersed, sat with his fellow Kohanim in Beis HaMoked until the gates were opened, and then left through Tadi, since as a tevul yom he could not cross the Azarah."},
       "period": ["bayis_sheni"],
       "area": "har_habayis",
       "dimensions": [
@@ -1181,12 +1180,6 @@
       ],
       "position": {"frame": "azarah", "x": 0, "y": -3.75, "z": 12, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "inside the Ezras Nashim (Middot 2:5: rising \"from within it\"), concentric on the Nicanor Gate at z 6: fifteen half-amah treads from radius 5 (the gate's half-width) out to radius 12.5, from y -7.5 up to the threshold at y 0"},
       "sources": ["Mishnah Middot 2:5","Mishnah Middot 2:3","Mishnah Sukkah 5:4","Sukkah 51b","Psalms 120:1"],
-      "disputes": [
-        {
-          "issue": "shape of the steps",
-          "views": ["semicircular, like half a round threshing floor (Mishnah Middot 2:5)","straight, semicircular only in their ends (a minority reconstruction)"]
-        }
-      ],
       "questions": [
         {"he": "למה דווקא חמש עשרה מעלות?", "en": "Why fifteen steps?"},
         {"he": "מה שרו הלוויים על המעלות בשמחת בית השואבה?", "en": "What did the Levites sing on the steps at the Simchas Beis HaShoeva?"},
@@ -1620,37 +1613,37 @@
       "period": ["bayis_sheni"],
       "area": "azaras_kohanim",
       "dimensions": [
-        {"label": "rise", "value": 6, "unit": "amah", "source": "Mishnah Middot 3:1", "note": "to the sovev"},
+        {"label": "height at the altar", "value": 6, "unit": "amah", "source": "Mishnah Middot 3:1", "note": "the sovev; the branch itself need not rise, see geometry.notes"},
         {"label": "gap from the altar", "value": 0, "unit": "amah", "source": "Zevachim 62b", "note": "a hair's breadth (melo nima) so that the altar's measure remains whole"}
       ],
-      "position": {"frame": "azarah", "x": -20, "y": 2.5, "z": -29, "unit": "amah", "source": "Zevachim 62b", "note": "branching from the east edge of the main ramp near its top (Zevachim 62b; Rambam Beis HaBechirah 2:14) and turning toward the sovev (kevesh z -30 .. -46)"},
+      "position": {"frame": "azarah", "x": -20, "y": 2.5, "z": -29, "unit": "amah", "source": "Zevachim 62b", "note": "hotspot beside the east edge of the main ramp (kevesh z -30 .. -46); the walkway itself runs from about x -24.7, where the kevesh is six amos high, to the sovev (Zevachim 62b; Rambam Beis HaBechirah 2:14), see geometry.notes"},
       "sources": ["Zevachim 62b","Mishneh Torah, The Chosen Temple 2:14","Mishnah Middot 3:3","Mishnah Middot 3:1"],
       "questions": [
         {"he": "לשם מה שימש הכבש הקטן?", "en": "What was the small ramp for?"},
         {"he": "מדוע מובדלים הכבשים הקטנים מן המזבח כמלוא נימא?", "en": "Why were the small ramps a hair's breadth from the altar?"}
       ],
       "icon": "📐",
-      "geometry": {"kind": "ramp", "w": 1, "d": 4, "h": 6, "notes": "small ramp on the east side of the kevesh rising 6 to the sovev; width and length are a reconstruction."}
+      "geometry": {"kind": "ramp", "w": 1, "d": 4, "h": 6, "notes": "level walkway (h is its height at the altar, not a rise): it leaves the east flank of the kevesh where the kevesh has reached sovev height, 6 amos (about x -24.7), and runs level to the sovev at the altar face, a hair from the altar (Zevachim 62b). The sources give no length or width; position is the hotspot only."}
     },
     {
       "id": "kevesh_katan_west",
       "type": "structure",
       "name": {"he": "כבש קטן מערבי", "en": "Small Ramp (West)"},
-      "desc": {"he": "כבש קטן היוצא מן הכבש לצד מערב ופונה אל היסוד, שדרכו ירד הכהן לשפוך שיירי הדם על יסוד מערבי. מובדל מן המזבח כמלוא נימא.", "en": "A small ramp leaving the west side of the main ramp toward the yesod, by which the Kohen went down to pour the leftover blood on the western base. It stood a hair's breadth from the altar."},
+      "desc": {"he": "כבש קטן היוצא מן הכבש לצד מערב ופונה אל היסוד, שדרכו ירד הכהן לשפוך שיירי דם החטאת על יסוד דרומי. מובדל מן המזבח כמלוא נימא.", "en": "A small ramp leaving the west side of the main ramp toward the yesod, by which the Kohen went down to pour the leftover blood of the chatas on the southern yesod. It stood a hair's breadth from the altar."},
       "period": ["bayis_sheni"],
       "area": "azaras_kohanim",
       "dimensions": [
-        {"label": "rise", "value": 1, "unit": "amah", "source": "Mishnah Middot 3:1", "note": "to the yesod"},
+        {"label": "height at the altar", "value": 1, "unit": "amah", "source": "Mishnah Middot 3:1", "note": "the yesod; the branch itself need not rise, see geometry.notes"},
         {"label": "gap from the altar", "value": 0, "unit": "amah", "source": "Zevachim 62b", "note": "a hair's breadth (melo nima) so that the altar's measure remains whole"}
       ],
-      "position": {"frame": "azarah", "x": -20, "y": 2.5, "z": -47, "unit": "amah", "source": "Zevachim 62b", "note": "branching from the west edge of the main ramp near its top (Zevachim 62b; Rambam Beis HaBechirah 2:14) and turning toward the yesod (kevesh z -30 .. -46)"},
-      "sources": ["Zevachim 62b","Mishneh Torah, The Chosen Temple 2:14","Mishnah Middot 3:3","Mishnah Middot 3:1"],
+      "position": {"frame": "azarah", "x": -20, "y": 2.5, "z": -47, "unit": "amah", "source": "Zevachim 62b", "note": "hotspot beside the west edge of the main ramp (kevesh z -30 .. -46); the walkway itself runs from about x -42.5, where the kevesh is one amah high, to the yesod (Zevachim 62b; Rambam Beis HaBechirah 2:14), see geometry.notes"},
+      "sources": ["Zevachim 62b","Mishneh Torah, The Chosen Temple 2:14","Mishnah Middot 3:3","Mishnah Middot 3:1","Mishnah Zevachim 5:3"],
       "questions": [
         {"he": "לשם מה שימש הכבש הקטן?", "en": "What was the small ramp for?"},
         {"he": "מדוע מובדלים הכבשים הקטנים מן המזבח כמלוא נימא?", "en": "Why were the small ramps a hair's breadth from the altar?"}
       ],
       "icon": "📐",
-      "geometry": {"kind": "ramp", "w": 1, "d": 4, "h": 1, "notes": "small ramp on the west side of the kevesh rising 1 to the yesod; width and length are a reconstruction."}
+      "geometry": {"kind": "ramp", "w": 1, "d": 4, "h": 1, "notes": "level walkway (h is its height at the altar, not a rise): it leaves the west flank of the kevesh where the kevesh has reached yesod height, 1 amah (about x -42.5), and runs level beside it to the altar's south face at x -16 and along that face to the yesod at the south-west corner, a hair from the altar (Zevachim 62b; Rambam 2:14). At x -20 the kevesh is already about 7 high, so the branch cannot rise from there. The sources give no length or width; position is the hotspot only."}
     },
     {
       "id": "maalos_ulam",
@@ -1690,8 +1683,8 @@
       "id": "ulam",
       "type": "area",
       "name": {"he": "אולם", "en": "Ulam"},
-      "desc": {"he": "הפרוזדור שלפני ההיכל, מאה אמה מצפון לדרום ואחת עשרה אמה ברוחבו, גבוה מאה אמה. פתחו ארבעים אמה גובה על עשרים רוחב ולא היו לו דלתות, ועליו תלויה גפן של זהב. מכאן ומכאן חורגות בית החליפות, חמש עשרה אמה לכל צד.", "en": "The porch before the Heichal, a hundred amos from north to south and eleven deep, a hundred amos tall. Its opening was forty amos high by twenty wide and had no doors; a golden vine hung over it. On either side it extended fifteen amos beyond the building as the Beis HaChalifos, where the slaughtering knives were kept."},
-      "period": ["bayis_sheni"],
+      "desc": {"he": "הפרוזדור שלפני ההיכל, מאה אמה מצפון לדרום ואחת עשרה אמה ברוחבו, גבוה מאה אמה. פתחו ארבעים אמה גובה על עשרים רוחב ולא היו לו דלתות, ומעליו חמש מלתראות של מילת, זו למעלה מזו, ונדבך של אבנים בין כל אחת ואחת; גפן הזהב עמדה על פתח ההיכל שבתוכו. מכאן ומכאן חורגות בית החליפות, חמש עשרה אמה לכל צד.", "en": "The porch before the Heichal, a hundred amos from north to south and eleven deep, a hundred amos tall. Its opening was forty amos high by twenty wide and had no doors; five carved oak beams sat above it, each longer than the one below with a course of stone between them; the golden vine stood over the Heichal door inside. On either side it extended fifteen amos beyond the building as the Beis HaChalifos, where the slaughtering knives were kept."},
+      "period": ["bayis_rishon","bayis_sheni"],
       "bounds": {"minX": -50, "maxX": 50, "minZ": -92, "maxZ": -76},
       "dimensions": [
         {"label": "width (north-south)", "value": 100, "unit": "amah", "source": "Mishnah Middot 4:7"},
@@ -1702,28 +1695,22 @@
         {"label": "wall thickness", "value": 5, "unit": "amah", "source": "Mishnah Middot 4:7"},
         {"label": "Beis HaChalifos overhang each side", "value": 15, "unit": "amah", "source": "Mishnah Middot 4:7"}
       ],
-      "position": {"frame": "azarah", "x": 0, "y": 8.5, "z": -86.5, "unit": "amah", "source": "Mishnah Middot 4:7", "note": "Middot 4:7 from the building front at z -76: Ulam wall 5, then the 11-amah Ulam: z -81 .. -92; 100 wide, x -50 .. 50; floor 6 above the Ezras Kohanim (Middot 3:6)"},
-      "sources": ["Mishnah Middot 3:7","Mishnah Middot 3:8","Mishnah Middot 4:7","Mishnah Middot 4:6","Mishnah Tamid 3:7","I Kings 6:3"],
-      "disputes": [
-        {
-          "issue": "doors of the Ulam",
-          "views": ["no doors (Mishnah Middot 2:3)","a curtain hung in the opening (Mishnah Shekalim 8:4 lists thirteen curtains)"]
-        }
-      ],
+      "position": {"frame": "azarah", "x": 0, "y": 8.5, "z": -86.5, "unit": "amah", "source": "Mishnah Middot 4:7", "note": "Middot 4:7 from the building front at z -76: Ulam wall 5, then the 11-amah Ulam: z -81 .. -92; 100 wide, x -50 .. 50; floor 6 above the Ezras Kohanim (Middot 3:6). Shown in both periods so that the Bayis Rishon items (yachin, boaz) have a building to stand at; the measures are Bayis Sheni (Middot), the Bayis Rishon Ulam was 20 x 10 (I Kings 6:3)"},
+      "sources": ["Mishnah Middot 3:7","Mishnah Middot 3:8","Mishnah Middot 4:7","Mishnah Middot 4:6","Mishnah Tamid 3:7","I Kings 6:3","Mishnah Shekalim 8:4"],
       "questions": [
         {"he": "מדוע לא היו דלתות לאולם?", "en": "Why did the Ulam have no doors?"},
-        {"he": "מהי הגפן של זהב שעל פתח האולם?", "en": "What was the golden vine at the Ulam entrance?"},
+        {"he": "מהי הגפן של זהב שעמדה על פתח ההיכל?", "en": "What was the golden vine over the Heichal door?"},
         {"he": "מה נשמר בבית החליפות?", "en": "What was kept in the Beis HaChalifos?"},
         {"he": "מה מבדיל בקדושה בין האולם להיכל?", "en": "How does the Ulam's sanctity differ from the Heichal's?"}
       ],
       "icon": "🏛️",
-      "geometry": {"kind": "room", "w": 100, "d": 11, "h": 100, "notes": "interior x -50 .. 50, z -81 .. -92, floor y 8.5; east wall 5 thick with a 20 x 40 doorless opening on the axis; cedar beams tie the front to the Heichal wall (Middot 3:8); the wings beyond x +-35 are the Beis HaChalifos with knife niches."}
+      "geometry": {"kind": "room", "w": 100, "d": 11, "h": 100, "notes": "interior x -50 .. 50, z -81 .. -92, floor y 8.5; east wall 5 thick with a 20 x 40 doorless opening on the axis over which a paroches hung (Mishnah Shekalim 8:4) and the five oak beams sat (Middot 3:7); cedar beams tie the front to the Heichal wall (Middot 3:8); the wings beyond x +-35 are the Beis HaChalifos with knife niches."}
     },
     {
       "id": "pesach_haheichal",
       "type": "gate",
       "name": {"he": "פתח ההיכל", "en": "Heichal Entrance"},
-      "desc": {"he": "פתח ההיכל גובהו עשרים אמה ורוחבו עשר, וארבע דלתות לו, שתיים מבפנים ושתיים מבחוץ, של זהב. מעליו חמש אמלתראות של מילת ומעל האולם פשפש קטן שדרכו נכנסים לפתוח את הדלתות מבפנים.", "en": "The Heichal doorway, twenty amos high and ten wide, with four gold-covered doors, two inside and two outside. Five carved oak lintels sat above it, and a small wicket on the north let a Kohen in to open the great doors from within."},
+      "desc": {"he": "פתח ההיכל גובהו עשרים אמה ורוחבו עשר, וארבע דלתות לו, שתיים מבפנים ושתיים מבחוץ, של זהב. שני פשפשים היו לו, אחד בצפון ואחד בדרום: בדרומי לא נכנס אדם מעולם, ודרך הצפוני נכנס הכהן לפתוח את הדלתות מבפנים. על פתחו עמדה גפן של זהב מודלה על גבי כלונסות.", "en": "The Heichal doorway, twenty amos high and ten wide, with four gold-covered doors, two inside and two outside. It had two wickets, north and south: no one ever passed through the southern one, and through the northern one a Kohen entered to open the great doors from within. A golden vine trained on poles stood over the entrance."},
       "period": ["bayis_sheni"],
       "area": "heichal",
       "dimensions": [
@@ -1731,7 +1718,7 @@
         {"label": "width", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:3"}
       ],
       "position": {"frame": "azarah", "x": 0, "y": 8.5, "z": -95, "unit": "amah", "source": "Mishnah Middot 4:1", "note": "in the 6-amah Heichal east wall (z -92 .. -98) on the axis (Middot 4:7); the northern wicket is in the north-east ta (Middot 4:2-3)"},
-      "sources": ["Mishnah Middot 4:1","Mishnah Middot 4:2","Mishnah Middot 3:7","Mishnah Tamid 3:7","Mishnah Middot 4:3"],
+      "sources": ["Mishnah Middot 4:1","Mishnah Middot 4:2","Mishnah Middot 3:8","Mishnah Tamid 3:7","Mishnah Middot 4:3"],
       "questions": [
         {"he": "מדוע היו ארבע דלתות לפתח ההיכל?", "en": "Why did the Heichal doorway have four doors?"},
         {"he": "כיצד נפתחו דלתות ההיכל בבוקר?", "en": "How were the Heichal doors opened in the morning?"},

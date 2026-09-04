@@ -56,11 +56,10 @@ export class AzaraBuilder extends CourtBuilder {
 
   buildEzrasYisrael() {
     const a = this.entry('azaras_yisrael').bounds;
-    const { x1: hx, z1: hz1, z2: hz2 } = this.hall;
+    const { x1: hx, z2: hz2 } = this.hall;
     this.group('azaras_yisrael', () => {
       this.floorA(a.minX, hx, a.minZ, a.maxZ, this.yYisrael, this.mat.floor, 'azaras_yisrael');
       this.floorA(hx, a.maxX, hz2, a.maxZ, this.yYisrael, this.mat.floor, 'azaras_yisrael');
-      void hz1;
     });
   }
 

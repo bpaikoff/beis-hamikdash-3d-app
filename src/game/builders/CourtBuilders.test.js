@@ -46,6 +46,36 @@ beforeAll(() => {
   built = buildCourts();
 });
 
+/**
+ * Walk a polyline of amos waypoints sampling every `stride` metres: every sample must
+ * have a floor, rise at most STEP_HEIGHT from the previous one, and no wall box may
+ * touch the player sphere. Returns the floor heights at the first and last sample.
+ */
+function walk(path, stride = 0.25, fromY = 60) {
+  const { floors, wallBoxes } = built;
+  const pts = [];
+  for (let i = 0; i < path.length - 1; i++) {
+    const [ax, az] = xz(...path[i]);
+    const [bx, bz] = xz(...path[i + 1]);
+    const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / stride));
+    for (let k = 0; k < n; k++) pts.push([ax + ((bx - ax) * k) / n, az + ((bz - az) * k) / n]);
+  }
+  pts.push(xz(...path[path.length - 1]));
+  const first = floorAt(floors, pts[0][0], pts[0][1], fromY);
+  let prev = first;
+  const sphere = new THREE.Sphere();
+  for (const [x, z] of pts) {
+    const y = floorAt(floors, x, z, fromY);
+    expect(y, `no floor at ${x},${z}`).toBeGreaterThan(-Infinity);
+    expect(y - prev, `rise at ${x},${z}`).toBeLessThanOrEqual(CONFIG.STEP_HEIGHT);
+    sphere.set(new THREE.Vector3(x, y + 0.9, z), CONFIG.PLAYER_RADIUS);
+    const blocked = wallBoxes.find((b) => b.intersectsSphere(sphere));
+    expect(blocked, `wall on the path at ${x},${z} (floor ${y})`).toBeUndefined();
+    prev = y;
+  }
+  return { first, last: prev };
+}
+
 describe('court builders', () => {
   it('tag every top-level group with entryId and period', () => {
     const groups = built.scene.children.filter((o) => o.isGroup);
@@ -94,32 +124,47 @@ describe('court builders', () => {
   it('is walkable from Har HaBayis to the Ezras Kohanim without a rise over STEP_HEIGHT', () => {
     // Half-amah treads are 0.25 m, so the walk is sampled every 0.25 m (a 1.5 m stride
     // would span six steps); the player controller moves a few cm per frame.
-    const STRIDE = 0.25;
-    const { floors, wallBoxes } = built;
     // Waypoints in amos: east of the Soreg, up the Cheil steps, through the Ezras Nashim
     // gate, across the court, up the fifteen steps, through Nicanor, over the Duchan.
     const path = [[0, 175], [0, 158], [0, 154], [0, 146], [0, 100], [0, 20], [0, 9], [0, 3], [0, -8], [0, -11.7], [0, -12.7], [0, -13.5], [0, -30], [0, -52]];
-    const pts = [];
-    for (let i = 0; i < path.length - 1; i++) {
-      const [ax, az] = xz(...path[i]);
-      const [bx, bz] = xz(...path[i + 1]);
-      const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, bz - az) / STRIDE));
-      for (let k = 0; k < n; k++) pts.push([ax + ((bx - ax) * k) / n, az + ((bz - az) * k) / n]);
+    const { first, last } = walk(path);
+    expect(first).toBeCloseTo(levelWorldY('har_habayis'), 1);
+    expect(last).toBeCloseTo(levelWorldY('azaras_kohanim'), 2);
+  });
+
+  it('lets the player through every chamber door and up the Parvah stair', () => {
+    const koh = levelWorldY('azaras_kohanim');
+    const under = koh + 2; // cast from under the chamber roofs
+    walk([[-40, -103], [-60, -103], [-70, -103]], 0.25, under); // Lishkas HaGazis, through to the chol half
+    walk([[-70, -110], [-80, -110], [-82, -110]], 0.25, under); // on into Lishkas HaEtz
+    walk([[-40, -133], [-58, -133]], 0.25, under); // Lishkas HaGolah
+    walk([[40, -96], [58, -96]], 0.25, under); // Lishkas HaMadichin
+    walk([[40, -112], [58, -112]], 0.25, under); // Lishkas HaParvah
+    walk([[40, -128], [58, -128]], 0.25, under); // Lishkas HaMelach
+    walk([[54.5, -90], [54.5, -102.5], [64.5, -102.5], [64.5, -112], [64.5, -130]], 0.25, koh + 9); // Madichin stair to the roof terrace, past the mikveh
+    walk([[40, -14], [56, -14], [67.5, -14], [70, -8], [78, -8]], 0.25, koh + 6); // Beis HaMoked: gate, steps down, hall, Lishkas Avnei HaMizbeach
+    walk([[65, -20], [58.5, -20]], 0.25, koh + 2); // into Lishkas Telaei Korban through its door facing the hall
+    const en = levelWorldY('ezras_nashim') + 2;
+    walk([[-20, 26], [-30, 26], [-40, 26]], 0.25, en); // chamber_oils
+    walk([[20, 121], [30, 121], [40, 121]], 0.25, en); // chamber_wood
+    walk([[30, 12], [30, 3], [30, -5]], 0.25, en); // Lishkos Klei Shir under the Ezras Yisrael
+    walk([[0, -5], [12, -5], [12, 3]], 0.25, levelWorldY('azaras_yisrael') + 2); // Lishkas Pinchas HaMalbish beside Nicanor
+  });
+
+  it('has no two floor slabs sharing a top surface', () => {
+    const boxes = built.floors.filter((f) => f.userData?.isFloor && !f.userData.isStep).map((f) => ({ f, b: new THREE.Box3().setFromObject(f) }));
+    const clashes = [];
+    for (let i = 0; i < boxes.length; i++) {
+      for (let j = i + 1; j < boxes.length; j++) {
+        const a = boxes[i].b;
+        const b = boxes[j].b;
+        if (Math.abs(a.max.y - b.max.y) > 0.005) continue;
+        const ox = Math.min(a.max.x, b.max.x) - Math.max(a.min.x, b.min.x);
+        const oz = Math.min(a.max.z, b.max.z) - Math.max(a.min.z, b.min.z);
+        if (ox > 0.05 && oz > 0.05) clashes.push(`${boxes[i].f.userData.name} x ${boxes[j].f.userData.name} (${ox.toFixed(1)} x ${oz.toFixed(1)} m)`);
+      }
     }
-    pts.push(xz(...path[path.length - 1]));
-    let prev = floorAt(floors, ...pts[0]);
-    expect(prev).toBeCloseTo(levelWorldY('har_habayis'), 1);
-    const sphere = new THREE.Sphere();
-    for (const [x, z] of pts) {
-      const y = floorAt(floors, x, z);
-      expect(y, `no floor at ${x},${z}`).toBeGreaterThan(-Infinity);
-      expect(y - prev, `rise at ${x},${z}`).toBeLessThanOrEqual(CONFIG.STEP_HEIGHT);
-      sphere.set(new THREE.Vector3(x, y + 0.9, z), CONFIG.PLAYER_RADIUS);
-      const blocked = wallBoxes.find((b) => b.intersectsSphere(sphere));
-      expect(blocked, `wall on the path at ${x},${z}`).toBeUndefined();
-      prev = y;
-    }
-    expect(prev).toBeCloseTo(levelWorldY('azaras_kohanim'), 2);
+    expect(clashes).toEqual([]);
   });
 
   it('keeps the draw-call budget', () => {

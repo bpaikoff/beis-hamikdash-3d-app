@@ -1245,7 +1245,7 @@
       "dimensions": [
         {"label": "wicket gate", "value": 1, "unit": "count", "source": "Mishnah Shekalim 6:3", "note": "one of Nicanor's two pishpeshin, right and left"}
       ],
-      "position": {"frame": "azarah", "x": 12, "y": 0, "z": 3, "unit": "amah", "source": "Mishnah Middot 1:4", "note": "north of the Nicanor Gate in the Azarah east wall (Middot 1:4: one chamber on its right and one on its left; which is which is not stated)"},
+      "position": {"frame": "azarah", "x": 12, "y": 0, "z": 0, "unit": "amah", "source": "Mishnah Middot 1:4", "note": "north of the Nicanor Gate, built into the Azarah east wall (z 0 .. 6) at its inner face (Middot 1:4: one chamber on its right and one on its left; which is which is not stated)"},
       "sources": ["Mishnah Middot 1:4","Mishnah Shekalim 6:3","Mishnah Shekalim 5:1","Mishnah Tamid 5:3"],
       "disputes": [
         {
@@ -1270,7 +1270,7 @@
       "dimensions": [
         {"label": "wicket gate", "value": 1, "unit": "count", "source": "Mishnah Shekalim 6:3", "note": "one of Nicanor's two pishpeshin, right and left"}
       ],
-      "position": {"frame": "azarah", "x": -12, "y": 0, "z": 3, "unit": "amah", "source": "Mishnah Middot 1:4", "note": "south of the Nicanor Gate in the Azarah east wall (Middot 1:4: one chamber on its right and one on its left; which is which is not stated)"},
+      "position": {"frame": "azarah", "x": -12, "y": 0, "z": 0, "unit": "amah", "source": "Mishnah Middot 1:4", "note": "south of the Nicanor Gate, built into the Azarah east wall (z 0 .. 6) at its inner face (Middot 1:4: one chamber on its right and one on its left; which is which is not stated)"},
       "sources": ["Mishnah Middot 1:4","Mishnah Shekalim 6:3","Mishnah Tamid 1:3","Leviticus 6:13","Mishnah Menachot 4:5"],
       "disputes": [
         {
@@ -1547,6 +1547,7 @@
       "area": "azaras_kohanim",
       "icon": "🪵",
       "id": "lishkas_haetz",
+      "outsideWall": "south",
       "name": {"he": "לשכת העץ", "en": "Chamber of Wood"},
       "desc": {"he": "לשכה בדרום העזרה שרבי אליעזר בן יעקב שכח למה שימשה. אבא שאול אומר: לשכת כהן גדול הייתה, אחורי לשכת הגולה ולשכת הגזית, וגג שלושתן שווה.", "en": "A southern chamber whose use Rabbi Eliezer ben Yaakov admitted he had forgotten. Abba Shaul says it was the Kohen Gadol's chamber, standing behind the Golah and Gazis chambers with the roofs of all three at one level."},
       "dimensions": [],
@@ -1570,6 +1571,7 @@
       "area": "azaras_kohanim",
       "icon": "👑",
       "id": "lishkas_palhedrin",
+      "outsideWall": "south",
       "name": {"he": "לשכת פלהדרין", "en": "Palhedrin Chamber"},
       "desc": {"he": "לשכת הכהן הגדול, שבה פרשו אותו שבעת ימים קודם יום הכיפורים. נקראה בתחילה לשכת בלווטי, ומשנתמנו כהנים גדולים בממון ונתחלפו בכל שנה נקראה פלהדרין, על שם פקידי המלך המתחלפים. הייתה חייבת במזוזה כדירה.", "en": "The Kohen Gadol's chamber, where he was secluded for the seven days before Yom Kippur. First called the chamber of the councillors, it was renamed Palhedrin after the royal officials replaced every year, once High Priests bought the office and rarely lasted longer. It required a mezuzah as a dwelling."},
       "dimensions": [

@@ -182,6 +182,7 @@ export class TempleGame {
     const [ex, , ez] = at('ezras_nashim', 0, 0, 'ezras_nashim');
     [[0, 6], [15, 10], [-15, 10], [10, -8], [-10, -8]].forEach(([dx, dz]) => this.characters.createKohen(ex + dx, nashimY, ez + dz));
     // Animals waiting by the Tamid pen in the Kohanim court; doves over the courts
+    const rand = mulberry32(11); // same flock on every load
     const [px, , pz] = at('tamid_lamb');
     for (let i = 0; i < 8; i++) this.characters.createAnimal('sheep', px + (rand() - 0.5) * 8, pz + (rand() - 0.5) * 8);
     for (let i = 0; i < 4; i++) this.characters.createAnimal('goat', px + 6 + (rand() - 0.5) * 6, pz + 6 + (rand() - 0.5) * 6);

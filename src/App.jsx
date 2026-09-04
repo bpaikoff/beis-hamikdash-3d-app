@@ -10,6 +10,7 @@ import { HotspotCard } from './components/HotspotCard.jsx';
 import { LockOverlay } from './components/LockOverlay.jsx';
 import { StartScreen } from './components/StartScreen.jsx';
 import { store, useStore } from './store.js';
+import { byId } from './content/index.js';
 
 const hasWebGL2 = () => {
   try {
@@ -48,9 +49,17 @@ export default function BeisHamikdash3D() {
   useEffect(() => {
     if (!started || !containerRef.current || !webgl) return;
     store.setState({ loading: 'Starting...', error: null });
-    gameRef.current = new TempleGame(containerRef.current, store);
+    const game = new TempleGame(containerRef.current, store);
+    gameRef.current = game;
+    // `?at=<id>`: the game spawns beside the item; open its card once the first frame is in.
+    const at = new URLSearchParams(window.location.search).get('at');
+    if (at && byId[at]) {
+      game.ready.then(() => {
+        if (!game.disposed && !store.getState().error) store.setState({ selected: at });
+      });
+    }
     return () => {
-      gameRef.current?.dispose();
+      game.dispose();
       gameRef.current = null;
     };
   }, [started, webgl]);

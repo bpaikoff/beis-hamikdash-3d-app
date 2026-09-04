@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { BaseBuilder } from './BaseBuilder.js';
-import { instance } from '../instanced.js';
+import { instance, instancePositions } from '../instanced.js';
 import { AMAH } from '../../content/units.js';
 import { byId, worldPos, levelWorldY } from '../../content/index.js';
 
@@ -246,8 +246,9 @@ export class HeichalBuilder extends BaseBuilder {
     });
 
     // Floor (0.1 into the walls so no slab edge is coplanar with a wall face)
-    this.floorAt(g, U, [b.minX - 0.1, b.maxX + 0.1], [zIn - 0.1, zBack + 0.1], this.mat.marbleW, 'ulam');
-    this.floorAt(g, U, [-doorW / 2 - 0.1, doorW / 2 + 0.1], [zFront, zIn - 0.1], this.mat.marbleW, 'ulam-threshold');
+    // Adjoining slabs overlap by 0.1 amah so a ray on a seam always hits one of them.
+    this.floorAt(g, U, [b.minX - 0.1, b.maxX + 0.1], [zIn + 0.1, zBack + 0.1], this.mat.marbleW, 'ulam');
+    this.floorAt(g, U, [-doorW / 2 - 0.1, doorW / 2 + 0.1], [zFront + 0.1, zIn - 0.1], this.mat.marbleW, 'ulam-threshold');
 
     // Front wall with the opening; the lintel above it does not collide.
     const facade = this.mat.stonePolished;
@@ -261,19 +262,19 @@ export class HeichalBuilder extends BaseBuilder {
     // Middot 3:7: five oak beams above the opening, the lowest one amah wider than
     // the opening on each side, each one above a further amah wider, a course of
     // stones between each; they project from the facade.
-    const melatra = [];
+    // Five distinct widths, so five meshes with correctly tiled cedar (they are on the facade).
     for (let i = 0; i < 5; i++) {
       const w = doorW + 2 * (i + 1);
       const y0 = U + doorH + 2 * i;
-      melatra.push({ x: [-w / 2, w / 2], y: [y0, y0 + 1], z: [zFront + 1, zFront - 1] });
+      this.block(g, { x: [-w / 2, w / 2], y: [y0, y0 + 1], z: [zFront + 1, zFront - 1] }, this.mat.cedar, { name: `ulam-melatra-${i + 1}` });
     }
-    this.blocksInstanced(g, melatra, this.mat.cedar, { name: 'ulam-melatra' });
 
     // Middot 3:8: cedar beams from the Ulam wall to the Heichal wall so the front
-    // wall does not lean. Nine beams, 1 x 1, across the width above the opening.
+    // wall does not lean. Nine identical 1 x 1 beams across the width, one draw call.
+    const tieGeo = this.box(A, A, Math.abs(zBack - zIn) * A, this.mat.cedar);
     const ties = [];
-    for (let x = -40; x <= 40; x += 10) ties.push({ x: [x - 0.5, x + 0.5], y: [U + doorH + 12, U + doorH + 13], z: [zIn, zBack] });
-    this.blocksInstanced(g, ties, this.mat.cedar, { name: 'ulam-tie-beams' });
+    for (let x = -40; x <= 40; x += 10) ties.push([this.F.x(x), yAmos(U + doorH + 12.5), this.F.z((zIn + zBack) / 2)]);
+    g.add(instancePositions(tieGeo, this.mat.cedar, ties, { name: 'ulam-tie-beams' }));
 
     // Ceiling at the top of the 100-amah hall (also spans the Heichal east wall)
     this.block(g, { x: [-xEnd, xEnd], y: [U + H - 1, U + H], z: [zFront, zBack - SECTION.wallT] }, this.mat.cedar, {
@@ -305,14 +306,14 @@ export class HeichalBuilder extends BaseBuilder {
     const stone = this.mat.stonePolished;
 
     // Floor: Heichal to the parochos (-139), oversized 0.1 into the walls
-    this.floorAt(g, U, [b.minX - 0.1, b.maxX + 0.1], [zEastIn + 0.1, khk.maxZ], this.mat.mosaic, 'heichal');
+    this.floorAt(g, U, [b.minX - 0.1, b.maxX + 0.1], [zEastIn + 0.1, khk.maxZ - 0.1], this.mat.mosaic, 'heichal');
 
     // East wall with the doorway (pesach_haheichal)
     const door = byId.pesach_haheichal;
     const dg = tagEntry(new THREE.Group(), door);
     const dw = door.geometry.w / 2; // 5
     const dh = door.geometry.h; // 20
-    this.floorAt(dg, U, [-dw - 0.1, dw + 0.1], [zEastOut, zEastIn + 0.1], this.mat.mosaic, 'heichal-threshold');
+    this.floorAt(dg, U, [-dw - 0.1, dw + 0.1], [zEastOut + 0.1, zEastIn - 0.1], this.mat.mosaic, 'heichal-threshold');
     this.block(dg, { x: [-xEnd, -dw], y: [base, U + H], z: [zEastOut, zEastIn] }, stone, { wall: true, name: 'heichal-east-s' });
     this.block(dg, { x: [dw, xEnd], y: [base, U + H], z: [zEastOut, zEastIn] }, stone, { wall: true, name: 'heichal-east-n' });
     this.block(dg, { x: [-dw, dw], y: [U + dh, U + H], z: [zEastOut, zEastIn] }, stone, { name: 'heichal-east-lintel' });
@@ -464,7 +465,7 @@ export class HeichalBuilder extends BaseBuilder {
     const ceilH = e.geometry.h; // 40
     const { wallT } = SECTION;
     const base = U - FT;
-    this.floorAt(g, U, [b.minX - 0.1, b.maxX + 0.1], [b.maxZ, b.minZ + 0.1], this.mat.marbleW, 'kodesh-hakodashim');
+    this.floorAt(g, U, [b.minX - 0.1, b.maxX + 0.1], [b.maxZ + 0.1, b.minZ + 0.1], this.mat.marbleW, 'kodesh-hakodashim');
     this.block(g, { x: [b.minX - wallT, b.maxX + wallT], y: [base, U + H], z: [b.minZ, b.minZ - wallT] }, this.mat.stonePolished, {
       wall: true,
       name: 'heichal-west-wall',
@@ -536,7 +537,7 @@ export class HeichalBuilder extends BaseBuilder {
       const h = dim('height') * A;
       const capH = dim('capital height') * A;
       const [x] = worldPos(e);
-      g.position.set(x, yAmos(U), this.F.z(zFront + r / A + 0.6));
+      g.position.set(x, yAmos(U), this.F.z(zFront + (r * 1.35) / A + 0.5)); // the capital clears the facade
       const shaft = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 24), this.mat.copper);
       shaft.position.y = h / 2;
       const capital = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.35, r, capH, 24), this.mat.copperP);

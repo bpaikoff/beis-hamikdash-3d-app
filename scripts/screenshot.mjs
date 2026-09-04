@@ -16,12 +16,14 @@ import { mkdirSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 
 const VIEWS = [
-  { name: 'hero', cam: '0,4,66,0,-3' },               // Har HaBayis, looking west at the Ezras Nashim gate
-  { name: 'ezras_nashim_steps', cam: '0,6,22,0,-6' },  // toward Nicanor and the 15 steps
-  { name: 'mizbeach_kevesh', cam: '14,10,-14,45,-8' }, // altar with the ramp on its south
-  { name: 'ulam_facade', cam: '0,9,-36,0,4' },         // Ulam entrance
-  { name: 'heichal_interior', cam: '0,10,-52,0,0' },   // Menorah, Shulchan, golden altar
-  { name: 'kodesh_hakodashim', cam: '0,10,-80,0,0' },
+  // `at` spawns just east of a content entry, facing west (follows the JSON when geometry moves);
+  // `cam` is x,y,z,yaw,pitch in metres/degrees for free placement.
+  { name: 'hero', at: 'ezras_nashim_gate' },        // Har HaBayis, facing the Ezras Nashim gate
+  { name: 'ezras_nashim_steps', at: 'maalos_shir' }, // the 15 steps up to Nicanor
+  { name: 'mizbeach_kevesh', at: 'mizbeach' },       // the altar from the east
+  { name: 'ulam_facade', at: 'maalos_ulam' },        // the 12 steps and the Ulam front
+  { name: 'heichal_interior', at: 'heichal' },       // looking west across the Heichal
+  { name: 'kodesh_hakodashim', at: 'even_hashtiya' },
 ];
 
 // Hard watchdog: SwiftShader can wedge a renderer so that even browser.close() never
@@ -66,7 +68,8 @@ try {
   for (const v of VIEWS) {
     if (only && v.name !== only) continue;
     log(`view ${v.name}: goto`);
-    await page.goto(`${base}/?cam=${v.cam}&autostart=1&shadows=0&bloom=0`, { waitUntil: 'load', timeout: 60000 });
+    const where = v.at ? `at=${encodeURIComponent(v.at)}` : `cam=${v.cam}`;
+    await page.goto(`${base}/?${where}&autostart=1&shadows=0&bloom=0`, { waitUntil: 'load', timeout: 60000 });
     // Older builds have no ?autostart; click through the start screen if it is there.
     const btn = page.locator('.start-btn');
     if (await btn.count()) await btn.first().click();

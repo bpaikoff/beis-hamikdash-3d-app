@@ -89,7 +89,7 @@ export class KeilimBuilder extends BaseBuilder {
     const topH = dim("ma'aracha height above the floor"); // 9
     const H = dim('height'); // 10
     const lineH = dim('chut hasikra height'); // 5
-    const stone = this.mat.stonePolished;
+    const stone = (this.mat.stoneFine ?? this.mat.stonePolished);
 
     // Yesod: an L along the west (z = -16) and north (x = +16) faces. The west strip
     // runs the full width, so its south end is the one amah onto the south face.
@@ -207,7 +207,7 @@ export class KeilimBuilder extends BaseBuilder {
     const xFoot = altar.position.x - altarHalf - (len - 2); // -46 (world amos)
     const xFace = altar.position.x - altarHalf; // -16
     const width = 2;
-    const stone = this.mat.stonePolished;
+    const stone = (this.mat.stoneFine ?? this.mat.stonePolished);
 
     for (const id of ['kevesh_katan_east', 'kevesh_katan_west']) {
       const e = byId[id];
@@ -357,7 +357,7 @@ export class KeilimBuilder extends BaseBuilder {
       const zc = (1 + (2 - i) * 0.5 + 0.25) * A;
       steps.push({ position: [0, top / 2, zc], scale: [1.5 * A, top, 0.5 * A] });
     }
-    g.add(instance(this.box(1, 1, 1, this.mat.stonePolished), this.mat.stonePolished, steps, { name: 'menorah-stone' }));
+    g.add(instance(this.box(1, 1, 1, (this.mat.stoneFine ?? this.mat.stonePolished)), (this.mat.stoneFine ?? this.mat.stonePolished), steps, { name: 'menorah-stone' }));
     g.traverse((m) => {
       if (m.isMesh && m.material !== this.flame) m.castShadow = true;
     });

@@ -44,9 +44,12 @@ function readSpawn(search) {
   }
   const at = q.get('at');
   if (at && byId[at]) {
-    const [x, y, z] = worldPos(byId[at]);
-    // 4 m east of the item, at eye height, facing west toward it.
-    return { pos: [x, y + CONFIG.PLAYER_HEIGHT, z + 4], yaw: 0, pitch: 0 };
+    const entry = byId[at];
+    const [x, y, z] = worldPos(entry);
+    // East of the item (clear of its footprint), at eye height, facing west toward it.
+    const depth = (entry.geometry?.d ?? entry.geometry?.w ?? 0) * AMAH;
+    const back = Math.max(4, depth / 2 + 3);
+    return { pos: [x, y + CONFIG.PLAYER_HEIGHT, z + back], yaw: 0, pitch: depth > 20 ? 6 : 0 };
   }
   return null;
 }

@@ -6,10 +6,27 @@ import { PlayerController } from './PlayerController.js';
 import { CharacterSystem } from './CharacterSystem.js';
 import { ParticleSystem } from './ParticleSystem.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { mulberry32 } from './random.js';
 import { areas, byId, hotspots, worldBounds, worldPos } from '../content/index.js';
 
 const HOTSPOT_RADIUS = 8; // metres; the nearest entry within this shows in the HUD
+
+const BLOOM = { strength: 0.35, radius: 0.6, threshold: 0.9 };
+
+/**
+ * Bloom needs WebGL2 (MSAA + half-float render targets) and is skipped on phones/tablets
+ * (coarse pointer: fill-rate bound) and for users who asked for reduced motion.
+ */
+function wantsPostFX(renderer) {
+  if (!renderer.capabilities.isWebGL2) return false;
+  const mm = typeof window.matchMedia === 'function' ? (q) => window.matchMedia(q).matches : () => false;
+  if (mm('(pointer: coarse)') || mm('(prefers-reduced-motion: reduce)')) return false;
+  return new URLSearchParams(window.location.search).get('bloom') !== '0';
+}
 
 /** Let the browser paint (loading text) between build phases. */
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
@@ -92,6 +109,7 @@ export class TempleGame {
     // moving Kohanim instead of every frame.
     r.shadowMap.autoUpdate = false;
     this.container.appendChild(r.domElement);
+    this.setupPostFX();
     this.camera.position.set(0, CONFIG.PLAYER_HEIGHT + 1.8, 62);
 
     // Image-based lighting: without an environment the PBR gold and copper have nothing
@@ -147,14 +165,44 @@ export class TempleGame {
     this.store.setState({ loading: null });
     window.__mikdash = {
       ready: false,
-      info: this.renderer.info.render,
+      info: this.renderer.info.render, // whole-frame counts (all passes), see animate()
       camera: this.camera,
       game: this,
+      postfx: Boolean(this.composer),
     };
     this.animate();
     // Ready once one full frame has been rendered.
     await nextFrame();
     window.__mikdash.ready = true;
+  }
+
+  /**
+   * RenderPass -> UnrealBloomPass -> OutputPass on an MSAA half-float target. Tone
+   * mapping and the sRGB transfer happen in OutputPass (it reads renderer.toneMapping),
+   * so the renderer settings above stay the single source of truth. Without post-fx
+   * animate() falls back to renderer.render().
+   */
+  setupPostFX() {
+    const r = this.renderer;
+    if (!wantsPostFX(r)) return;
+    const w = this.container.clientWidth || 1;
+    const h = this.container.clientHeight || 1;
+    const pr = r.getPixelRatio();
+    const target = new THREE.WebGLRenderTarget(w * pr, h * pr, { samples: 4, type: THREE.HalfFloatType });
+    target.texture.name = 'EffectComposer.msaa';
+    const composer = new EffectComposer(r, target);
+    composer.setPixelRatio(pr);
+    composer.setSize(w, h);
+    this.renderPass = new RenderPass(this.scene, this.camera);
+    this.bloomPass = new UnrealBloomPass(new THREE.Vector2(w, h), BLOOM.strength, BLOOM.radius, BLOOM.threshold);
+    this.outputPass = new OutputPass();
+    composer.addPass(this.renderPass);
+    composer.addPass(this.bloomPass);
+    composer.addPass(this.outputPass);
+    this.composer = composer;
+    // renderer.info resets on every render() call; with several passes per frame the
+    // counts would only show the last one. Reset once per frame in animate() instead.
+    r.info.autoReset = false;
   }
 
   on(target, type, fn, opts) {
@@ -207,6 +255,7 @@ export class TempleGame {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(w, h);
+    this.composer?.setSize(w, h);
   }
 
   checkLocation() {
@@ -248,7 +297,12 @@ export class TempleGame {
     this.store.setState({
       frame: { x: c.x, y: c.y, z: c.z, yaw: this.player.euler.y, elev: Number(this.player.getElevation()) },
     });
-    this.renderer.render(this.scene, this.camera);
+    if (this.composer) {
+      this.renderer.info.reset();
+      this.composer.render(delta);
+    } else {
+      this.renderer.render(this.scene, this.camera);
+    }
   }
 
   dispose() {
@@ -269,6 +323,13 @@ export class TempleGame {
     });
     this.scene.clear();
     this.envTexture?.dispose();
+    if (this.composer) {
+      this.bloomPass?.dispose();
+      this.outputPass?.dispose();
+      this.composer.renderTarget1.dispose();
+      this.composer.renderTarget2.dispose();
+      this.composer = null;
+    }
     this.renderer.dispose();
     this.renderer.domElement.remove();
     if (window.__mikdash?.game === this) delete window.__mikdash;

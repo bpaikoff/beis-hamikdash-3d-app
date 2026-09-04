@@ -44,7 +44,8 @@ export default function BeisHamikdash3D() {
 
   const hebrewDate = useMemo(() => HebrewCalendar.getDate(), []);
   const korbanos = useMemo(() => Korbanos.getDaily(hebrewDate), [hebrewDate]);
-  const showKorbanos = nearbyKli?.legacyId === 'mizbeiach' || nearbyKli?.id === 'mizbeach';
+  const selected = useStore((s) => s.selected);
+  const showKorbanos = !selected && (nearbyKli?.legacyId === 'mizbeiach' || nearbyKli?.id === 'mizbeach');
 
   useEffect(() => {
     if (!started || !containerRef.current || !webgl) return;

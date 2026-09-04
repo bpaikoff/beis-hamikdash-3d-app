@@ -27,7 +27,8 @@ export class TempleBuilder {
       stonePolished: new THREE.MeshStandardMaterial({ map: this.tex.get('jerusalemStone'), roughness: 0.4, metalness: 0.1 }),
       // Same stone at a finer tiling for objects a few metres across (altar, kiyor, steps): 4 m bricks read as slabs on them.
       stoneFine: Object.assign(new THREE.MeshStandardMaterial({ map: this.tex.get('jerusalemStone'), normalMap: this.tex.get('normalMap'), roughness: 0.8, metalness: 0.05 }), { userData: { tileMetres: 1.25 } }),
-      gold: new THREE.MeshStandardMaterial({ map: this.tex.get('goldPolished'), roughness: 0.15, metalness: 0.95 }),
+      // Roughness 0.15 mirrored the environment's bright panels into white blooms on the large gold walls.
+      gold: new THREE.MeshStandardMaterial({ map: this.tex.get('goldPolished'), roughness: 0.38, metalness: 0.9, envMapIntensity: 0.6 }),
       goldEng: new THREE.MeshStandardMaterial({ map: this.tex.get('goldEngraved'), roughness: 0.25, metalness: 0.9 }),
       copper: new THREE.MeshStandardMaterial({ map: this.tex.get('copper'), roughness: 0.35, metalness: 0.85 }),
       copperP: new THREE.MeshStandardMaterial({ map: this.tex.get('copperPatina'), roughness: 0.5, metalness: 0.7 }),

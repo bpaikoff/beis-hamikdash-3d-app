@@ -48,8 +48,10 @@ function readSpawn(search) {
     const [x, y, z] = worldPos(entry);
     // East of the item (clear of its footprint), at eye height, facing west toward it.
     const depth = (entry.geometry?.d ?? entry.geometry?.w ?? 0) * AMAH;
-    const back = Math.max(4, depth / 2 + 3);
-    return { pos: [x, y + CONFIG.PLAYER_HEIGHT, z + back], yaw: 0, pitch: depth > 20 ? 6 : 0 };
+    const height = (entry.geometry?.h ?? 0) * AMAH;
+    // Stand far enough back to take the whole object in (its depth plus roughly its height).
+    const back = Math.max(4, depth / 2 + 3 + Math.min(height, 12) * 0.8);
+    return { pos: [x, y + CONFIG.PLAYER_HEIGHT, z + back], yaw: 0, pitch: height > 6 ? 8 : 0 };
   }
   return null;
 }

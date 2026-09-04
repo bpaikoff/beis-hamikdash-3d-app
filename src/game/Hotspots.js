@@ -117,16 +117,16 @@ export class Hotspots {
     let bestAngle = Infinity;
     let nearest = null;
     let nearestDist = NEAR_DISTANCE;
+    const cardOpen = !!this.store.getState().selected;
+    const candidates = [];
     for (const it of this.items) {
+      it.obj.visible = false;
       _to.subVectors(it.anchor, cam.position);
       const dist = _to.length();
-      if (dist > VISIBLE_DISTANCE) {
-        it.obj.visible = false;
-        continue;
-      }
+      if (dist > VISIBLE_DISTANCE) continue;
       const angle = Math.acos(THREE.MathUtils.clamp(_to.divideScalar(dist || 1).dot(_forward), -1, 1));
       const inCone = angle < CONE;
-      it.obj.visible = inCone || dist < NEAR_DISTANCE;
+      if (inCone || dist < NEAR_DISTANCE) candidates.push({ it, dist, angle });
       if (inCone && angle < bestAngle) {
         bestAngle = angle;
         best = it;
@@ -134,6 +134,18 @@ export class Hotspots {
       if (dist < nearestDist && angle < Math.PI / 2) {
         nearestDist = dist;
         nearest = it;
+      }
+    }
+    // Declutter: when the card is open show nothing; otherwise the gazed-at pill plus at most
+    // two more, preferring near ones, so labels do not stack on the crosshair.
+    if (!cardOpen) {
+      candidates.sort((a, b) => a.dist - b.dist);
+      let shown = 0;
+      for (const c of candidates) {
+        if (c.it === best || shown < 2) {
+          c.it.obj.visible = true;
+          if (c.it !== best) shown++;
+        }
       }
     }
     const focused = best ?? nearest;

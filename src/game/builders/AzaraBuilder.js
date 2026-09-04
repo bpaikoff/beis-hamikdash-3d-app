@@ -177,8 +177,9 @@ export class AzaraBuilder extends CourtBuilder {
 
   /**
    * Beis HaMoked: a domed hall straddling the north wall (Middot 1:6-8), its gate to the
-   * Azarah at x 52.5 (threshold at the Ezras Kohanim level, five steps down to the hall
-   * floor at y 0), a closed gate to the Cheil, four corner chambers and stone ledges.
+   * Azarah at x 52.5 (threshold at the Ezras Kohanim level; the hall floor is at that
+   * level too, y 2.5, and a flight down is built only if the content ever lowers it),
+   * a closed gate to the Cheil, four corner chambers and stone ledges.
    */
   buildBeisHamoked() {
     const e = this.entry('beis_hamoked');
@@ -195,8 +196,10 @@ export class AzaraBuilder extends CourtBuilder {
           { face: 'n', at: zc, w: gate.geometry.w, h: gate.geometry.h, floor: floor + LIP, frame: this.mat.stonePolished, doors: 'closed', doorMat: this.mat.goldEng, name: 'beis_hamoked north gate' },
         ],
       });
-      // Down from the Azarah gate to the hall floor.
-      this.flightA({ axis: 'x', span: [zc - gate.geometry.w / 2, zc + gate.geometry.w / 2], from: x1 + 3.5, to: x1 + 1, yBase: floor + LIP, steps: 5, rise: (this.yKohanim - floor - LIP) / 5, mat: this.mat.marbleW, name: 'beis_hamoked steps' });
+      // Down from the Azarah gate to the hall floor, when the hall lies below the court.
+      if (this.yKohanim - floor - LIP > 0.01) {
+        this.flightA({ axis: 'x', span: [zc - gate.geometry.w / 2, zc + gate.geometry.w / 2], from: x1 + 3.5, to: x1 + 1, yBase: floor + LIP, steps: 5, rise: (this.yKohanim - floor - LIP) / 5, mat: this.mat.marbleW, name: 'beis_hamoked steps' });
+      }
       // The court wall continues above the hall.
       this.decoA(X_IN, X_OUT, z1, z2, floor + h + 1, WALL_TOP, this.mat.stone);
       // Dome.
@@ -323,7 +326,7 @@ export class AzaraBuilder extends CourtBuilder {
     const hag = this.entry('lishkas_hagazis');
     const hagX1 = hag.position.x - hag.geometry.w / 2;
     {
-      // JSON gives x -73.5 .. -87.5, which overlaps Lishkas HaGazis (to -77.5); built from the Gazis face outward.
+      // JSON gives x -73.5 .. -83.5, which overlaps Lishkas HaGazis (to -77.5); built from the Gazis face out to the Soreg line.
       const { d, h } = etz.geometry;
       const x2 = hagX1;
       const x1 = etz.position.x - etz.geometry.w / 2;
@@ -346,7 +349,12 @@ export class AzaraBuilder extends CourtBuilder {
     }
   }
 
-  /** Beis Avtinas: the upper storey over Shaar HaMayim (Yoma 3:3), with a mikveh on its roof. */
+  /**
+   * Beis Avtinas: an upper storey over a court gate on whichever wall the content puts it
+   * (north, over Shaar HaKorban, per Yoma 19a). The Kohen Gadol's first immersion was on
+   * the roof of the Water Gate beside Palhedrin (Yoma 31a), so the mikveh sits on the south
+   * wall top over that gate.
+   */
   buildBeisAvtinas() {
     const e = this.entry('beis_avtinas');
     const { w, d, h } = e.geometry;
@@ -355,17 +363,22 @@ export class AzaraBuilder extends CourtBuilder {
     const z1 = e.position.z - d / 2;
     const z2 = e.position.z + d / 2;
     const floor = e.position.y;
+    const side = Math.sign(e.position.x); // +1 north wall, -1 south wall
+    const [inner, edge] = side > 0 ? [x1, X_IN] : [-X_IN, x2]; // the part overhanging the court
     this.group('beis_avtinas', () => {
-      this.roomA({ x1, x2, z1, z2, floor, h, floorMat: this.mat.floor, wallMat: this.mat.stonePolished, roof: 'walk', roofMat: this.mat.stone, name: 'beis_avtinas', doors: [{ face: 'n', at: e.position.z, w: 3, h: 6, frame: this.mat.cedar, doors: 'closed', doorMat: this.mat.cedar }] });
+      this.roomA({ x1, x2, z1, z2, floor, h, floorMat: this.mat.floor, wallMat: this.mat.stonePolished, roof: 'walk', roofMat: this.mat.stone, name: 'beis_avtinas', doors: [{ face: side > 0 ? 's' : 'n', at: e.position.z, w: 3, h: 6, frame: this.mat.cedar, doors: 'closed', doorMat: this.mat.cedar }] });
       // Corbels under the part that overhangs the court.
-      for (const z of [z1 + 1, (z1 + z2) / 2, z2 - 1]) this.decoA(-X_IN, x2, z - 0.5, z + 0.5, floor - SLAB - 1.5, floor - SLAB, this.mat.stone);
-      // Mikveh on the roof.
-      const ry = floor + h + 1;
-      const cx = (x1 + x2) / 2;
-      const cz = (z1 + z2) / 2;
+      for (const z of [z1 + 1, (z1 + z2) / 2, z2 - 1]) this.decoA(inner, edge, z - 0.5, z + 0.5, floor - SLAB - 1.5, floor - SLAB, this.mat.stone);
+    });
+    // Mikveh on the south wall top over the Water Gate (Yoma 31a).
+    const wg = this.entry('water_gate');
+    this.group('azaras_kohanim', () => {
+      const ry = WALL_TOP;
+      const cx = -(X_IN + X_OUT) / 2;
+      const cz = wg.position.z;
       this.decoA(cx - 2, cx + 2, cz - 2, cz + 2, ry, ry + 1.5, this.mat.stonePolished);
       this.decoA(cx - 1.6, cx + 1.6, cz - 1.6, cz + 1.6, ry + 1.5, ry + 1.6, this.mat.water);
-    });
+    }, { part: 'water gate roof' });
   }
 
   /**

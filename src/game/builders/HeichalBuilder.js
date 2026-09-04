@@ -176,9 +176,10 @@ export class HeichalBuilder extends BaseBuilder {
 
   // --------------------------------------------------------------------------
   // Middot 3:6: twelve steps, rise 1/2, tread 1, between the altar (z -54) and the
-  // Ulam wall (z -76): three steps then a rovad of 3, three and a rovad of 3, three
-  // and the upper rovad of 4, then the last three reach the Ulam floor. 12 + 3 + 3 + 4 = 22.
-  // Each step is a solid block down to the court floor so the flight reads as stone.
+  // Ulam wall (z -76): four steps then a rovad of 3, four and a rovad of 3, four and
+  // the upper rovad of 4 against the Ulam wall. 12 + 3 + 3 + 4 = 22 (temple.json
+  // maalos_ulam.geometry.notes). Each step is a solid block down to the court floor
+  // so the flight reads as stone.
   // --------------------------------------------------------------------------
   buildMaalosUlam() {
     const e = byId.maalos_ulam;
@@ -189,11 +190,12 @@ export class HeichalBuilder extends BaseBuilder {
     const half = e.geometry.w / 2; // 20
     const zStart = byId.mizbeach.position.z - byId.mizbeach.geometry.d / 2; // -54
     const landings = [3, 3, 4];
+    const perGroup = 4;
     let z = zStart;
     let y = K;
     let n = 0;
-    for (let group = 0; group < 4; group++) {
-      for (let s = 0; s < 3; s++) {
+    for (let group = 0; group < landings.length; group++) {
+      for (let s = 0; s < perGroup; s++) {
         y += rise;
         n++;
         const step = this.block(g, { x: [-half, half], y: [K - FT, y], z: [z, z - tread] }, this.mat.marbleW, {
@@ -203,14 +205,12 @@ export class HeichalBuilder extends BaseBuilder {
         step.userData.isStep = true;
         z -= tread;
       }
-      if (group < 3) {
-        const d = landings[group];
-        this.block(g, { x: [-half, half], y: [K - FT, y], z: [z, z - d] }, this.mat.marbleW, {
-          floor: true,
-          name: `maalos-ulam-rovad-${group + 1}`,
-        });
-        z -= d;
-      }
+      const d = landings[group];
+      this.block(g, { x: [-half, half], y: [K - FT, y], z: [z, z - d] }, this.mat.marbleW, {
+        floor: true,
+        name: `maalos-ulam-rovad-${group + 1}`,
+      });
+      z -= d;
     }
     g.userData.steps = n;
     g.userData.topZ = z; // -76
@@ -376,7 +376,7 @@ export class HeichalBuilder extends BaseBuilder {
     const zEast = byId.ulam.bounds.minZ; // -92
     const { xTaOut, xTaWall, xOuterWall, xBuilding, zWestTa, zBack } = SECTION;
     const sideH = 45; // roof of the lower side buildings (reconstruction: the ta'im reach the Heichal ceiling, Middot 4:5)
-    const storeyH = 13; // 3 x 13 + 1-amah floors fill the 42 amos under the side roof
+    const storeyH = e.geometry.h - 1; // storey 15 (temple.json) = 14 of room + a 1-amah floor; 3 x 15 = 45 reaches the side roof
     const stone = this.mat.stone;
 
     // Outer walls and back wall (collide), ta walls (interior, no collision)
@@ -522,13 +522,12 @@ export class HeichalBuilder extends BaseBuilder {
 
   // --------------------------------------------------------------------------
   // Yachin and Boaz (I Kings 7:15-21): bronze columns 18 tall, circumference 12,
-  // 5-amah capitals; Bayis Rishon only, hidden until toggled. The JSON places them at
-  // z -78.5, inside the 5-amah Ulam wall; they are set just east of the facade so
-  // they stand free of it (see the reply notes on the content).
+  // 5-amah capitals; Bayis Rishon only, hidden until toggled. Placed where the JSON
+  // puts them: in front of the Ulam wall (z -76) on the top rovad of the steps,
+  // z -74 (II Chronicles 3:15, 3:17), so the shaft stands free of the facade.
   // --------------------------------------------------------------------------
   buildYachinBoaz() {
     const { U } = LEVEL;
-    const zFront = byId.ulam.bounds.maxZ; // -76
     for (const id of ['yachin', 'boaz']) {
       const e = byId[id];
       const g = periodGroup(e);
@@ -536,8 +535,8 @@ export class HeichalBuilder extends BaseBuilder {
       const r = (dim('circumference') / (2 * Math.PI)) * A;
       const h = dim('height') * A;
       const capH = dim('capital height') * A;
-      const [x] = worldPos(e);
-      g.position.set(x, yAmos(U), this.F.z(zFront + (r * 1.35) / A + 0.5)); // the capital clears the facade
+      const [x, , z] = worldPos(e);
+      g.position.set(x, yAmos(U), z);
       const shaft = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 24), this.mat.copper);
       shaft.position.y = h / 2;
       const capital = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.35, r, capH, 24), this.mat.copperP);

@@ -477,16 +477,17 @@ export class KeilimBuilder extends BaseBuilder {
   }
 
   // --------------------------------------------------------------------------
-  // Aron (Exodus 25:10-22): 2.5 long (east-west) x 1.5 x 1.5, gold, with the
-  // kapores and two small keruvim facing each other, and its two poles running
+  // Aron (Exodus 25:10-22): 2.5 long x 1.5 x 1.5, gold, lying north-south across
+  // the width of the house (Menachot 98a), with the kapores and two small keruvim
+  // facing each other at its north and south ends, and its two poles running
   // east-west (Yoma 54a). Bayis Rishon only; built hidden.
   // --------------------------------------------------------------------------
   buildAron() {
     const e = byId.aron;
     const g = this.groupFor(e);
     const gold = this.mat.gold;
-    const w = e.geometry.w * A; // 0.75 (north-south)
-    const d = e.geometry.d * A; // 1.25 (east-west)
+    const w = e.geometry.w * A; // 1.25 (north-south, the long side)
+    const d = e.geometry.d * A; // 0.75 (east-west)
     const h = e.geometry.h * A; // 0.75
     const chest = new THREE.Mesh(this.box(w, h, d, gold), gold);
     chest.position.y = h / 2;
@@ -494,20 +495,20 @@ export class KeilimBuilder extends BaseBuilder {
     const kapores = new THREE.Mesh(this.box(w + 0.04, 0.05, d + 0.04, this.mat.goldEng), this.mat.goldEng);
     kapores.position.y = h + 0.025;
     g.add(kapores);
-    const zk = d / 2 - 0.2;
+    const xk = w / 2 - 0.2; // the keruvim at the two ends of the long side (Exodus 25:19)
     const bodies = [];
     const heads = [];
     const wings = [];
     for (const s of [-1, 1]) {
-      bodies.push({ position: [0, h + 0.05 + 0.12, s * zk], scale: [0.09, 0.12, 0.09] });
-      heads.push([0, h + 0.05 + 0.3, s * zk]);
+      bodies.push({ position: [s * xk, h + 0.05 + 0.12, 0], scale: [0.09, 0.12, 0.09] });
+      heads.push([s * xk, h + 0.05 + 0.3, 0]);
       for (const side of [-1, 1]) {
-        wings.push({ position: [side * 0.12, h + 0.05 + 0.32, s * zk - s * 0.08], rotation: [s * 0.35, 0, side * 0.6] });
+        wings.push({ position: [s * xk - s * 0.08, h + 0.05 + 0.32, side * 0.12], rotation: [side * 0.6, 0, -s * 0.35] });
       }
     }
     g.add(instance(new THREE.SphereGeometry(1, 10, 8), gold, bodies, { name: 'aron-keruvim-bodies' }));
     g.add(instancePositions(new THREE.SphereGeometry(0.06, 10, 8), gold, heads, { name: 'aron-keruvim-heads' }));
-    g.add(instance(new THREE.BoxGeometry(0.22, 0.2, 0.015), gold, wings, { name: 'aron-keruvim-wings' }));
+    g.add(instance(new THREE.BoxGeometry(0.015, 0.2, 0.22), gold, wings, { name: 'aron-keruvim-wings' }));
     g.add(
       instance(
         new THREE.CylinderGeometry(0.03, 0.03, d + 0.8, 8),

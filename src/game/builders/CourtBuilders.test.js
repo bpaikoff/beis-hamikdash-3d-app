@@ -109,7 +109,7 @@ describe('court builders', () => {
     near(floorAt(floors, ...xz(60, -112)), levelWorldY('azaras_kohanim') + (10 + 1) * AMAH); // the Parvah roof terrace
     near(floorAt(floors, ...xz(-60, -170)), levelWorldY('azaras_kohanim'));
     near(floorAt(floors, ...xz(0, -182)), levelWorldY('azaras_kohanim'));
-    near(floorAt(floors, ...xz(67.5 + 7, -14)), levelWorldY('azaras_yisrael') + 0.05 * AMAH); // Beis HaMoked hall floor
+    near(floorAt(floors, ...xz(67.5 + 7, -14)), levelWorldY('azaras_kohanim') + 0.05 * AMAH); // Beis HaMoked hall floor, at the level of the Ezras Kohanim strip its gate opens onto
   });
 
   it('leaves the altar area and the building to GEO-A', () => {
@@ -136,13 +136,13 @@ describe('court builders', () => {
     const koh = levelWorldY('azaras_kohanim');
     const under = koh + 2; // cast from under the chamber roofs
     walk([[-40, -103], [-60, -103], [-70, -103]], 0.25, under); // Lishkas HaGazis, through to the chol half
-    walk([[-70, -110], [-80, -110], [-82, -110]], 0.25, under); // on into Lishkas HaEtz
+    walk([[-70, -110], [-80, -110], [-81, -110]], 0.25, under); // on into Lishkas HaEtz (its west wall is at x -83.5, the Soreg line)
     walk([[-40, -133], [-58, -133]], 0.25, under); // Lishkas HaGolah
     walk([[40, -96], [58, -96]], 0.25, under); // Lishkas HaMadichin
     walk([[40, -112], [58, -112]], 0.25, under); // Lishkas HaParvah
     walk([[40, -128], [58, -128]], 0.25, under); // Lishkas HaMelach
     walk([[54.5, -90], [54.5, -102.5], [64.5, -102.5], [64.5, -112], [64.5, -130]], 0.25, koh + 9); // Madichin stair to the roof terrace, past the mikveh
-    walk([[40, -14], [56, -14], [67.5, -14], [70, -8], [78, -8]], 0.25, koh + 6); // Beis HaMoked: gate, steps down, hall, Lishkas Avnei HaMizbeach
+    walk([[40, -14], [56, -14], [67.5, -14], [70, -8], [78, -8]], 0.25, koh + 6); // Beis HaMoked: gate, hall (level with the Ezras Kohanim), Lishkas Avnei HaMizbeach
     walk([[65, -20], [58.5, -20]], 0.25, koh + 2); // into Lishkas Telaei Korban through its door facing the hall
     const en = levelWorldY('ezras_nashim') + 2;
     walk([[-20, 26], [-30, 26], [-40, 26]], 0.25, en); // chamber_oils

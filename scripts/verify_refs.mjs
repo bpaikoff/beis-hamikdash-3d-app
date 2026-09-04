@@ -59,15 +59,21 @@ if (cachePath && existsSync(cachePath)) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function check(ref) {
+/** One request. Transient failures (network errors, HTTP 5xx) are retried up to `retries` times. */
+async function check(ref, retries = 2) {
   const url = `${API}${encodeURIComponent(ref)}?version=hebrew`;
   let res;
   try {
     res = await fetch(url, { headers: { accept: 'application/json' } });
   } catch (err) {
+    if (retries > 0) return sleep(1000).then(() => check(ref, retries - 1));
     return { ok: false, reason: `network: ${err.message}` };
   }
   if (res.status === 404) return { ok: false, reason: 'HTTP 404' };
+  if (res.status >= 500 && retries > 0) {
+    await sleep(1000);
+    return check(ref, retries - 1);
+  }
   let body;
   try {
     body = await res.json();

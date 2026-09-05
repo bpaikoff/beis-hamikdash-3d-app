@@ -25,3 +25,6 @@ npm-debug.log*
 screenshots/auto/
 .refs-cache.json
 walk-report/
+
+# Ad-hoc HUD captures (scripts/shot_ask.mjs)
+shots/

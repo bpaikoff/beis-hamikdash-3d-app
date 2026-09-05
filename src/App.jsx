@@ -7,6 +7,7 @@ import { Minimap } from './components/Minimap.jsx';
 import { Compass } from './components/Compass.jsx';
 import { Telemetry } from './components/Telemetry.jsx';
 import { HotspotCard } from './components/HotspotCard.jsx';
+import { AskPanel } from './components/AskPanel.jsx';
 import { LockOverlay } from './components/LockOverlay.jsx';
 import { StartScreen } from './components/StartScreen.jsx';
 import { store, useStore } from './store.js';
@@ -41,6 +42,7 @@ export default function BeisHamikdash3D() {
   const focused = useStore((s) => s.focused);
   const debug = useStore((s) => s.debug);
   const lang = useStore((s) => s.lang);
+  const askOpen = useStore((s) => s.askOpen);
 
   const hebrewDate = useMemo(() => HebrewCalendar.getDate(), []);
   const korbanos = useMemo(() => Korbanos.getDaily(hebrewDate), [hebrewDate]);
@@ -82,7 +84,7 @@ export default function BeisHamikdash3D() {
     <>
       <div className="game-container" ref={containerRef} tabIndex={-1}>
         {started && !loading && !error && (
-          <div className="overlay">
+          <div className={`overlay${askOpen ? ' ask-open' : ''}`}>
             <div className="crosshair" aria-hidden="true"><div className="crosshair-dot"></div></div>
 
             <div className="hud-top">
@@ -102,6 +104,7 @@ export default function BeisHamikdash3D() {
             )}
 
             <HotspotCard />
+            <AskPanel />
             <LockOverlay />
 
             {showKorbanos && (

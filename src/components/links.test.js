@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sefariaUrl, tzadekUrl } from './links.js';
+import { sefariaUrl, tzadekUrl, sourceUrl } from './links.js';
 import { entries } from '../content/index.js';
 
 describe('sefariaUrl', () => {
@@ -24,5 +24,15 @@ describe('tzadekUrl', () => {
     const url = tzadekUrl('למה כבש ולא מדרגות?');
     expect(url.startsWith('https://tzadek.ai/app?q=')).toBe(true);
     expect(new URL(url).searchParams.get('q')).toBe('למה כבש ולא מדרגות?');
+  });
+});
+
+describe('sourceUrl', () => {
+  it('prefers the url tzadek.ai sends and falls back to Sefaria by ref', () => {
+    expect(sourceUrl({ ref: 'Zevachim 62b', url: 'https://www.sefaria.org/Zevachim.62b' })).toBe('https://www.sefaria.org/Zevachim.62b');
+    expect(sourceUrl({ ref: 'Zevachim 62b', url: 'javascript:alert(1)' })).toBe('https://www.sefaria.org/Zevachim_62b');
+    expect(sourceUrl({ ref: 'Mishnah Middot 3:3' })).toBe('https://www.sefaria.org/Mishnah_Middot_3:3');
+    expect(sourceUrl('Yoma 19a')).toBe('https://www.sefaria.org/Yoma_19a');
+    expect(sourceUrl({})).toBe(null);
   });
 });

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { store, useStore } from '../store.js';
+import { store, useStore, openAsk } from '../store.js';
 import { byId } from '../content/index.js';
 import { formatLength } from '../content/units.js';
 import { sefariaUrl, tzadekUrl } from './links.js';
@@ -14,6 +14,7 @@ const UI = {
     questions: 'Questions',
     bayisRishon: 'Bayis Rishon',
     bayisRishonOnly: 'First Temple only',
+    openExternal: 'Open on tzadek.ai',
     lang: 'עברית',
   },
   he: {
@@ -25,6 +26,7 @@ const UI = {
     questions: 'שאלות',
     bayisRishon: 'בית ראשון',
     bayisRishonOnly: 'בבית ראשון בלבד',
+    openExternal: 'פתח ב-tzadek.ai',
     lang: 'English',
   },
 };
@@ -171,11 +173,26 @@ export function HotspotCard() {
           <ul>
             {questions.map((q, i) => {
               const text = q[lang] ?? q.en;
+              const qLang = q[lang] ? lang : 'en';
               return (
                 <li key={i}>
-                  <a href={tzadekUrl(text)} target="_blank" rel="noopener noreferrer" lang={q[lang] ? lang : 'en'}>
+                  {/* The button streams the answer into the Ask panel; the small link is the
+                      same question on tzadek.ai itself (and the only path when the panel
+                      cannot stream, e.g. no guest passcode in this build). */}
+                  <button type="button" className="question-btn" lang={qLang} dir={qLang === 'he' ? 'rtl' : 'ltr'} onClick={() => openAsk(text)}>
                     {text}
-                    <span className="ext" aria-hidden="true"> ↗</span>
+                  </button>
+                  <a
+                    className="question-ext"
+                    href={tzadekUrl(text)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={t.openExternal}
+                    title={t.openExternal}
+                    lang="en"
+                    dir="ltr"
+                  >
+                    ↗
                   </a>
                 </li>
               );

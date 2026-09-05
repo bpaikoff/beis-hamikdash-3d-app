@@ -32,6 +32,12 @@ const VIEWS = [
   // The altar fire from the south-east of the Ezras Kohanim, ~25 m from the ma'aracha,
   // with bloom on (the flame core is tuned to cross the bloom threshold).
   { name: 'altar_fire', cam: '-22,9.75,0,-63,9', bloom: true },
+  // The Cheil stairs (GEO-D): each vestibule from inside its door, looking at the flights,
+  // and each stair well from the chamber floor above.
+  { name: 'moked_vestibule', cam: '40,1.8,-4,151,3' },
+  { name: 'moked_well', cam: '32,9.8,5,-48,-15' },
+  { name: 'gazis_vestibule', cam: '-35,1.8,-50,165,3' },
+  { name: 'gazis_well', cam: '-31,9.8,-42,126,-15' },
   // Guided tour stops (`?tour=<id>&stop=N`, N 1-based): the rail stands the camera at the
   // stop and the script waits for the tour to dwell there, so the card is in the frame.
   { name: 'tour_1', tour: 'tamid', stop: 1 },   // Beis HaMoked at night

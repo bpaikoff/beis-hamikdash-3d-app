@@ -147,7 +147,7 @@ describe('court builders', () => {
     // Madichin stair) are entered over HeichalBuilder's strips, so they are walked with the
     // real PlayerController over the whole Temple in AzarahRoutes.test.js.
     const koh = levelWorldY('azaras_kohanim');
-    walk([[40, -14], [56, -14], [67.5, -14], [70, -8], [78, -8]], 0.25, koh + 6); // Beis HaMoked: gate, hall (level with the Ezras Kohanim), Lishkas Avnei HaMizbeach
+    walk([[40, -14], [56, -14], [66, -14], [66, -7], [70, -7], [70, -8], [78, -8]], 0.25, koh + 6); // Beis HaMoked: gate, hall (level with the Ezras Kohanim), past the stair well, Lishkas Avnei HaMizbeach
     walk([[65, -20], [58.5, -20]], 0.25, koh + 2); // into Lishkas Telaei Korban through its door facing the hall
     const en = levelWorldY('ezras_nashim') + 2;
     walk([[-20, 26], [-30, 26], [-40, 26]], 0.25, en); // chamber_oils
@@ -253,6 +253,57 @@ describe('court builders', () => {
     expect(solidAt(71.25, 5, -44.75), 'landing 0').toBe(false);
     expect(solidAt(63.75, 5, -46.5), 'landing 1').toBe(false);
     expect(solidAt(67.5, 5, -43.9), 'flight 0').toBe(false);
+  });
+
+  it('climbs from the Cheil into Beis HaMoked and Lishkas HaGazis by their vestibules and switchback stairs', () => {
+    const { floors, wallBoxes } = built;
+    const cheil = levelWorldY('cheil');
+    const koh = levelWorldY('azaras_kohanim');
+    const near = (v, target, msg) => expect(Math.abs(v - target), `${msg}: ${v} vs ${target}`).toBeLessThan(0.03);
+    const solidAt = (x, y, z) => {
+      const [wx, wy, wz] = toWorld({ x, y, z });
+      return wallBoxes.some((b) => b.containsPoint(new THREE.Vector3(wx, wy, wz)));
+    };
+    // Under the chamber floors (cast from just below them): the vestibule floors, a LIP over
+    // the Cheil pavement (which is 0.04 amos over the mount); the doors to the Cheil are clear.
+    const underFloor = koh - 0.4 - 0.05; // below the slab
+    const top = koh + 0.05 * AMAH; // the chamber floors' top
+    for (const [id, x0, sx, zFoot, door] of [['beis_hamoked', 68.5, 1, -13.5, [82, -14, -18]], ['lishkas_hagazis', -68.5, -1, -97, [-77, -113, -108]]]) {
+      const x = (d) => x0 + sx * d;
+      near(floorAt(floors, ...xz(x(7.5), zFoot - 1), underFloor), cheil + 0.09 * AMAH, `${id} vestibule floor`);
+      near(floorAt(floors, ...xz(x(6), zFoot + 0.25), underFloor), top - 15.5 * AMAH, `${id} flight A first tread`);
+      near(floorAt(floors, ...xz(x(6), zFoot + 5.25), underFloor), top - 10.5 * AMAH, `${id} flight A top tread`);
+      near(floorAt(floors, ...xz(x(4), zFoot + 6.5), underFloor), top - 10.5 * AMAH, `${id} landing L1`);
+      near(floorAt(floors, ...xz(x(3.5), zFoot + 0.25), underFloor), top - 5 * AMAH, `${id} flight B top tread`);
+      near(floorAt(floors, ...xz(x(1), zFoot - 1.5), underFloor), top - 5 * AMAH, `${id} landing L2`);
+      near(floorAt(floors, ...xz(x(1), zFoot + 0.25), underFloor), top - 4.5 * AMAH, `${id} flight C first tread`);
+      near(floorAt(floors, ...xz(x(1), zFoot + 4.75)), top, `${id} flight C top tread, level with the floor`);
+      near(floorAt(floors, ...xz(x(1), zFoot + 6)), top, `${id} floor beyond the well`);
+      // The parapet round the well: both sides and its -z end, 1.5 amos over the floor; the +z end open.
+      for (const [dx, dz] of [[-0.25, 2.5], [2.25, 2.5], [1, -0.25]]) expect(floorAt(floors, ...xz(x(dx), zFoot + dz)) - koh, `${id} parapet ${dx},${dz}`).toBeCloseTo((0.05 + 0.05 + 1.5) * AMAH, 2);
+      // Balustrades: the wall parting A from B beside A's fifth tread, and B from C beside B's fifth tread, an amah over the tread; none over the landings that join them.
+      expect(solidAt(x(4.75), -10, zFoot + 2.5), `${id} wall A|B`).toBe(true);
+      expect(solidAt(x(2.25), -4, zFoot + 3), `${id} wall B|C`).toBe(true);
+      expect(solidAt(x(4.75), -8, zFoot + 6.5), `${id} L1 open to B`).toBe(false);
+      expect(solidAt(x(2.25), -3, zFoot - 1), `${id} L2 open to C`).toBe(false);
+      // The door to the Cheil: open at the Cheil level, wall beside it.
+      const [dxw, dz1, dz2] = door;
+      expect(solidAt(dxw, -12.5, dz1), `${id} door`).toBe(false);
+      expect(solidAt(dxw, -12.5, dz2), `${id} wall beside the door`).toBe(true);
+    }
+    // The kodesh halves stand on solid bases; the walk up the Beis HaMoked stair (cast from under the hall floor, then from above for the well).
+    expect(solidAt(60, -5, -14)).toBe(true);
+    expect(solidAt(-62, -5, -103)).toBe(true);
+    expect(solidAt(75, -5, -14)).toBe(false);
+    expect(solidAt(-72, -5, -103)).toBe(false);
+    const lower = walk([[80, -14], [74.5, -15], [74.5, -7], [72, -6.75], [72, -13], [70, -15], [69.5, -13], [69.5, -10]], 0.25, underFloor);
+    near(lower.first, cheil + 0.09 * AMAH, 'vestibule');
+    const upper = walk([[69.5, -10], [69.5, -7], [66, -7], [66, -14], [56, -14]]);
+    near(upper.first, lower.last, 'seam of the two casts');
+    near(upper.last, koh, 'the court');
+    const gLower = walk([[-75, -113], [-75, -101], [-75, -90.25], [-72, -90.25], [-72, -96.5], [-70.5, -98.5], [-69.5, -96.5], [-69.5, -93.5]], 0.25, underFloor);
+    near(gLower.first, cheil + 0.09 * AMAH, 'gazis vestibule');
+    near(walk([[-69.5, -93.5], [-69.5, -90.5], [-66, -90.5], [-66, -103], [-60, -103]]).last, koh + 0.05 * AMAH, 'the kodesh half, at its court door (the court west of z -54 is HeichalBuilder\'s)');
   });
 
   it('has no two floor slabs sharing a top surface', () => {

@@ -31,6 +31,10 @@ export const ROOM_WALL_T = 1;
  * never z-fight (2.5 cm; invisible underfoot and well below CONFIG.STEP_HEIGHT).
  */
 export const LIP = 0.05;
+/** The Cheil pavement stands this much above the mount (2 cm) so the two slabs never z-fight (HarHaBayisBuilder). */
+export const CHEIL_LIP = 0.04;
+/** Half-amah steps: the rise of every court flight in Middot (2:3, 2:6, 3:6), amos. */
+export const STEP_RISE = 0.5;
 
 /** Value of a `dimensions[]` entry by label, or `fallback`. */
 export function dim(entry, label, fallback) {
@@ -170,6 +174,96 @@ export class CourtBuilder extends BaseBuilder {
       out.push(this.blockA(...r, base, top, mat, name));
     }
     return out;
+  }
+
+  /**
+   * Switchback stair of 32 half-amah steps in three flights (11 + 11 + 10) that climb
+   * the 16 amos from `floor` to `top`, for a chamber whose door to the Cheil lies a
+   * storey under its floor (Beis HaMoked, Lishkas HaGazis; reconstructions). The
+   * flights run along z in three 2-amah bands parted by half-amah walls, side by side
+   * from the partition at `x0` in the direction `sx` (+1 or -1): flight A in the outer
+   * band (`wA` wide) climbs +z from `zFoot`, landing L1 lies across the outer two bands
+   * at its top, flight B in the middle band climbs back -z, landing L2 across the inner
+   * two bands, and flight C in the band beside the partition climbs +z again and tops
+   * out level with the upper floor, which needs a well over that band from `zFoot` to
+   * `zFoot + 5` (returned as `well`, with x1 < x2). Every step and landing is solid to
+   * a slab under `floor`. The band walls and the walls fencing the landings' open
+   * sides rise from `floor` to `ceiling` (the underside of the upper floor), each
+   * stopping an amah short of the landing that joins its two flights, as in the Beis
+   * Avtinas tower; `eWall` closes flight A's outer side and `nWall` L1's far end (pass
+   * false where a room wall already stands there). Treads and rises are half an amah.
+   *
+   * Flight C's two side walls go on above the ceiling to `top + 1.5`, as thin walls
+   * hidden inside the upper floor's slab and the well parapet ({@link wellParapetA}):
+   * the parapet is a mass, which stops the player's centre only, and a player who
+   * walked into the well less than a body's radius from its side would otherwise be
+   * wedged in the band wall below the ceiling on the way down. They stop a body's
+   * width short of the well's open end, so a walker passing the end on the upper floor
+   * is not caught on them (the top two treads are above the band walls anyway).
+   */
+  switchbackA({ x0, sx, zFoot, floor, top, ceiling, wA = 2, eWall = true, nWall = true, mat, wallMat, name }) {
+    const m = mat ?? this.mat.stonePolished;
+    const wm = wallMat ?? this.mat.stone;
+    const rise = STEP_RISE;
+    const band = 2;
+    const gap = 0.5;
+    const bt = 0.25;
+    const [nA, nB, nC] = [11, 11, 10];
+    const bottom = floor - SLAB;
+    const x = (d) => x0 + sx * d; // distance from the partition, signed
+    const xC = [x(0), x(band)];
+    const xB = [x(band + gap), x(2 * band + gap)];
+    const xA = [x(2 * band + 2 * gap), x(2 * band + 2 * gap + wA)];
+    const zA1 = zFoot + nA * rise; // top of A / foot of B
+    const zL1 = zA1 + 2.5;
+    const zL2 = zFoot - 2.5;
+    const yA = top - (nA + nB + nC) * rise;
+    const yB = yA + nA * rise;
+    const yC = yB + nB * rise;
+    this.flightA({ axis: 'z', span: xA, from: zFoot, to: zA1, yBase: yA, bottom, steps: nA, rise, mat: m, name: `${name} stair` });
+    this.blockA(xB[0], xA[1], zA1, zL1, bottom, yB, m, `${name} landing`);
+    this.flightA({ axis: 'z', span: xB, from: zA1, to: zFoot, yBase: yB, bottom, steps: nB, rise, mat: m, name: `${name} stair` });
+    this.blockA(xC[0], xB[1], zL2, zFoot, bottom, yC, m, `${name} landing`);
+    this.flightA({ axis: 'z', span: xC, from: zFoot, to: zFoot + nC * rise, yBase: yC, bottom, steps: nC, rise, mat: m, name: `${name} stair` });
+    // Walls: L2's outer end; between A and B (to an amah short of L1); between B and C
+    // (from an amah short of L2, along L1's inner side); L1's far end; A's outer side.
+    this.wallA(xC[0], xA[0], zL2 - bt, zL2, floor, ceiling, wm);
+    this.wallA(xB[1], xA[0], zL2, zA1 - 1, floor, ceiling, wm);
+    this.wallA(xC[1], xB[0], zFoot + 1, zL1, floor, ceiling, wm);
+    if (nWall) this.wallA(xC[1], xA[1] + (eWall ? sx * bt : 0), zL1, zL1 + bt, floor, ceiling, wm);
+    if (eWall) this.wallA(xA[1], xA[1] + sx * bt, zFoot, zL1 + bt, floor, ceiling, wm);
+    const zTop = zFoot + nC * rise;
+    const zRail = zTop - 0.9;
+    this.wallA(xC[0] - sx * bt, xC[0], zFoot, zRail, ceiling, top + 1.5, wm);
+    this.wallA(xC[1], xC[1] + sx * bt, zFoot, zRail, ceiling, top + 1.5, wm);
+    const [wx1, wx2] = [Math.min(...xC), Math.max(...xC)];
+    return { well: { x1: wx1, x2: wx2, z1: zFoot, z2: zTop } };
+  }
+
+  /**
+   * Floor slab with a rectangular well left open, as four slabs round it (the well's
+   * -z end and both sides; the +z end is where a stair arrives).
+   */
+  floorWithWellA(x1, x2, z1, z2, well, yTop, mat, name) {
+    this.floorA(x1, well.x1, z1, z2, yTop, mat, name);
+    this.floorA(well.x2, x2, z1, z2, yTop, mat, name);
+    this.floorA(well.x1, well.x2, z1, well.z1, yTop, mat, name);
+    this.floorA(well.x1, well.x2, well.z2, z2, yTop, mat, name);
+  }
+
+  /**
+   * Parapet round a stair well in a floor at `y`: half-amah masses 1.5 amos high along
+   * both sides and the -z end (open at +z, where the flight arrives), standing a LIP
+   * above the floor like every mass on a floor (see solidA). A mass, not a wall, so
+   * that it stops the player although it is below the head-height wall test.
+   */
+  wellParapetA(well, y, mat, name) {
+    const t = 0.5;
+    const h = 1.5;
+    const py = y + LIP;
+    this.blockA(well.x1 - t, well.x1, well.z1 - t, well.z2, py, py + h, mat, name);
+    this.blockA(well.x2, well.x2 + t, well.z1 - t, well.z2, py, py + h, mat, name);
+    this.blockA(well.x1 - t, well.x2 + t, well.z1 - t, well.z1, py, py + h, mat, name);
   }
 
   /**

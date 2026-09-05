@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CourtBuilder, GROUND, SLAB, WALL_T } from './CourtBuilder.js';
+import { CHEIL_LIP, CourtBuilder, GROUND, SLAB, WALL_T } from './CourtBuilder.js';
 import { instance } from '../instanced.js';
 import { AMAH } from '../../content/units.js';
 
@@ -17,8 +17,6 @@ const EAST_WALL_TOP = 8.5;
 const MERLON_PITCH = 4;
 /** Soreg post pitch, amos. */
 const POST_PITCH = 1;
-/** The Cheil pavement is 2 cm proud of the mount so the two slabs never z-fight. */
-const CHEIL_LIP = 0.04;
 /** Cheek walls beside the twelve steps: thickness and height over the top tread, amos. */
 const CHEEK_T = 0.5;
 const CHEEK_H = 1.2;

@@ -92,8 +92,9 @@ export const routes = {
   // The Cheil (Middot 2:3) all round the courts, entering and leaving through the Soreg
   // opening opposite every gate. The ring is interrupted where temple.json puts buildings
   // across it: Beis HaMoked (x to 82.5, z -26 .. -2) on the north, Lishkas Palhedrin
-  // (z -22 .. -38, closed door) and Lishkas HaEtz (z -118 .. -148) on the south, so those
-  // stretches are bypassed over the plaza.
+  // (z -21 .. -37, with a door to the Cheil) and Lishkas HaEtz (z -118 .. -148) on the
+  // south, so those stretches are bypassed over the plaza. The last leg goes in through
+  // the Beis HaMoked's Cheil door into its vestibule (stairs.mjs walks the stair).
   cheil: [
     amos(0, 165, HB),
     at('cheil', CH), // in through the opening opposite the Ezras Nashim gate
@@ -132,7 +133,10 @@ export const routes = {
     amos(78.5, -36, CH),
     amos(90, -36, HB), // out opposite Shaar HaNashim
     amos(90, -14, HB),
-    amos(85.5, -14, HB), // the opening opposite the Beis HaMoked's Cheil gate (closed; the hall stands 1 amah inside the Soreg)
+    amos(83, -14, { ...CH, reach: 0.5 }), // the opening opposite the Beis HaMoked's Cheil gate: the amah of Cheil between the Soreg and the hall
+    amos(79, -14, CH), // through the door into the vestibule under the hall's chol half
+    amos(83, -14, { ...CH, reach: 0.5 }),
+    amos(90, -14, HB),
   ],
 
   // The inside face of the outer wall, corner to corner, 0.4 m (0.8 amos) off the face.
@@ -171,7 +175,8 @@ export const routes = {
   // (no Soreg opening between it and the east side); Lishkas Palhedrin (z -37 .. -21)
   // and Lishkas HaEtz (z -148 .. -118) fill the south strip, and the chol half of
   // Lishkas HaGazis (x to -77.5, z -118 .. -88) narrows it. Palhedrin's door to the Cheil
-  // is walked into; Beis HaMoked's and the Gazis' Cheil doors open 16 amos up (see the report).
+  // is walked into; Beis HaMoked's and the Gazis' Cheil doors, at the Cheil level into
+  // the vestibules under their chol halves, are walked in stairs.mjs.
   // Convex corners (the courts' corners, the Gazis) are turned at a waypoint 1.5 amos past
   // the face just left, with a tight reach, so the body clears the corner before it turns.
   cheil_ring: [
@@ -255,7 +260,9 @@ export const routes = {
     amos(78.5, -36, CH), // Shaar HaNashim
     amos(90, -36, HB),
     amos(90, -14, HB),
-    amos(83.2, -14, { ...CH, reach: 0.5 }), // the Beis HaMoked's Cheil gate: the hall's wall stands 1 amah inside the Soreg
+    amos(83, -14, { ...CH, reach: 0.5 }), // the Beis HaMoked's Cheil gate: the hall's wall stands 1 amah inside the Soreg
+    amos(79, -14, CH), // and its door at the Cheil level leads into the vestibule under the hall
+    amos(83, -14, { ...CH, reach: 0.5 }),
     amos(90, -14, HB),
   ],
 

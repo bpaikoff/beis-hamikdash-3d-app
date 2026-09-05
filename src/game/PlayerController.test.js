@@ -169,7 +169,9 @@ describe('in the built Temple', () => {
     for (const [name, wps] of Object.entries(routes)) {
       for (const wp of wps) {
         const { x, z, level } = resolve(wp);
-        const floor = temple.probe(x, z, 200).y; // highest surface
+        // Probe like the controller does (from just above head height at the expected level), so a
+        // gallery or roof above the spot does not count as its floor.
+        const floor = wp.minY != null || level == null ? temple.probe(x, z, 200).y : temple.floorUnder(x, z, level).y;
         const feet = wp.minY != null ? floor : level ?? floor;
         const p = temple.probe(x, z, feet + CONFIG.STEP_HEIGHT + 0.05);
         const label = `${name}: ${wp.id}(${wp.dx ?? 0},${wp.dz ?? 0})`;

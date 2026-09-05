@@ -18,8 +18,8 @@ function faceRanges(geo) {
 }
 
 describe('scaleBoxUVs', () => {
-  it('a 40 x 4 m stone wall spans 10 x 1 tiles at 4 m per tile', () => {
-    const geo = scaleBoxUVs(new THREE.BoxGeometry(40, 4, 1), 40, 4, 1, TILE_METRES.stone);
+  it('a 40 x 4 m wall spans 10 x 1 tiles at 4 m per tile', () => {
+    const geo = scaleBoxUVs(new THREE.BoxGeometry(40, 4, 1), 40, 4, 1, 4);
     const [px, nx, py, ny, pz, nz] = faceRanges(geo);
     expect(pz).toEqual([0, 10, 0, 1]); // front face: width x height
     expect(nz).toEqual([0, 10, 0, 1]);
@@ -38,7 +38,8 @@ describe('scaleBoxUVs', () => {
   it('BaseBuilder.box picks the tile size from the material map', () => {
     const mat = { stone: new THREE.MeshStandardMaterial(), floor: new THREE.MeshStandardMaterial() };
     const b = new BaseBuilder(new THREE.Scene(), null, mat, [], []);
-    expect(b.tileMetresFor(mat.stone)).toBe(4);
+    expect(b.tileMetresFor(mat.stone)).toBe(TILE_METRES.stone);
+    expect(TILE_METRES.stone).toBe(3); // ashlar: three ~1 m courses per 1K tile
     expect(b.tileMetresFor(mat.floor)).toBe(2);
     const other = new THREE.MeshStandardMaterial();
     other.userData.tileMetres = 1;
@@ -52,9 +53,20 @@ describe('scaleBoxUVs', () => {
     const mat = { stone: new THREE.MeshStandardMaterial() };
     const walls = [];
     const b = new BaseBuilder(new THREE.Scene(), null, mat, [], walls);
-    const m = b.addWall(0, 0, 0, 40, 4, 1, mat.stone);
+    const m = b.addWall(0, 0, 0, 30, 3, 1, mat.stone);
     expect(walls).toContain(m);
-    expect(m.position.y).toBe(2);
+    expect(m.position.y).toBe(1.5);
     expect(faceRanges(m.geometry)[4]).toEqual([0, 10, 0, 1]);
+  });
+
+  it('aoMap samples the scaled uv: three >= r152 defaults Texture.channel to 0 (uv, not uv1/uv2)', () => {
+    // WebGLPrograms: aoMapUv = getChannel(material.aoMap.channel), getChannel(0) === 'uv'.
+    // If a three upgrade ever changes this default, scaleBoxUVs must also write `uv1`.
+    const m = new THREE.MeshStandardMaterial({ aoMap: new THREE.Texture() });
+    expect(m.aoMap.channel).toBe(0);
+    const geo = scaleBoxUVs(new THREE.BoxGeometry(8, 4, 2), 8, 4, 2, 4);
+    expect(geo.attributes.uv1).toBeUndefined();
+    expect(geo.attributes.uv2).toBeUndefined();
+    expect(faceRanges(geo)[4]).toEqual([0, 2, 0, 1]);
   });
 });

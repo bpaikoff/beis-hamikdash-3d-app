@@ -7,16 +7,16 @@ import * as THREE from 'three';
  * DEFAULT_TILE_METRES; a material can override with `material.userData.tileMetres`.
  */
 export const TILE_METRES = {
-  stone: 4,
-  stonePolished: 4,
+  stone: 3,          // ashlar: one 1K tile = three courses of ~1 m blocks
+  stonePolished: 2,
   floor: 2,
   mosaic: 2,
-  marbleW: 3,
-  marbleR: 3,
+  marbleW: 2,
+  marbleR: 2,
   cedar: 2,
   acacia: 2,
   paroches: 4,
-  ground: 10,
+  ground: 8,
 };
 export const DEFAULT_TILE_METRES = 4;
 
@@ -51,6 +51,8 @@ export function scaleBoxUVs(geo, w, h, d, tileMetres = DEFAULT_TILE_METRES) {
     for (let k = 0; k < count && i < uv.count; k++, i++) uv.setXY(i, uv.getX(i) * su, uv.getY(i) * sv);
   }
   uv.needsUpdate = true;
+  // aoMap needs no second UV set here: since three r152 Texture.channel defaults to 0,
+  // so every map (aoMap included) samples this same scaled `uv` (see BaseBuilder.test.js).
   return geo;
 }
 

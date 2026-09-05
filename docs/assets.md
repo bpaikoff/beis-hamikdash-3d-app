@@ -93,3 +93,62 @@ gets a new URL and the old cache entry is never hit. `try_files $uri` ignores th
 (hero, ezras_nashim_steps, mizbeach_kevesh, ulam_facade, heichal_interior,
 kodesh_hakodashim) headlessly. Sprint 3's before/after pairs live in `shots/before` and
 `shots/after` (untracked).
+
+# Character assets
+
+The kohanim, the Kohen Gadol, the Yisraelim and the animals are rigged glTF models under
+`public/assets/characters/` (CC0, by Quaternius; see `public/assets/LICENSES.md`), loaded
+by `src/game/CharacterSystem.js`. Doves stay primitives.
+
+| File | Source | Clips | Size | Notes |
+|---|---|---|---|---|
+| `kohen.glb` | Universal Animation Library (Standard), `UAL1_Standard.glb` | `Idle_Loop`, `Idle_Talking_Loop`, `Walk_Loop` | 1.6 MB | the UAL mannequin, 1.8 m, two skinned primitives (8.5k vertices), 65 bones, in-place animation (not the root-motion file) |
+| `sheep.glb` | Lowpoly Animated Animals (farm pack), `FBX/Sheep.fbx` | `Idle` | 0.2 MB | converted from FBX, scaled to 0.95 m, feet on y 0, facing +z; also the goats |
+| `bull.glb` | same pack, `FBX/Cow.fbx` | `Idle` | 0.2 MB | the pack's cow, scaled to 1.5 m; coloured dark at load |
+
+Total 2.0 MB, static files outside the JS bundle. No Draco or KTX2: the files are plain
+glTF 2.0 binaries written by three's `GLTFExporter`, so `GLTFLoader` alone reads them and
+vitest can parse them in node (`Characters.test.js`).
+
+## Fetching
+
+```bash
+node scripts/fetch_assets.mjs --characters   # itch.io download + reduction (network, three in node)
+node scripts/fetch_assets.mjs --verify       # also checks characters/manifest.json
+```
+
+The packs live on itch.io, which has no direct zip links: the script follows the site's
+own flow (POST `download_url` for the "no thanks" download page, then POST `file/<id>`)
+with a small cookie jar, so no account is needed. It then takes one entry out of each zip
+and reduces it with three's loaders in node: the UAL file is re-exported with only the
+three clips above (7.6 MB -> 1.6 MB); each animal FBX is parsed with `FBXLoader`, its
+material groups merged (one primitive per material instead of one per polygon run),
+scaled by its skinned bounds to the `height` in `CHARACTERS`, and exported as GLB.
+`public/assets/characters/manifest.json` records the itch.io page, the zip's sha256, the
+source entry, the clips and the sha256 of every output; `LICENSES.md` is regenerated from
+it together with the texture manifest. URLs carry `?v=<sha256 prefix>` like the textures.
+
+## How the figures are built
+
+- One `GLTFLoader` on the shared `LoadingManager` (`TextureFactory.manager`); each file is
+  loaded once and every figure is a `SkeletonUtils.clone` with its own `AnimationMixer`.
+- Dress by vertex colour: the human is painted per role from its bind (T) pose — head and
+  hands skin, the rest white linen (kohen), undyed wool (yisrael), or techeiles on the
+  torso with the linen sleeves and hem showing (Kohen Gadol); a dark avnet band. Geometry
+  is copied once per role, materials are shared per role (`whiteLinen` map x vertex colour).
+- Meshes on bones: the migba'as (kohen) and the mitznefes, tzitz, ephod, choshen and the
+  twelve stones (Kohen Gadol) are simple geometries attached to the `Head` / `spine_03`
+  bones at rest-pose world positions, so they follow the idle animation.
+- Animals swap materials by the source names (`White`, `Black`, `Pink`): wool, goat hide
+  (the sheep model narrowed to 0.85 x 0.95 x 0.9) and dark bull hide.
+- Budget: `LIMITS` = 20 humans, 14 animals, 12 doves. Mixers tick at 30 Hz and only for
+  figures within 80 m of the camera; everything is frustum-culled by three (bind-pose
+  bounding spheres, animations are in place). Walkers use `Walk_Loop` with the mixer's
+  `timeScale = speed / CLIP_SPEED.kohen` so the feet do not slide.
+- Placement is data: `templePlacements()` derives every spot from the content JSON
+  (`worldPos` + level y); `Characters.test.js` probes each spot and every 0.25 m of the
+  two walking loops (slaughter lane, Duchan strip) against the built Temple with
+  `PlayerController.probe`, so a builder change that puts a figure inside a solid or off
+  its floor fails the suite. Nothing changes with the period toggle.
+- `dispose()` stops the mixers, disposes the cloned skeletons, painted geometries and
+  materials; `TempleGame.dispose` calls it before traversing the scene.

@@ -24,3 +24,4 @@ Thumbs.db
 npm-debug.log*
 screenshots/auto/
 .refs-cache.json
+walk-report/

@@ -11,7 +11,8 @@
     "format": "prettier --write \"src/**/*.{js,jsx}\" \"scripts/**/*.mjs\"",
     "test": "vitest",
     "screenshot": "node scripts/screenshot.mjs",
-    "bake": "node scripts/bake_textures.mjs"
+    "bake": "node scripts/bake_textures.mjs",
+    "walk": "node scripts/walk.mjs"
   },
   "dependencies": {
     "@hebcal/core": "^6.9.2",

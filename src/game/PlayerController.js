@@ -32,7 +32,9 @@ function buildFloorCollider(floors) {
   const merged = BufferGeometryUtils.mergeGeometries(parts, false);
   for (const p of parts) p.dispose();
   merged.boundsTree = new MeshBVH(merged);
-  const mesh = new THREE.Mesh(merged, new THREE.MeshBasicMaterial({ visible: false }));
+  // DoubleSide so a probe that starts inside a solid hits its underside (a back face) and
+  // reports "inside" instead of seeing through to the floor below.
+  const mesh = new THREE.Mesh(merged, new THREE.MeshBasicMaterial({ visible: false, side: THREE.DoubleSide }));
   mesh.name = 'floorCollider';
   return mesh;
 }
@@ -58,17 +60,6 @@ export class PlayerController {
         w.updateWorldMatrix(true, false);
         return new THREE.Box3().setFromObject(w);
       });
-    // Thick walkable masses (altar tiers, platforms, solid steps) also block from the side:
-    // a downward floor ray cannot see a block you are walking into, so without this the
-    // player clips inside it. The collision sphere sits at head height, so anything lower
-    // than ~1.4 m above the feet (stairs, slabs, the Duchan) stays walkable.
-    const _box = new THREE.Box3();
-    for (const f of floors) {
-      if (!f.geometry || f.userData?.isRamp) continue;
-      f.updateWorldMatrix(true, false);
-      _box.setFromObject(f);
-      if (_box.max.y - _box.min.y > 0.6) this.wallBoxes.push(_box.clone());
-    }
     this.bounds = opts.bounds ?? { minX: -100, maxX: 100, minZ: -95, maxZ: 120 };
     this.euler = new THREE.Euler(0, 0, 0, 'YXZ');
     this.moveF = false;
@@ -101,17 +92,38 @@ export class PlayerController {
     }
   }
 
-  /** Height of the highest walkable surface under (x, z), or 0 if there is none. */
-  getFloorHeight(x, z, fromY = 100) {
+  /**
+   * Cast straight down from (x, fromY, z). Returns the first surface hit and whether the
+   * probe started inside a solid (the first hit is a back face, i.e. the solid's underside).
+   * Probing from just above step height catches walking into a block the player cannot
+   * climb; probing from above head height finds the floor while ignoring balconies overhead.
+   */
+  probe(x, z, fromY) {
     _origin.set(x, fromY, z);
     this.raycaster.set(_origin, _down);
     this.raycaster.far = fromY + 100;
     const hits = this.raycaster.intersectObjects(this.floors, false);
-    if (!hits.length) return 0;
-    if (this.collider) return hits[0].point.y; // BVH with firstHitOnly returns the nearest = highest
+    if (!hits.length) return { y: 0, inside: false };
+    if (this.collider) {
+      const h = hits[0];
+      const n = h.face?.normal;
+      return { y: h.point.y, inside: !!n && n.y < 0 };
+    }
     let highest = -Infinity;
     for (const hit of hits) if (hit.point.y > highest && hit.point.y < fromY) highest = hit.point.y;
-    return highest > -Infinity ? highest : 0;
+    return { y: highest > -Infinity ? highest : 0, inside: false };
+  }
+
+  /** Height of the highest walkable surface under (x, z), or 0 if there is none. */
+  getFloorHeight(x, z, fromY = 100) {
+    return this.probe(x, z, fromY).y;
+  }
+
+  /** Floor under the feet, ignoring surfaces overhead but not fooled by standing inside a slab. */
+  floorUnder(x, z, feetY) {
+    let p = this.probe(x, z, feetY + CONFIG.PLAYER_HEIGHT + 0.3);
+    if (p.inside) p = this.probe(x, z, feetY + CONFIG.STEP_HEIGHT + 0.05);
+    return p;
   }
 
   collides(pos) {
@@ -148,22 +160,23 @@ export class PlayerController {
     _move.set(0, 0, 0).addScaledVector(_forward, (dz / len) * speed).addScaledVector(_right, (dx / len) * speed);
 
     // Horizontal move with step climbing, resolved per axis so walls are slid along, not stuck to.
-    const currentFloorY = this.getFloorHeight(cam.position.x, cam.position.z);
     const feetY = cam.position.y - CONFIG.PLAYER_HEIGHT;
     for (const axis of ['x', 'z']) {
       if (_move[axis] === 0) continue;
       const next = cam.position.clone();
       next[axis] += _move[axis];
-      const nextFloorY = this.getFloorHeight(next.x, next.z, feetY + CONFIG.PLAYER_HEIGHT + 0.3);
-      const rise = nextFloorY - currentFloorY;
-      if (rise > CONFIG.STEP_HEIGHT && !this.isJumping) continue;
+      // Probe from just above step height: inside a solid, or a surface higher than a step,
+      // means the way is blocked.
+      const p = this.probe(next.x, next.z, feetY + CONFIG.STEP_HEIGHT + 0.05);
+      if (p.inside) continue;
+      if (p.y - feetY > CONFIG.STEP_HEIGHT && !this.isJumping) continue;
       if (this.collides(next)) continue;
       cam.position[axis] = next[axis];
     }
 
     // Vertical: gravity, landing, and stepping up onto the surface we just walked onto.
     this.verticalVelocity -= 20 * delta;
-    const floorY = this.getFloorHeight(cam.position.x, cam.position.z, feetY + CONFIG.PLAYER_HEIGHT + 0.3);
+    const floorY = this.floorUnder(cam.position.x, cam.position.z, feetY).y;
     const newFeet = feetY + this.verticalVelocity * delta;
     if (newFeet <= floorY) {
       cam.position.y = floorY + CONFIG.PLAYER_HEIGHT;

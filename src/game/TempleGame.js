@@ -228,12 +228,50 @@ export class TempleGame {
     this.hotspotLabels = new Hotspots(this.camera, this.container, this.store); // HUD: in-scene labels
     if (isTouchDevice()) this.touch = new TouchControls(this.container, this.player); // HUD: joystick + drag-look
     this.store.setState({ loading: null });
+    const q = new URLSearchParams(window.location.search);
+    // Test hooks (scripts/walk.mjs, scripts/screenshot.mjs). ?render=0 keeps the simulation
+    // running at full rAF speed without drawing; ?step=<seconds> fixes the frame delta.
+    this.renderEnabled = q.get('render') !== '0';
+    this.fixedStep = Number(q.get('step')) || 0;
     window.__mikdash = {
       ready: false,
       info: this.renderer.info.render, // whole-frame counts (all passes), see animate()
       camera: this.camera,
       game: this,
       postfx: Boolean(this.composer),
+      get player() {
+        return this.game.player;
+      },
+      /** Walk without pointer lock (headless drivers cannot lock the pointer). */
+      lock: () => {
+        this.player.isLocked = true;
+        this.store.setState({ locked: true });
+      },
+      teleport: (x, y, z) => {
+        this.camera.position.set(x, y, z);
+        this.player.verticalVelocity = 0;
+      },
+      /** Face a point (x, z) on the ground plane, level pitch. */
+      lookAt: (x, z) => {
+        const c = this.camera.position;
+        const yaw = Math.atan2(-(x - c.x), -(z - c.z));
+        this.camera.rotation.set(0, yaw, 0, 'YXZ');
+        this.player.euler.setFromQuaternion(this.camera.quaternion, 'YXZ');
+      },
+      /** Highest walkable surface under (x, z), or 0. */
+      floorAt: (x, z) => this.player.getFloorHeight(x, z, 200),
+      /** True when the feet point is inside a collision box (clipped into a solid). */
+      insideSolid: () => {
+        const c = this.camera.position;
+        const feetY = c.y - CONFIG.PLAYER_HEIGHT;
+        const p = this.player.probe(c.x, c.z, feetY + CONFIG.STEP_HEIGHT + 0.05);
+        const feet = new THREE.Vector3(c.x, feetY + 0.3, c.z);
+        return p.inside || this.player.wallBoxes.some((b) => b.containsPoint(feet));
+      },
+      renderOnce: () => this.renderFrame(0, true),
+      entries: byId,
+      worldPos,
+      levelWorldY,
     };
     this.animate();
     // Ready once one full frame has been rendered.
@@ -355,7 +393,7 @@ export class TempleGame {
     if (this.disposed) return;
     this.raf = requestAnimationFrame(() => this.animate());
     if (window.__mikdash?.paused) return; // screenshot tooling holds the last frame
-    const delta = Math.min(this.clock.getDelta(), 0.1);
+    const delta = this.fixedStep || Math.min(this.clock.getDelta(), 0.1);
     this.player.update(delta);
     this.characters.update(delta);
     this.particles.update(delta);
@@ -367,6 +405,11 @@ export class TempleGame {
     this.store.setState({
       frame: { x: c.x, y: c.y, z: c.z, yaw: this.player.euler.y, elev: Number(this.player.getElevation()) },
     });
+    this.renderFrame(delta);
+  }
+
+  renderFrame(delta, force = false) {
+    if (!this.renderEnabled && !force) return;
     if (this.composer) {
       this.renderer.info.reset();
       this.composer.render(delta);

@@ -133,6 +133,26 @@ export class CourtBuilder extends BaseBuilder {
   }
 
   /**
+   * Invisible solid mass standing on a floor at `y1`, registered as a walkable block
+   * (this.floors). PlayerController tests walls only against a sphere at head height,
+   * so a wall lower than the player's eyes (a table, a short pillar, a tank) never
+   * blocks; a mass in the floor collider does, through the double-sided probe: taller
+   * than STEP_HEIGHT from the side it reads "inside", and its top is walkable.
+   *
+   * The mass starts a LIP above the floor it stands on. With its underside coplanar
+   * with the floor's top the downward probe from inside it meets both faces at the
+   * same distance and may take the floor's (front face -> "not inside" -> walk through);
+   * a LIP higher, the first face met is the mass's own underside. Visible masses built
+   * with blockA on a floor want the same LIP.
+   */
+  solidA(x1, x2, z1, z2, y1, y2, name) {
+    const m = this.blockA(x1, x2, z1, z2, y1 + LIP, y2, this.mat.stone, name);
+    m.visible = false;
+    m.castShadow = false;
+    return m;
+  }
+
+  /**
    * Straight flight of solid steps of equal rise. `axis` is the direction of travel
    * ('x' or 'z'); the flight runs from `from` to `to` along it and spans `[s1, s2]` on
    * the other axis. Step k tops out at yBase + (k + 1) * rise, so the last step is level

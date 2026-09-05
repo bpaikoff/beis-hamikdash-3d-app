@@ -107,16 +107,17 @@ describe('court builders', () => {
     near(floorAt(floors, ...xz(-60, -40)), levelWorldY('azaras_kohanim'));
     near(floorAt(floors, ...xz(60, -120), levelWorldY('azaras_kohanim') + 2), levelWorldY('azaras_kohanim') + 0.05 * AMAH); // inside the Parvah (under its roof)
     near(floorAt(floors, ...xz(60, -112)), levelWorldY('azaras_kohanim') + (10 + 1) * AMAH); // the Parvah roof terrace
-    near(floorAt(floors, ...xz(-60, -170)), levelWorldY('azaras_kohanim'));
-    near(floorAt(floors, ...xz(0, -182)), levelWorldY('azaras_kohanim'));
+    near(floorAt(floors, ...xz(-67.5, -103), levelWorldY('azaras_kohanim') + 2), levelWorldY('azaras_kohanim') + 0.05 * AMAH); // Lishkas HaGazis, on the wall line
+    near(floorAt(floors, ...xz(-59.5, -133), levelWorldY('azaras_kohanim') + 2), levelWorldY('azaras_kohanim') + 0.05 * AMAH); // Lishkas HaGolah
     near(floorAt(floors, ...xz(67.5 + 7, -14)), levelWorldY('azaras_kohanim') + 0.05 * AMAH); // Beis HaMoked hall floor, at the level of the Ezras Kohanim strip its gate opens onto
   });
 
-  it('leaves the altar area and the building to GEO-A', () => {
+  it('leaves the court west of z -54 (the building, its steps and the strips beside it) to GEO-A', () => {
     const { floors } = built;
-    // The Kohanim floor reaches z -54 at the axis and stops there; nothing of ours under the Ulam steps or the Heichal.
-    expect(floorAt(built.floors, ...xz(0, -53))).toBeCloseTo(levelWorldY('azaras_kohanim'), 2);
-    for (const [x, z] of [[0, -60], [0, -84], [0, -118], [30, -100], [-30, -150], [40, -84]]) {
+    // The Kohanim floor reaches z -54 across the whole width and stops there; west of it only the chambers have floors of ours
+    // (HeichalBuilder.buildWestCourtFloor lays the strips, so a second slab here would z-fight; AzarahRoutes.test.js checks the seam).
+    for (const x of [0, -60, 60]) expect(floorAt(floors, ...xz(x, -53.9)), `${x},-53.9`).toBeCloseTo(levelWorldY('azaras_kohanim'), 2);
+    for (const [x, z] of [[0, -60], [0, -84], [0, -118], [30, -100], [-30, -150], [40, -84], [-60, -60], [60, -60], [-60, -170], [60, -170], [0, -182], [45, -120], [-45, -120]]) {
       expect(floorAt(floors, ...xz(x, z)), `${x},${z}`).toBeLessThan(levelWorldY('har_habayis') + 0.5);
     }
   });
@@ -132,16 +133,11 @@ describe('court builders', () => {
     expect(last).toBeCloseTo(levelWorldY('azaras_kohanim'), 2);
   });
 
-  it('lets the player through every chamber door and up the Parvah stair', () => {
+  it('lets the player through every chamber door on the court floor', () => {
+    // The chambers west of z -54 (Gazis, Etz, Golah, Madichin, Parvah, Melach and the
+    // Madichin stair) are entered over HeichalBuilder's strips, so they are walked with the
+    // real PlayerController over the whole Temple in AzarahRoutes.test.js.
     const koh = levelWorldY('azaras_kohanim');
-    const under = koh + 2; // cast from under the chamber roofs
-    walk([[-40, -103], [-60, -103], [-70, -103]], 0.25, under); // Lishkas HaGazis, through to the chol half
-    walk([[-70, -110], [-80, -110], [-81, -110]], 0.25, under); // on into Lishkas HaEtz (its west wall is at x -83.5, the Soreg line)
-    walk([[-40, -133], [-58, -133]], 0.25, under); // Lishkas HaGolah
-    walk([[40, -96], [58, -96]], 0.25, under); // Lishkas HaMadichin
-    walk([[40, -112], [58, -112]], 0.25, under); // Lishkas HaParvah
-    walk([[40, -128], [58, -128]], 0.25, under); // Lishkas HaMelach
-    walk([[54.5, -90], [54.5, -102.5], [64.5, -102.5], [64.5, -112], [64.5, -130]], 0.25, koh + 9); // Madichin stair to the roof terrace, past the mikveh
     walk([[40, -14], [56, -14], [67.5, -14], [70, -8], [78, -8]], 0.25, koh + 6); // Beis HaMoked: gate, hall (level with the Ezras Kohanim), Lishkas Avnei HaMizbeach
     walk([[65, -20], [58.5, -20]], 0.25, koh + 2); // into Lishkas Telaei Korban through its door facing the hall
     const en = levelWorldY('ezras_nashim') + 2;

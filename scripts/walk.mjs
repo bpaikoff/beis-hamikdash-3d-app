@@ -4,11 +4,12 @@
  * fails: falling through a floor, getting stuck, clipping into a solid, or never arriving.
  *
  *   npm run build && node scripts/walk.mjs                 # all routes, report to walk-report/
- *   node scripts/walk.mjs --route ladder --base http://localhost:5173
+ *   node scripts/walk.mjs --route ladder --base http://localhost:5173   # --route takes a comma-separated list
  *   node scripts/walk.mjs --list
  *
  * Routes are lists of waypoints. A waypoint is a content id (with optional {dx,dz} metres
  * offset and an optional `level` name that sets the expected floor) or {x, z, level}.
+ * `expect: 'blocked'` inverts a leg: it passes only if the player is stopped (a closed gate).
  * The player is teleported to the first waypoint, then walks (W held, turning toward the
  * target every sample) until within `reach` metres. Each sample checks:
  *   fell      feet more than 1.5 m below the lower of the start/target floor levels
@@ -72,7 +73,7 @@ page.on('pageerror', (e) => console.error('page error:', e.message));
 
 const report = { base, routes: {} };
 try {
-  const routes = Object.entries(ROUTES).filter(([k]) => !only || k === only);
+  const routes = Object.entries(ROUTES).filter(([k]) => !only || only.split(',').includes(k));
   await page.goto(`${base}/?autostart=1&render=0&shadows=0&bloom=0&step=0.0166`, { waitUntil: 'load', timeout: 60000 });
   await page.waitForFunction(() => window.__mikdash?.ready === true, null, { timeout: 120000 });
   await page.evaluate(() => window.__mikdash.lock());
@@ -137,6 +138,11 @@ try {
       }
       await page.keyboard.up('KeyW');
       const pos = await page.evaluate(() => { const c = window.__mikdash.camera.position; return [c.x, c.y - 1.7, c.z].map((v) => Number(v.toFixed(2))); });
+      if (wp.expect === 'blocked') {
+        // A closed gate: the leg must end against the leaves, without clipping or falling.
+        if (result === 'stuck') { result = 'ok'; detail = `blocked, ${detail}`; }
+        else if (result === 'ok') { result = 'passed'; detail = 'walked through where the player should be stopped'; }
+      }
       const step = { to: label, result, detail, pos, seconds: Number(((Date.now() - t0) / 1000).toFixed(1)) };
       if (result !== 'ok') {
         ok = false;

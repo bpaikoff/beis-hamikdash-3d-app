@@ -210,11 +210,19 @@ export class TempleGame {
     await this.setLoading('Lighting the fire...');
     this.particles = new ParticleSystem(this.scene);
     {
-      // Altar fire on top of the ma'aracha (the altar is 10 amos high), incense smoke over the golden altar.
+      // Altar fire on top of the ma'aracha (the altar is 10 amos high).
       const [fx, fy, fz] = at('mizbeach');
       this.particles.createFire(fx, fy + 10 * AMAH, fz, 4);
-      const [sx, sy, sz] = at('mizbeach_hazahav');
-      this.particles.createSmoke(sx, sy + 1.2, sz, 0.3);
+      // The Menorah's lamps and the coals of the golden altar: KeilimBuilder leaves named
+      // anchors inside the period groups; the flames hang on them and toggle with the vessel.
+      const wicks = [];
+      let coals = null;
+      this.scene.traverse((o) => {
+        if (o.name === 'menorah-flame') wicks.push(o);
+        else if (o.name === 'golden-altar-coals') coals = o;
+      });
+      wicks.forEach((w, i) => this.particles.createCandle(w, { light: i === 3 ? 6 : 0 }));
+      if (coals) this.particles.createCoals(coals);
     }
     if (this.disposed) return;
 
@@ -403,7 +411,7 @@ export class TempleGame {
     const delta = this.fixedStep || Math.min(this.clock.getDelta(), 0.1);
     this.player.update(delta);
     this.characters.update(delta);
-    this.particles.update(delta);
+    this.particles.update(delta, this.camera);
     this.checkLocation();
     if (this.sky) this.sky.position.copy(this.camera.position);
     this.frameCount = (this.frameCount ?? 0) + 1;

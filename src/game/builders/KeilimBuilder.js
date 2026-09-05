@@ -35,7 +35,6 @@ export class KeilimBuilder extends BaseBuilder {
   build() {
     this.redLine = new THREE.MeshStandardMaterial({ color: 0x8b0000, roughness: 0.8 });
     this.ash = new THREE.MeshStandardMaterial({ color: 0x6e6a66, roughness: 1 });
-    this.flame = new THREE.MeshBasicMaterial({ color: 0xffcc55, toneMapped: false });
     this.ember = new THREE.MeshBasicMaterial({ color: 0xff6a1a, toneMapped: false });
     this.bread = new THREE.MeshStandardMaterial({ color: 0xd4a862, roughness: 0.85 });
     this.levonah = new THREE.MeshStandardMaterial({ color: 0xfffff0, roughness: 0.9 });
@@ -313,7 +312,7 @@ export class KeilimBuilder extends BaseBuilder {
   // --------------------------------------------------------------------------
   // Menorah (Exodus 25:31-39, Menachos 28b): 18 tefachim tall, seven branches with
   // cups, knobs and flowers; the lamps level in a row. A stone with three steps
-  // stands before it on the east (Tamid 3:9). Flames are unlit emissive cones.
+  // stands before it on the east (Tamid 3:9). The flames are lit by ParticleSystem.
   // --------------------------------------------------------------------------
   buildMenorah() {
     const e = byId.menorah;
@@ -372,7 +371,14 @@ export class KeilimBuilder extends BaseBuilder {
     g.add(instance(unit, gold, arms, { name: 'menorah-arms' }));
     g.add(instance(unit, gold, verts, { name: 'menorah-branches' }));
     g.add(instancePositions(new THREE.CylinderGeometry(0.055, 0.035, 0.07, 10), gold, lamps, { name: 'menorah-lamps' }));
-    g.add(instancePositions(new THREE.ConeGeometry(0.025, 0.12, 8), this.flame, flames, { name: 'menorah-flames', castShadow: false }));
+    // The lamp flames are shader billboards (ParticleSystem.createCandle) hung on these
+    // anchors after the build, so they toggle with the Menorah's period group.
+    for (const [x, y, z] of flames) {
+      const wick = new THREE.Object3D();
+      wick.name = 'menorah-flame';
+      wick.position.set(x, y - 0.045, z); // the lamp cup's rim
+      g.add(wick);
+    }
     // Tamid 3:9: the stone with three steps before it, on the east
     // Three treads, half an amah each, rising toward the Menorah from one amah east of it.
     const steps = [];
@@ -387,7 +393,7 @@ export class KeilimBuilder extends BaseBuilder {
     this.solid(g, { w: spread, h: H, d: spread, name: 'menorah-solid' });
     this.solid(g, { z: (1 + 0.75) * A, w: 1.5 * A, h: 1.5 * A, d: 1.5 * A, name: 'menorah-stone-solid' }); // treads z 0.5 .. 1.25 m
     g.traverse((m) => {
-      if (m.isMesh && m.material !== this.flame) m.castShadow = true;
+      if (m.isMesh) m.castShadow = true;
     });
     this.scene.add(g);
   }
@@ -456,7 +462,7 @@ export class KeilimBuilder extends BaseBuilder {
   // --------------------------------------------------------------------------
   // Mizbeach HaZahav (Exodus 30:1-5): 1 x 1 x 2 amos, gold-covered, four horns and
   // two rings; on the axis between the Menorah and the Shulchan, drawn a little
-  // outward (Yoma 33b). Coals glow on top instead of a point light.
+  // outward (Yoma 33b). Coals glow on top; the ketores smoke rises from them.
   // --------------------------------------------------------------------------
   buildMizbeachHazahav() {
     const e = byId.mizbeach_hazahav;
@@ -497,7 +503,9 @@ export class KeilimBuilder extends BaseBuilder {
         { name: 'golden-altar-rings' }
       )
     );
+    // ParticleSystem.createCoals hangs the glow and the incense smoke on this mesh by name.
     const coals = new THREE.Mesh(new THREE.CylinderGeometry(w * 0.3, w * 0.3, 0.02, 12), this.ember);
+    coals.name = 'golden-altar-coals';
     coals.position.y = h + 0.05;
     coals.castShadow = false;
     g.add(coals);

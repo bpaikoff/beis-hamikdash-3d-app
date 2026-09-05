@@ -99,6 +99,14 @@ describe('court builders', () => {
     near(floorAt(floors, ...xz(0, 70)), levelWorldY('ezras_nashim'));
     near(floorAt(floors, ...xz(0, 144)), levelWorldY('ezras_nashim'));
     near(floorAt(floors, ...xz(-47.5, 26)), levelWorldY('ezras_nashim') + 0.05 * AMAH);
+    const balcony = levelWorldY('ezras_nashim') + 10 * AMAH; // the gallery, 10 amos up (temple.json: y 2.5)
+    near(floorAt(floors, ...xz(0, 139)), balcony);
+    near(floorAt(floors, ...xz(-65.5, 70)), balcony);
+    near(floorAt(floors, ...xz(25.5, 120)), balcony);
+    near(floorAt(floors, ...xz(45, 99)), balcony);
+    near(floorAt(floors, ...xz(0, 139), levelWorldY('ezras_nashim') + 2), levelWorldY('ezras_nashim')); // the court under it
+    near(floorAt(floors, ...xz(8, 135)), balcony); // top step of the north flight
+    near(floorAt(floors, ...xz(-5.5, 135)), balcony); // south landing
     near(floorAt(floors, ...xz(0, 8)), levelWorldY('azaras_yisrael'));
     near(floorAt(floors, ...xz(0, 3)), levelWorldY('azaras_yisrael'));
     near(floorAt(floors, ...xz(20, -5)), levelWorldY('azaras_yisrael'));
@@ -127,8 +135,9 @@ describe('court builders', () => {
     // would span six steps); the player controller moves a few cm per frame.
     // Waypoints in amos: east of the Soreg, up the Cheil steps, through the Ezras Nashim
     // gate, across the court, up the fifteen steps, through Nicanor, over the Duchan.
-    const path = [[0, 175], [0, 158], [0, 154], [0, 146], [0, 100], [0, 20], [0, 9], [0, 3], [0, -8], [0, -11.7], [0, -12.7], [0, -13.5], [0, -30], [0, -52]];
-    const { first, last } = walk(path);
+    // The gallery hangs over the way in from the gate (z 137 .. 141), so that stretch is cast from under it.
+    const { first } = walk([[0, 175], [0, 158], [0, 154], [0, 146], [0, 100], [0, 20]], 0.25, levelWorldY('ezras_nashim') + 2);
+    const { last } = walk([[0, 20], [0, 9], [0, 3], [0, -8], [0, -11.7], [0, -12.7], [0, -13.5], [0, -30], [0, -52]]);
     expect(first).toBeCloseTo(levelWorldY('har_habayis'), 1);
     expect(last).toBeCloseTo(levelWorldY('azaras_kohanim'), 2);
   });
@@ -145,6 +154,49 @@ describe('court builders', () => {
     walk([[20, 121], [30, 121], [40, 121]], 0.25, en); // chamber_wood
     walk([[30, 12], [30, 3], [30, -5]], 0.25, en); // Lishkos Klei Shir under the Ezras Yisrael
     walk([[0, -5], [12, -5], [12, 3]], 0.25, levelWorldY('azaras_yisrael') + 2); // Lishkas Pinchas HaMalbish beside Nicanor
+  });
+
+  it('climbs to the Ezras Nashim gallery and round it', () => {
+    const balcony = levelWorldY('ezras_nashim') + 10 * AMAH;
+    // Up the north flight beside the gate, over the gate, in front of the wood store, along the north wall; then the mirror image down.
+    // The lowest steps run under the gallery in front of the chamber (x 23.5 .. 27.5), so they are cast from beneath it.
+    const foot = walk([[26.5, 128], [26.5, 135], [22, 135]], 0.25, levelWorldY('ezras_nashim') + 3.5);
+    expect(foot.first).toBeCloseTo(levelWorldY('ezras_nashim'), 2);
+    const up = walk([[22, 135], [8, 135], [5.5, 135], [5.5, 139], [0, 139], [25.5, 139], [25.5, 99], [45, 99], [65.5, 99], [65.5, 60]]);
+    expect(up.first).toBeCloseTo(foot.last, 2);
+    expect(up.last).toBeCloseTo(balcony, 2);
+    walk([[-65.5, 60], [-65.5, 99], [-45, 99], [-25.5, 99], [-25.5, 139], [-5.5, 139], [-5.5, 135], [-8, 135]]);
+    const down = walk([[-22, 135], [-8, 135]]); // the flight is checked upward (a rise, not a drop)
+    expect(down.last).toBeCloseTo(balcony, 2);
+    expect(walk([[-26.5, 128], [-26.5, 135], [-22, 135]], 0.25, levelWorldY('ezras_nashim') + 3.5).last).toBeCloseTo(down.first, 2);
+  });
+
+  it('passes through the five gates of the mount and the Soreg opening opposite every gate', () => {
+    // No ground plane here, so each passage starts on the threshold at the wall's outer face.
+    const hb = levelWorldY('har_habayis');
+    for (const [id, path] of [
+      ['shaar_shushan', [[0, 283.5], [0, 278], [0, 265]]],
+      ['shaar_tadi', [[203, -20], [197.5, -20], [185, -20]]],
+      ['shaar_kiponus', [[0, -227.5], [0, -222], [0, -210]]],
+      ['chuldah_gate_west', [[-308, -30], [-302.5, -30], [-290, -30]]],
+      ['chuldah_gate_east', [[-308, 90], [-302.5, 90], [-290, 90]]],
+    ]) {
+      const { first, last } = walk(path);
+      expect(first, id).toBeCloseTo(hb, 1);
+      expect(last, id).toBeCloseTo(hb, 1);
+    }
+    const cheil = levelWorldY('cheil');
+    for (const id of ['water_gate', 'bechoros_gate', 'delek_gate', 'shaar_elyon', 'nitzotz_gate', 'korban_gate', 'shaar_hanashim']) {
+      const g = byId[id];
+      const s = Math.sign(g.position.x);
+      const { last } = walk([[s * 90, g.position.z], [s * 78.5, g.position.z]]);
+      expect(last, id).toBeCloseTo(cheil, 1);
+    }
+    for (const id of ['shaar_maaravi_north', 'shaar_maaravi_south']) {
+      const { last } = walk([[byId[id].position.x, -210], [byId[id].position.x, -198]]);
+      expect(last, id).toBeCloseTo(cheil, 1);
+    }
+    expect(walk([[0, 165], [0, 155]]).last).toBeCloseTo(cheil, 1); // opposite the Ezras Nashim gate
   });
 
   it('has no two floor slabs sharing a top surface', () => {

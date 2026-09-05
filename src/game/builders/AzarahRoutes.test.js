@@ -219,6 +219,10 @@ describe('Ezras Kohanim floor over the whole Temple', () => {
     for (const [x, z] of [[61.25, -95], [61.25, -106], [67, -100], [64, -93.25]]) expect(under(x, z, roof + 3), `${x},${z}`).toBeCloseTo(parapet, 2);
     expect(under(64, -107.5, roof + 3)).toBeCloseTo(roof, 2);
     expect(under(60, -95, roof + 3)).toBeCloseTo(roof, 2);
+    // The court-edge parapet follows each roof's own edge (the Madichin is 15 wide, x 52.5 .. 67.5; Parvah and Melach 16), with a return across the step at z -108.
+    for (const [x, z] of [[52.75, -100], [51.75, -116], [51.75, -132], [52.25, -108.25], [52.75, -108.25], [52, -139.75]]) expect(under(x, z, roof + 3), `${x},${z}`).toBeCloseTo(parapet, 2);
+    expect(under(53.25, -100, roof + 3)).toBeCloseTo(roof, 2);
+    expect(under(52, -100, roof + 3), 'no ledge outside the Madichin parapet').toBeLessThan(roof - 1);
     // The muchni post stands on the kiyor's south side, outside the Ulam steps' x range (x -20 .. 20),
     // and the kiyor's own body (3 amos) is clear of the steps' south end.
     const box = new THREE.Box3();

@@ -465,10 +465,12 @@ Object.assign(routes, {
     h(50 + HUG, -92 + HUG, K),
     h(50 + HUG, -76 + HUG, K),
     h(50 + HUG, -92 + HUG, K),
-    h(50 + HUG, -93.5, K), // through the 1.5-amah slot between the wing and the Madichin
-    h(51.5 - HUG, -100, K),
-    h(54, -100, K), // Lishkas HaMadichin through its door
-    hc(51.5 - HUG, -100, K),
+    h(50 + HUG, -93.5, K), // through the 2.5-amah slot between the wing and the Madichin (x 52.5)
+    h(52.5 - HUG, -100, K),
+    h(55, -100, K), // Lishkas HaMadichin through its door
+    hc(52.5 - HUG, -100, K),
+    h(52.5 - HUG, -108 + HUG, K), // the Madichin's face to the Parvah's east face (z -108), which steps out an amah
+    h(51.5 - HUG, -108 + HUG, K),
     h(51.5 - HUG, -116, K),
     h(54, -116, K), // Lishkas HaParvah
     hc(51.5 - HUG, -116, K),
@@ -584,8 +586,13 @@ Object.assign(routes, {
     p(64, -95, K, { ...blocked, minY: 11 * AMAH }), // into it
     h(60, -93 - HUG, K, { minY: 11 * AMAH }),
     p(60, -90, K, { ...blocked, minY: 11 * AMAH }), // the east end parapet
-    h(52 + HUG, -93 - HUG, K, { minY: 11 * AMAH }),
-    h(52 + HUG, -120, K, { minY: 11 * AMAH }), // along the court-edge parapet
+    h(53 + HUG, -93 - HUG, K, { minY: 11 * AMAH }), // the Madichin roof's court-edge parapet (x 52.5 .. 53: the room is 15 wide)
+    h(53 + HUG, -108 + HUG, K, { minY: 11 * AMAH }), // to the return where the Parvah's roof steps out an amah
+    p(51.5, -108.25, K, { ...blocked, minY: 11 * AMAH }), // into the return (x 51.5 .. 53, z -108.5 .. -108)
+    h(53 + HUG, -108 + HUG, K, { minY: 11 * AMAH }),
+    h(53 + HUG, -110, K, { minY: 11 * AMAH }),
+    h(52 + HUG, -110, K, { minY: 11 * AMAH }), // round it onto the Parvah's roof
+    h(52 + HUG, -120, K, { minY: 11 * AMAH }), // along the court-edge parapet (x 51.5 .. 52)
     p(50, -120, K, { ...blocked, minY: 11 * AMAH }), // into it
     h(52 + HUG, -139.5 + HUG, K, { minY: 11 * AMAH }),
     h(66, -139.5 + HUG, K, { minY: 11 * AMAH }), // the west end parapet

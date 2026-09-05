@@ -1451,7 +1451,7 @@
       "dimensions": [
         {"label": "mesibah to the Parvah roof", "value": 1, "unit": "count", "source": "Mishnah Middot 5:3"}
       ],
-      "position": {"frame": "azarah", "x": 59.5, "y": 2.5, "z": -100, "unit": "amah", "source": "Mishnah Middot 5:3", "note": "one of the three northern chambers (Middot 5:3), placed nearest the slaughtering area west of Shaar HaNitzotz: x 51.5 .. 67.5, z -92 .. -108; order along the wall is not given, and the 12-amah shift west (earlier z -88 .. -104) keeps the strip beside the Ulam's north wing open, see disputes"},
+      "position": {"frame": "azarah", "x": 59.5, "y": 2.5, "z": -100, "unit": "amah", "source": "Mishnah Middot 5:3", "note": "one of the three northern chambers (Middot 5:3), placed nearest the slaughtering area west of Shaar HaNitzotz: x 52.5 .. 67.5, z -92 .. -108 (15 wide, an amah narrower than Parvah and Melach, so the slot between its court face and the Ulam's north wing at x 50 is 2.5 amos; hotspot x 59.5); order along the wall is not given, and the 12-amah shift west (earlier z -88 .. -104) keeps the strip beside the Ulam's north wing open, see disputes"},
       "sources": ["Mishnah Middot 5:3","Mishnah Tamid 4:2","Mishnah Shekalim 6:4","Mishneh Torah, The Chosen Temple 5:17"],
       "disputes": [
         {
@@ -1464,7 +1464,7 @@
         {"he": "מדוע הודחו הקרביים לפני ההקטרה?", "en": "Why were the innards rinsed before being burned?"},
         {"he": "מה הקשר בין לשכת המדיחין לבית הפרוה?", "en": "How was the rinsing chamber connected to Beis HaParvah?"}
       ],
-      "geometry": {"kind": "room", "w": 16, "d": 16, "h": 10, "notes": "room against the inside of the north wall with a stair up to the Parvah roof; size not given (16 x 16 reconstruction)."}
+      "geometry": {"kind": "room", "w": 15, "d": 16, "h": 10, "notes": "room against the inside of the north wall with a stair up to the Parvah roof; size not given (15 x 16 reconstruction: an amah narrower than the other two so the slot past the Ulam's north wing, x 50 .. 52.5, is 2.5 amos; the stair well and the roof terrace's parapet follow its own width)."}
     },
     {
       "type": "chamber",

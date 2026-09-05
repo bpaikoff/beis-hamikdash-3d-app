@@ -327,7 +327,9 @@ export class AzaraBuilder extends CourtBuilder {
   /**
    * Madichin, Parvah and Melach against the north wall (Middot 5:3). The Parvah's roof
    * carries the Kohen Gadol's mikveh, reached by a stair inside the Madichin; the three
-   * roofs form one walkable terrace with a parapet.
+   * roofs form one walkable terrace with a parapet. Each room's width is its own
+   * (the Madichin is 15, the others 16), so the court-edge parapet follows each roof's
+   * edge with a return where the edge steps.
    */
   buildNorthernLishkos() {
     const ids = ['lishkas_hamadichin', 'lishkas_haparvah', 'lishkas_hamelach'];
@@ -363,11 +365,21 @@ export class AzaraBuilder extends CourtBuilder {
       // Parapet around the terrace (court edge, east and west ends): 1.5 amos, a solid
       // mass so it actually stops the player (a wall this low is below the head-height
       // test), standing a LIP above the roof like every mass on a floor (see solidA).
+      // The court edge runs along each roof's own edge; where a wider roof follows a
+      // narrower one, a return across the step (on the wider roof) closes the corner.
       const pY = roofY + LIP;
       const pH = 1.5;
-      this.blockA(mad.x1, mad.x1 + 0.5, mel.z1, mad.z2, pY, pY + pH, this.mat.stone, 'terrace parapet');
+      for (const r of rooms) this.blockA(r.x1, r.x1 + 0.5, r.z1, r.z2, pY, pY + pH, this.mat.stone, 'terrace parapet');
+      for (let i = 1; i < rooms.length; i++) {
+        const [a, b] = [rooms[i - 1], rooms[i]];
+        if (Math.abs(a.x1 - b.x1) < 1e-6) continue;
+        const wide = a.x1 < b.x1 ? a : b;
+        const zc = a.z1; // the seam between the two roofs (a.z1 === b.z2)
+        const [za, zb] = wide === a ? [zc, zc + 0.5] : [zc - 0.5, zc];
+        this.blockA(Math.min(a.x1, b.x1), Math.max(a.x1, b.x1) + 0.5, za, zb, pY, pY + pH, this.mat.stone, 'terrace parapet');
+      }
       this.blockA(mad.x1, mad.x2, mad.z2 - 0.5, mad.z2, pY, pY + pH, this.mat.stone, 'terrace parapet');
-      this.blockA(mad.x1, mad.x2, mel.z1, mel.z1 + 0.5, pY, pY + pH, this.mat.stone, 'terrace parapet');
+      this.blockA(mel.x1, mel.x2, mel.z1, mel.z1 + 0.5, pY, pY + pH, this.mat.stone, 'terrace parapet');
       // Round the stair well too (its court side, its east end and the amah between it and
       // the court wall), open only at the flight's top end: without it a step sideways off
       // the terrace dropped 11 amos onto the flight.

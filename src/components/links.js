@@ -2,7 +2,7 @@
 
 const SEFARIA = 'https://www.sefaria.org/';
 /** tzadek.ai origin; `VITE_TZADEK_BASE` points a dev build at a staging server. */
-export const TZADEK_BASE = String(import.meta.env?.VITE_TZADEK_BASE ?? 'https://tzadek.ai').replace(/\/+$/, '');
+export const TZADEK_BASE = String(import.meta.env?.VITE_TZADEK_BASE || 'https://tzadek.ai').replace(/\/+$/, '');
 const TZADEK = `${TZADEK_BASE}/app`;
 
 /**

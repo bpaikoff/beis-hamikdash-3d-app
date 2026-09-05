@@ -19,7 +19,7 @@ export const QUICK_RABBIS = ['geonim', 'shulchanAruch', 'contemporary'];
 
 export const env = () => import.meta.env ?? {};
 
-export const baseUrl = () => String(env().VITE_TZADEK_BASE ?? 'https://tzadek.ai').replace(/\/+$/, '');
+export const baseUrl = () => String(env().VITE_TZADEK_BASE || 'https://tzadek.ai').replace(/\/+$/, '');
 
 export const guestPasscode = () => {
   const p = env().VITE_TZADEK_GUEST_PASSCODE;

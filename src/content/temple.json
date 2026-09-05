@@ -22,7 +22,7 @@
       "desc": {"he": "הדרך העולה אל הר הבית מדרום. משם עולים במדרגות אל שערי חולדה ונכנסים אל הר הבית, ומי שרואה את המקדש מברך ומשתחווה.", "en": "The approach to the Temple Mount from the south. From here pilgrims climbed the steps to the Chuldah Gates and entered Har HaBayis."},
       "period": ["bayis_sheni"],
       "bounds": {"minX": -420, "maxX": -302.5, "minZ": -222, "maxZ": 278},
-      "position": {"frame": "azarah", "x": -340, "y": -19.5, "z": 30, "unit": "amah", "source": "Mishnah Middot 1:3", "note": "legacy: x 0, y -10, z 194 (pre-2026 scene coordinates converted to amos); now south of the Har HaBayis south wall, where the Chuldah Gates open (Middot 1:3); the ground outside is set 6 amos below the mount (not given in Middot)"},
+      "position": {"frame": "azarah", "x": -340, "y": -13.5, "z": 30, "unit": "amah", "source": "Mishnah Middot 1:3", "note": "legacy: x 0, y -10, z 194 (pre-2026 scene coordinates converted to amos); now south of the Har HaBayis south wall, where the Chuldah Gates open (Middot 1:3). The ground outside is drawn flush with the mount at the Har HaBayis level (y -13.5): the drop from the mount to the streets outside is not given in Middot and is not modelled (an earlier y -19.5 put the hotspot 6 amos under the ground that is built)"},
       "sources": ["Mishnah Middot 1:3","Mishnah Berakhot 9:5"],
       "questions": [
         {"he": "מאיזה כיוון נכנסו רוב עולי הרגל להר הבית?", "en": "From which direction did most pilgrims enter the Temple Mount?"},
@@ -1096,7 +1096,7 @@
         {"label": "breaches", "value": 13, "unit": "count", "source": "Mishnah Middot 2:3", "note": "made by the Greek kings and later fenced up"},
         {"label": "distance from the Ezras Nashim wall", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:3", "note": "the width of the Cheil"}
       ],
-      "position": {"frame": "azarah", "x": 0, "y": -13.5, "z": 158, "unit": "amah", "source": "Mishnah Middot 2:3", "note": "10 amos (the Cheil) outside the Ezras Nashim east wall (141 .. 147): at z 157; runs around the whole complex at that offset"},
+      "position": {"frame": "azarah", "x": 0, "y": -13.5, "z": 157, "unit": "amah", "source": "Mishnah Middot 2:3", "note": "10 amos (the Cheil) outside the Ezras Nashim east wall (141 .. 147): at z 157 (an earlier z 158 disagreed with this note and with the builder's ring); runs around the whole complex at that offset"},
       "sources": ["Mishnah Middot 2:3","Mishnah Kelim 1:8","Mishneh Torah, The Chosen Temple 5:3","Mishnah Shekalim 6:1"],
       "disputes": [
         {

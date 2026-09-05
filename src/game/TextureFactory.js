@@ -1,17 +1,88 @@
 import * as THREE from 'three';
+import { mulberry32 } from './random.js';
+
+/**
+ * Every procedural texture, in bake order. `scripts/bake_textures.mjs` renders each one to
+ * public/textures/<name>.webp; at runtime get(name) loads that file and only falls back
+ * to the canvas generator when the file is missing or the page runs with ?bake=0.
+ */
+export const TEXTURE_NAMES = [
+  'jerusalemStone', 'goldPolished', 'goldEngraved', 'copper', 'copperPatina', 'cedarWood',
+  'acaciaWood', 'marbleWhite', 'marbleRose', 'techeiles', 'argaman', 'whiteLinen', 'paroches',
+  'groundSand', 'floorTiles', 'mosaic', 'water', 'sheepWool', 'bullHide', 'goatHide', 'normalMap',
+];
+
+/** Per-texture settings that apply to both the baked and the canvas path. */
+const META = {
+  normalMap: { srgb: false },
+};
+
+export const BAKED_PATH = '/textures/';
 
 // ============================================================================
-// TEXTURE FACTORY - 30 REALISTIC TEXTURES
+// TEXTURE FACTORY - 21 procedural textures, baked to WebP at build time
 // ============================================================================
 export class TextureFactory {
-  constructor() {
+  /**
+   * @param {{maxAnisotropy?: number, baked?: boolean, manager?: THREE.LoadingManager}} [opts]
+   *   maxAnisotropy: renderer.capabilities.getMaxAnisotropy();
+   *   baked: try public/textures/<name>.webp first (default true; pass false for ?bake=0);
+   *   manager: shared LoadingManager (one is created when omitted).
+   */
+  constructor(opts = {}) {
     this.cache = new Map();
     this.size = 1024;
+    this.maxAnisotropy = opts.maxAnisotropy ?? 4;
+    this.baked = opts.baked ?? true;
+    this.manager = opts.manager ?? new THREE.LoadingManager();
+    this.loader = new THREE.TextureLoader(this.manager);
+    this.rand = mulberry32(1);
+    this.loaded = 0; // baked files finished (ok or fallen back)
+    this.total = 0; // baked files requested
+    this.progressHandlers = [];
+    this.waiters = [];
+  }
+
+  /**
+   * Every colour texture is authored in sRGB; telling three so keeps the colours from
+   * washing out under the sRGB output. Anisotropy keeps the 8x-repeated floors sharp at
+   * grazing angles. Normal maps are linear data and skip the colour-space tag.
+   * `update` is false for a texture whose image has not arrived yet (the loader flags
+   * it when the file lands).
+   */
+  finish(tex, { srgb = true, update = true } = {}) {
+    tex.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.anisotropy = this.maxAnisotropy;
+    if (update) tex.needsUpdate = true;
+    return tex;
+  }
+
+  /** @param {(loaded: number, total: number) => void} fn called after each baked file. */
+  onProgress(fn) {
+    this.progressHandlers.push(fn);
+    return () => { this.progressHandlers = this.progressHandlers.filter((h) => h !== fn); };
+  }
+
+  /** Resolves once every baked texture requested so far has loaded or fallen back. */
+  whenLoaded() {
+    if (this.loaded >= this.total) return Promise.resolve();
+    return new Promise((resolve) => this.waiters.push(resolve));
+  }
+
+  settle() {
+    this.loaded++;
+    for (const h of this.progressHandlers) h(this.loaded, this.total);
+    if (this.loaded >= this.total) {
+      const w = this.waiters;
+      this.waiters = [];
+      for (const r of w) r();
+    }
   }
 
   perlin(w, h, scale = 1, octaves = 4, persistence = 0.5) {
     const perm = new Uint8Array(512);
-    for (let i = 0; i < 256; i++) perm[i] = perm[i + 256] = Math.floor(Math.random() * 256);
+    for (let i = 0; i < 256; i++) perm[i] = perm[i + 256] = Math.floor(this.rand() * 256);
     const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
     const lerp = (a, b, t) => a + t * (b - a);
     const grad = (h, x, y) => ((h & 1) ? -x : x) + ((h & 2) ? -y : y);
@@ -47,9 +118,9 @@ export class TextureFactory {
     const img = ctx.createImageData(this.size, this.size);
     for (let i = 0; i < noise.length; i++) {
       const n = noise[i], v = (n - 0.5) * 50;
-      img.data[i*4] = Math.min(255, Math.max(0, 228 + v + Math.random() * 10));
-      img.data[i*4+1] = Math.min(255, Math.max(0, 215 + v + Math.random() * 8));
-      img.data[i*4+2] = Math.min(255, Math.max(0, 195 + v + Math.random() * 6));
+      img.data[i*4] = Math.min(255, Math.max(0, 228 + v + this.rand() * 10));
+      img.data[i*4+1] = Math.min(255, Math.max(0, 215 + v + this.rand() * 8));
+      img.data[i*4+2] = Math.min(255, Math.max(0, 195 + v + this.rand() * 6));
       img.data[i*4+3] = 255;
     }
     ctx.putImageData(img, 0, 0);
@@ -62,16 +133,16 @@ export class TextureFactory {
         ctx.fillRect(bx - 3, y - 3, bw + 6, 6);
         ctx.fillRect(bx - 3, y - 3, 6, bh + 6);
         for (let s = 0; s < 4; s++) {
-          const sx = bx + 15 + Math.random() * (bw - 30), sy = y + 15 + Math.random() * (bh - 30), sr = Math.random() * 12 + 4;
+          const sx = bx + 15 + this.rand() * (bw - 30), sy = y + 15 + this.rand() * (bh - 30), sr = this.rand() * 12 + 4;
           const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr);
-          g.addColorStop(0, `rgba(${160+Math.random()*40},${150+Math.random()*40},${130+Math.random()*40},0.35)`);
+          g.addColorStop(0, `rgba(${160+this.rand()*40},${150+this.rand()*40},${130+this.rand()*40},0.35)`);
           g.addColorStop(1, 'transparent');
           ctx.fillStyle = g;
           ctx.fillRect(sx - sr, sy - sr, sr * 2, sr * 2);
         }
       }
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -85,18 +156,18 @@ export class TextureFactory {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 512, 512);
     for (let y = 0; y < 512; y++) {
-      ctx.strokeStyle = `rgba(255,240,180,${0.03 + Math.random() * 0.04})`;
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y + (Math.random() - 0.5) * 2); ctx.stroke();
+      ctx.strokeStyle = `rgba(255,240,180,${0.03 + this.rand() * 0.04})`;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y + (this.rand() - 0.5) * 2); ctx.stroke();
     }
     for (let i = 0; i < 12; i++) {
-      const x = Math.random() * 512, y = Math.random() * 512, r = Math.random() * 60 + 20;
+      const x = this.rand() * 512, y = this.rand() * 512, r = this.rand() * 60 + 20;
       const gg = ctx.createRadialGradient(x, y, 0, x, y, r);
       gg.addColorStop(0, 'rgba(255,255,230,0.4)');
       gg.addColorStop(1, 'transparent');
       ctx.fillStyle = gg;
       ctx.fillRect(x - r, y - r, r * 2, r * 2);
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -123,7 +194,7 @@ export class TextureFactory {
         }
       }
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -141,14 +212,14 @@ export class TextureFactory {
     }
     ctx.putImageData(img, 0, 0);
     for (let i = 0; i < 80; i++) {
-      const x = Math.random() * 512, y = Math.random() * 512;
+      const x = this.rand() * 512, y = this.rand() * 512;
       const g = ctx.createRadialGradient(x, y, 0, x, y, 12);
       g.addColorStop(0, 'rgba(230,150,100,0.25)');
       g.addColorStop(1, 'transparent');
       ctx.fillStyle = g;
       ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fill();
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -162,7 +233,7 @@ export class TextureFactory {
       const b = base[i], p = patina[i];
       if (p > 0.55) {
         img.data[i*4] = 70 + (p - 0.55) * 120;
-        img.data[i*4+1] = 120 + (p - 0.55) * 160 + Math.random() * 20;
+        img.data[i*4+1] = 120 + (p - 0.55) * 160 + this.rand() * 20;
         img.data[i*4+2] = 90 + (p - 0.55) * 120;
       } else {
         img.data[i*4] = 160 + b * 40;
@@ -172,7 +243,7 @@ export class TextureFactory {
       img.data[i*4+3] = 255;
     }
     ctx.putImageData(img, 0, 0);
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -183,30 +254,30 @@ export class TextureFactory {
     ctx.fillRect(0, 0, 512, 512);
     for (let y = 0; y < 512; y++) {
       const l = 30 + Math.sin(y * 0.02) * 15 + Math.sin(y * 0.07) * 8 + Math.sin(y * 0.15) * 4;
-      ctx.strokeStyle = `hsl(${15 + Math.sin(y * 0.01) * 5}, 70%, ${l + Math.random() * 5}%)`;
+      ctx.strokeStyle = `hsl(${15 + Math.sin(y * 0.01) * 5}, 70%, ${l + this.rand() * 5}%)`;
       ctx.beginPath(); ctx.moveTo(0, y);
-      for (let x = 0; x < 512; x += 8) ctx.lineTo(x, y + (Math.random() - 0.5) * 1.5);
+      for (let x = 0; x < 512; x += 8) ctx.lineTo(x, y + (this.rand() - 0.5) * 1.5);
       ctx.stroke();
     }
     ctx.strokeStyle = 'rgba(50,25,10,0.12)';
     ctx.lineWidth = 2;
     for (let r = 0; r < 5; r++) {
       ctx.beginPath();
-      ctx.arc(256 + (Math.random() - 0.5) * 300, -200 + r * 180, 350 + r * 60, 0.4, 2.7);
+      ctx.arc(256 + (this.rand() - 0.5) * 300, -200 + r * 180, 350 + r * 60, 0.4, 2.7);
       ctx.stroke();
     }
     for (let k = 0; k < 2; k++) {
-      const kx = 100 + Math.random() * 312, ky = 100 + Math.random() * 312;
+      const kx = 100 + this.rand() * 312, ky = 100 + this.rand() * 312;
       const g = ctx.createRadialGradient(kx, ky, 0, kx, ky, 20);
       g.addColorStop(0, '#1A0A05');
       g.addColorStop(0.4, '#3D1A0D');
       g.addColorStop(1, '#8B4226');
       ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.ellipse(kx, ky, 20, 12, Math.random() * 0.3, 0, Math.PI * 2);
+      ctx.ellipse(kx, ky, 20, 12, this.rand() * 0.3, 0, Math.PI * 2);
       ctx.fill();
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -217,19 +288,19 @@ export class TextureFactory {
     ctx.fillRect(0, 0, 512, 512);
     for (let y = 0; y < 512; y++) {
       const l = 28 + Math.sin(y * 0.025) * 12 + Math.sin(y * 0.1) * 6;
-      ctx.strokeStyle = `hsl(25, 60%, ${l + Math.random() * 4}%)`;
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y + (Math.random() - 0.5)); ctx.stroke();
+      ctx.strokeStyle = `hsl(25, 60%, ${l + this.rand() * 4}%)`;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y + (this.rand() - 0.5)); ctx.stroke();
     }
     ctx.strokeStyle = 'rgba(30,15,5,0.35)';
     ctx.lineWidth = 3;
     for (let s = 0; s < 6; s++) {
       ctx.beginPath();
-      let x = Math.random() * 512, y = 0;
+      let x = this.rand() * 512, y = 0;
       ctx.moveTo(x, y);
-      while (y < 512) { y += Math.random() * 30 + 10; x += (Math.random() - 0.5) * 20; ctx.lineTo(x, y); }
+      while (y < 512) { y += this.rand() * 30 + 10; x += (this.rand() - 0.5) * 20; ctx.lineTo(x, y); }
       ctx.stroke();
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -243,16 +314,16 @@ export class TextureFactory {
       ctx.lineWidth = width;
       for (let v = 0; v < count; v++) {
         ctx.beginPath();
-        let x = Math.random() * this.size, y = Math.random() * this.size;
+        let x = this.rand() * this.size, y = this.rand() * this.size;
         ctx.moveTo(x, y);
-        for (let s = 0; s < 20; s++) { x += (Math.random() - 0.5) * 45; y += (Math.random() - 0.5) * 45; ctx.lineTo(x, y); }
+        for (let s = 0; s < 20; s++) { x += (this.rand() - 0.5) * 45; y += (this.rand() - 0.5) * 45; ctx.lineTo(x, y); }
         ctx.stroke();
       }
     };
     drawVeins('rgba(160,155,165,0.25)', 3, 6);
     drawVeins('rgba(140,135,145,0.2)', 2, 12);
     drawVeins('rgba(180,175,185,0.15)', 1, 15);
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -267,12 +338,12 @@ export class TextureFactory {
     ctx.lineWidth = 2;
     for (let v = 0; v < 15; v++) {
       ctx.beginPath();
-      let x = Math.random() * this.size, y = Math.random() * this.size;
+      let x = this.rand() * this.size, y = this.rand() * this.size;
       ctx.moveTo(x, y);
-      for (let s = 0; s < 15; s++) { x += (Math.random() - 0.5) * 35; y += (Math.random() - 0.5) * 35; ctx.lineTo(x, y); }
+      for (let s = 0; s < 15; s++) { x += (this.rand() - 0.5) * 35; y += (this.rand() - 0.5) * 35; ctx.lineTo(x, y); }
       ctx.stroke();
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -289,7 +360,7 @@ export class TextureFactory {
         ctx.fillRect(x, y, 1, 1);
       }
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -304,7 +375,7 @@ export class TextureFactory {
         ctx.fillRect(x, y, 1, 1);
       }
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -317,7 +388,7 @@ export class TextureFactory {
     ctx.lineWidth = 1;
     for (let y = 0; y < 256; y += 4) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(256, y); ctx.stroke(); }
     for (let x = 0; x < 256; x += 4) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 256); ctx.stroke(); }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -355,7 +426,7 @@ export class TextureFactory {
     ctx.strokeStyle = 'rgba(218,165,32,0.5)';
     ctx.lineWidth = 5;
     ctx.strokeRect(18, 18, 476, 476);
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -366,22 +437,21 @@ export class TextureFactory {
     const img = ctx.createImageData(this.size, this.size);
     for (let i = 0; i < noise.length; i++) {
       const n = noise[i];
-      img.data[i*4] = 200 + n * 40 + Math.random() * 10;
-      img.data[i*4+1] = 180 + n * 35 + Math.random() * 8;
-      img.data[i*4+2] = 140 + n * 30 + Math.random() * 6;
+      img.data[i*4] = 200 + n * 40 + this.rand() * 10;
+      img.data[i*4+1] = 180 + n * 35 + this.rand() * 8;
+      img.data[i*4+2] = 140 + n * 30 + this.rand() * 6;
       img.data[i*4+3] = 255;
     }
     ctx.putImageData(img, 0, 0);
     for (let i = 0; i < 150; i++) {
-      const x = Math.random() * this.size, y = Math.random() * this.size, s = Math.random() * 5 + 2;
-      ctx.fillStyle = `hsl(30,${20+Math.random()*20}%,${40+Math.random()*30}%)`;
+      const x = this.rand() * this.size, y = this.rand() * this.size, s = this.rand() * 5 + 2;
+      ctx.fillStyle = `hsl(30,${20+this.rand()*20}%,${40+this.rand()*30}%)`;
       ctx.beginPath();
-      ctx.ellipse(x, y, s, s * 0.7, Math.random() * Math.PI, 0, Math.PI * 2);
+      ctx.ellipse(x, y, s, s * 0.7, this.rand() * Math.PI, 0, Math.PI * 2);
       ctx.fill();
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-    tex.repeat.set(8, 8);
     return tex;
   }
 
@@ -392,7 +462,7 @@ export class TextureFactory {
     const ts = this.size / 4;
     for (let row = 0; row < 4; row++) {
       for (let col = 0; col < 4; col++) {
-        const x = col * ts, y = row * ts, v = Math.random() * 20 - 10;
+        const x = col * ts, y = row * ts, v = this.rand() * 20 - 10;
         ctx.fillStyle = `rgb(${208+v},${196+v},${176+v})`;
         ctx.fillRect(x + 4, y + 4, ts - 8, ts - 8);
         ctx.strokeStyle = '#8B8070';
@@ -409,7 +479,7 @@ export class TextureFactory {
         ctx.stroke();
       }
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -427,7 +497,7 @@ export class TextureFactory {
         ctx.fillRect(x + 1, y + 1, ts - 2, ts - 2);
       }
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -441,16 +511,16 @@ export class TextureFactory {
     ctx.strokeStyle = 'rgba(255,255,255,0.15)';
     for (let i = 0; i < 15; i++) {
       ctx.beginPath();
-      const y = Math.random() * 256;
+      const y = this.rand() * 256;
       ctx.moveTo(0, y);
       for (let x = 0; x < 256; x += 10) ctx.lineTo(x, y + Math.sin(x * 0.1) * 3);
       ctx.stroke();
     }
     for (let i = 0; i < 20; i++) {
-      ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.35})`;
-      ctx.beginPath(); ctx.arc(Math.random() * 256, Math.random() * 256, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(255,255,255,${this.rand() * 0.35})`;
+      ctx.beginPath(); ctx.arc(this.rand() * 256, this.rand() * 256, 2, 0, Math.PI * 2); ctx.fill();
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
     return tex;
   }
@@ -460,12 +530,12 @@ export class TextureFactory {
     ctx.fillStyle = '#F5F5DC';
     ctx.fillRect(0, 0, 128, 128);
     for (let i = 0; i < 80; i++) {
-      ctx.fillStyle = `rgba(${240+Math.random()*15},${235+Math.random()*15},${215+Math.random()*20},0.75)`;
+      ctx.fillStyle = `rgba(${240+this.rand()*15},${235+this.rand()*15},${215+this.rand()*20},0.75)`;
       ctx.beginPath();
-      ctx.arc(Math.random() * 128, Math.random() * 128, Math.random() * 7 + 3, 0, Math.PI * 2);
+      ctx.arc(this.rand() * 128, this.rand() * 128, this.rand() * 7 + 3, 0, Math.PI * 2);
       ctx.fill();
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     return tex;
   }
 
@@ -478,7 +548,7 @@ export class TextureFactory {
       const x = i % 256, y = Math.floor(i / 256);
       if (noise[i] > 0.55) { ctx.fillStyle = '#2D1F15'; ctx.fillRect(x, y, 2, 2); }
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     return tex;
   }
 
@@ -492,7 +562,7 @@ export class TextureFactory {
       if (noise[i] > 0.6) { ctx.fillStyle = '#3D2B1F'; ctx.fillRect(x, y, 3, 3); }
       else if (noise[i] < 0.4) { ctx.fillStyle = '#C9B896'; ctx.fillRect(x, y, 2, 2); }
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = this.finish(new THREE.CanvasTexture(c));
     return tex;
   }
 
@@ -512,15 +582,54 @@ export class TextureFactory {
       }
     }
     ctx.putImageData(img, 0, 0);
-    const tex = new THREE.CanvasTexture(c);
-    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    return this.finish(new THREE.CanvasTexture(c), { srgb: false });
+  }
+
+  /** Run the canvas generator for `name` (deterministic: seeded by the name). */
+  generate(name) {
+    if (!TEXTURE_NAMES.includes(name)) return undefined;
+    // Seed per texture name so each texture is identical on every load, in any order.
+    let seed = 0;
+    for (const ch of name) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+    this.rand = mulberry32(seed || 1);
+    return this[name]();
+  }
+
+  /**
+   * Shared texture for `name`. With `baked` on, returns a texture that fills in from
+   * /textures/<name>.webp (through the LoadingManager) and silently regenerates on the
+   * canvas when the file is missing; the returned object is stable either way, so
+   * materials can hold it immediately.
+   */
+  get(name) {
+    if (this.cache.has(name)) return this.cache.get(name);
+    if (!TEXTURE_NAMES.includes(name)) return undefined;
+    let tex;
+    if (this.baked) {
+      this.total++;
+      tex = this.loader.load(
+        `${BAKED_PATH}${name}.webp`,
+        () => this.settle(),
+        undefined,
+        () => {
+          const fallback = this.generate(name);
+          tex.image = fallback.image;
+          tex.needsUpdate = true;
+          fallback.dispose();
+          this.settle();
+        }
+      );
+      this.finish(tex, { ...META[name], update: false });
+    } else {
+      tex = this.generate(name);
+    }
+    this.cache.set(name, tex);
     return tex;
   }
 
-  get(name) {
-    if (this.cache.has(name)) return this.cache.get(name);
-    const tex = this[name]?.();
-    if (tex) this.cache.set(name, tex);
-    return tex;
+  /** Release every cached texture. */
+  dispose() {
+    for (const t of this.cache.values()) t.dispose();
+    this.cache.clear();
   }
 }

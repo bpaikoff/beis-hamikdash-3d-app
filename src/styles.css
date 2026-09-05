@@ -1,0 +1,1262 @@
+/* ============================================================================
+   Beis HaMikdash walkthrough HUD
+   Tokens follow the tzadek.ai "night seder" palette (web/public/theme.css).
+   Latin UI: Inter. Hebrew: Frank Ruhl Libre. Both are linked from index.html.
+   ============================================================================ */
+
+:root {
+  --bg-grad: radial-gradient(ellipse at top, #1a1a2e 0%, #0d0d1a 100%);
+  --bg-solid: #0d0d1a;
+  --surface: #1e1e33;
+  --surface-2: #252540;
+  --ink: #e8d5b7;
+  --muted: #a89878;
+  --faint: #8a7a60;
+  --gold: #d4af37;
+  --gold-dim: #c9a84c;
+  --gold-soft: rgba(212, 175, 55, 0.14);
+  --line: rgba(212, 175, 55, 0.25);
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  --glow: 0 0 20px rgba(212, 175, 55, 0.22);
+  --flame: #fff8e1;
+  --danger: #f87171;
+
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-he: 'Frank Ruhl Libre', 'Times New Roman', serif;
+
+  --panel-bg: rgba(30, 30, 51, 0.88);
+  --panel-radius: 14px;
+  --hud-gap: 20px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  background: var(--bg-solid);
+}
+
+body {
+  overflow: hidden;
+  font-family: var(--font-ui);
+  background: var(--bg-solid);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hebrew text: any node marked rtl or `lang="he"` takes the serif face. */
+[dir='rtl'],
+[lang='he'] {
+  font-family: var(--font-he);
+  text-align: right;
+}
+
+[dir='rtl'] {
+  unicode-bidi: isolate;
+}
+
+a {
+  color: var(--gold);
+  text-decoration: none;
+}
+
+a:hover,
+a:focus-visible {
+  color: var(--gold-dim);
+  text-decoration: underline;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.game-container {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  position: relative;
+  background: var(--bg-solid);
+}
+
+canvas {
+  display: block;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Crosshair ---------------------------------------------------------------- */
+.crosshair {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+}
+
+.crosshair::before,
+.crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.crosshair::before {
+  width: 2px;
+  height: 24px;
+  left: 11px;
+  top: 0;
+}
+
+.crosshair::after {
+  width: 24px;
+  height: 2px;
+  top: 11px;
+  left: 0;
+}
+
+.crosshair-dot {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  top: 10px;
+  left: 10px;
+}
+
+/* HUD layout --------------------------------------------------------------- */
+.hud-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: var(--hud-gap);
+}
+
+.hud-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+  padding: var(--hud-gap);
+}
+
+/* Panel base --------------------------------------------------------------- */
+.panel {
+  background: var(--panel-bg);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+  color: var(--ink);
+  box-shadow: var(--card-shadow);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel {
+    background: rgba(30, 30, 51, 0.96);
+  }
+}
+
+/* Date panel */
+.date-panel {
+  padding: 16px 22px;
+  min-width: 200px;
+}
+
+.date-hebrew {
+  font-family: var(--font-he);
+  font-size: 1.5rem;
+  color: var(--gold);
+  text-shadow: var(--glow);
+}
+
+.date-day {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.date-special {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  color: var(--gold);
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+/* Compass */
+.compass {
+  background: var(--panel-bg);
+  padding: 10px 26px;
+  border-radius: 30px;
+  color: var(--gold);
+  font-size: 0.95rem;
+  letter-spacing: 0.15em;
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+/* Debug indicator */
+.debug-indicator {
+  background: rgba(248, 113, 113, 0.9);
+  padding: 8px 18px;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  animation: pulse 1s infinite;
+}
+
+/* Minimap */
+.minimap {
+  width: 190px;
+  height: 190px;
+  background: var(--panel-bg);
+  border-radius: var(--panel-radius);
+  border: 1px solid var(--line);
+  padding: 12px;
+  flex: none;
+}
+
+.minimap svg {
+  width: 100%;
+  height: 100%;
+}
+
+.player-marker {
+  fill: var(--gold);
+  filter: drop-shadow(0 0 6px var(--gold));
+}
+
+/* Location panel */
+.location-panel {
+  padding: 20px 26px;
+  max-width: 480px;
+}
+
+.location-hebrew {
+  font-family: var(--font-he);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-shadow: var(--glow);
+  line-height: 1.2;
+}
+
+.location-english {
+  font-size: 0.9rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 6px 0 12px;
+}
+
+.location-desc {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.coords-display {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  direction: ltr;
+}
+
+/* Controls hint */
+.controls-hint {
+  background: var(--panel-bg);
+  border: 1px solid var(--line);
+  padding: 12px 18px;
+  border-radius: 12px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.controls-hint kbd {
+  display: inline-block;
+  background: var(--surface-2);
+  padding: 3px 9px;
+  border-radius: 6px;
+  margin: 0 3px;
+  border: 1px solid var(--line);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  color: var(--ink);
+}
+
+/* Kli panel (compact "nearby" card) ---------------------------------------- */
+.kli-panel {
+  position: absolute;
+  top: 110px;
+  right: var(--hud-gap);
+  padding: 22px;
+  max-width: 360px;
+  animation: slideIn 0.35s ease;
+  pointer-events: auto;
+}
+
+.kli-panel .icon {
+  font-size: 3rem;
+  margin-bottom: 10px;
+}
+
+.kli-panel .name-heb {
+  font-family: var(--font-he);
+  font-size: 1.9rem;
+  color: var(--gold);
+}
+
+.kli-panel .name-en {
+  font-size: 0.95rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+.kli-panel .desc {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Korbanos panel ----------------------------------------------------------- */
+.korbanos-panel {
+  position: absolute;
+  bottom: 110px;
+  right: var(--hud-gap);
+  padding: 22px;
+  max-width: 420px;
+  max-height: 450px;
+  overflow-y: auto;
+  animation: slideIn 0.35s ease;
+  pointer-events: auto;
+}
+
+.korbanos-panel h3 {
+  font-family: var(--font-he);
+  font-size: 1.4rem;
+  color: var(--gold);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.korban-item {
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.korban-item:last-child {
+  border-bottom: none;
+}
+
+.korban-name {
+  font-family: var(--font-he);
+  font-size: 1.15rem;
+  color: var(--gold);
+}
+
+.korban-name-en {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.korban-desc {
+  font-size: 0.9rem;
+  margin-top: 6px;
+}
+
+.korban-type {
+  display: inline-block;
+  background: var(--gold-soft);
+  border: 1px solid var(--line);
+  color: var(--gold);
+  padding: 3px 10px;
+  border-radius: 14px;
+  font-size: 0.8rem;
+  margin-top: 8px;
+}
+
+/* Start screen ------------------------------------------------------------- */
+.start-screen {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-grad);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+  pointer-events: auto;
+}
+
+.start-panel {
+  background: var(--surface);
+  padding: 48px 64px;
+  border-radius: 24px;
+  border: 1px solid var(--line);
+  text-align: center;
+  max-width: 680px;
+  width: 100%;
+  box-shadow: var(--card-shadow), var(--glow);
+}
+
+.start-panel h1 {
+  font-family: var(--font-he);
+  font-size: 4.5rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-shadow: var(--glow);
+  margin-bottom: 6px;
+  line-height: 1.1;
+}
+
+.start-panel h2 {
+  font-size: 1.1rem;
+  color: var(--ink);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+  font-weight: 400;
+}
+
+.start-panel p {
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.start-panel .date-info {
+  background: var(--gold-soft);
+  padding: 18px 26px;
+  border-radius: var(--panel-radius);
+  margin: 24px 0;
+  border: 1px solid var(--line);
+}
+
+.start-panel .date-info .heb {
+  font-family: var(--font-he);
+  font-size: 1.7rem;
+  color: var(--gold);
+}
+
+.start-panel .date-info .day {
+  color: var(--ink);
+  font-size: 1.05rem;
+  margin-top: 4px;
+}
+
+.start-btn {
+  background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+  border: none;
+  color: #241a05;
+  padding: 18px 56px;
+  font-size: 1.15rem;
+  font-family: var(--font-ui);
+  border-radius: 14px;
+  cursor: pointer;
+  margin-top: 28px;
+  transition: filter 0.2s, transform 0.2s, box-shadow 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  box-shadow: 0 8px 28px rgba(212, 175, 55, 0.35);
+}
+
+.start-btn:hover,
+.start-btn:focus-visible {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px rgba(212, 175, 55, 0.45);
+}
+
+.start-btn:active {
+  transform: translateY(1px);
+}
+
+.start-panel .footer {
+  margin-top: 28px;
+  font-size: 0.85rem;
+  color: var(--faint);
+}
+
+/* Loading */
+.loading {
+  color: var(--gold);
+  font-size: 1.4rem;
+  text-align: center;
+}
+
+.loading-bar {
+  width: 300px;
+  max-width: 80vw;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  margin: 20px auto 0;
+  overflow: hidden;
+}
+
+.loading-bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-dim), var(--gold));
+  animation: loadPulse 1.5s ease infinite;
+}
+
+/* Animations --------------------------------------------------------------- */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(35px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+@keyframes loadPulse {
+  0%,
+  100% {
+    width: 20%;
+  }
+  50% {
+    width: 80%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .loading-bar-inner {
+    width: 60%;
+  }
+}
+
+/* Small screens / phones --------------------------------------------------- */
+@media (max-width: 900px) {
+  :root {
+    --hud-gap: 10px;
+  }
+
+  .hud-top {
+    align-items: flex-start;
+  }
+
+  .date-panel {
+    padding: 8px 12px;
+    min-width: 0;
+  }
+
+  .date-hebrew {
+    font-size: 1.05rem;
+  }
+
+  .date-day {
+    font-size: 0.75rem;
+  }
+
+  .date-special {
+    margin-top: 6px;
+    padding-top: 6px;
+    font-size: 0.85rem;
+  }
+
+  .compass {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+  }
+
+  .minimap {
+    width: 96px;
+    height: 96px;
+    padding: 6px;
+  }
+
+  .location-panel {
+    padding: 10px 14px;
+    max-width: 60vw;
+  }
+
+  .location-hebrew {
+    font-size: 1.3rem;
+  }
+
+  .location-english {
+    font-size: 0.7rem;
+    margin: 2px 0 4px;
+  }
+
+  .location-desc {
+    display: none;
+  }
+
+  .controls-hint {
+    display: none;
+  }
+
+  /* The kli card becomes a bottom sheet. */
+  .kli-panel {
+    top: auto;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    max-width: none;
+    border-radius: 18px 18px 0 0;
+    padding: 16px 18px;
+    max-height: 45vh;
+    overflow-y: auto;
+    animation: sheetIn 0.3s ease;
+  }
+
+  .korbanos-panel {
+    bottom: 0;
+    right: 0;
+    left: 0;
+    max-width: none;
+    max-height: 45vh;
+    border-radius: 18px 18px 0 0;
+    animation: sheetIn 0.3s ease;
+  }
+
+  .start-panel {
+    padding: 28px 22px;
+    border-radius: 18px;
+  }
+
+  .start-panel h1 {
+    font-size: 3rem;
+  }
+
+  .start-panel h2 {
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+  }
+
+  .start-btn {
+    padding: 14px 36px;
+    font-size: 1rem;
+  }
+}
+
+@keyframes sheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (pointer: coarse) {
+  .controls-hint {
+    display: none;
+  }
+}
+
+/* In-scene hotspot labels (CSS2DRenderer layer) ---------------------------- */
+.hotspot-layer {
+  pointer-events: none;
+  z-index: 1;
+}
+
+.hotspot-pill {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(30, 30, 51, 0.82);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: var(--card-shadow);
+  opacity: 0.8;
+  transition: opacity 0.15s, transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.hotspot-pill:hover,
+.hotspot-pill.focused {
+  opacity: 1;
+  border-color: var(--gold);
+  box-shadow: var(--card-shadow), var(--glow);
+  transform: scale(1.06);
+}
+
+.hotspot-pill .hotspot-icon {
+  font-size: 1.1rem;
+}
+
+.hotspot-pill .hotspot-he {
+  font-family: var(--font-he);
+  font-size: 1rem;
+  color: var(--gold);
+}
+
+.hotspot-pill .hotspot-en {
+  color: var(--muted);
+}
+
+.hotspot-pill .hotspot-en::before {
+  content: '·';
+  margin-right: 8px;
+  color: var(--faint);
+}
+
+.hotspot-pill.he-first .hotspot-en {
+  display: none;
+}
+
+/* "E · Inspect" prompt under the crosshair while a label is in the gaze cone. */
+.interact-hint {
+  position: absolute;
+  top: calc(50% + 28px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--panel-bg);
+  color: var(--ink);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.interact-hint kbd {
+  display: inline-block;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 7px;
+  margin-right: 6px;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  color: var(--gold);
+}
+
+@media (pointer: coarse) {
+  .interact-hint {
+    display: none;
+  }
+}
+
+/* Hotspot card (expanded) -------------------------------------------------- */
+.hotspot-card {
+  width: 400px;
+  max-width: calc(100vw - 2 * var(--hud-gap));
+  max-height: calc(100vh - 130px);
+  max-height: calc(100dvh - 130px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 22px 22px;
+  outline: none;
+}
+
+.hotspot-card:focus-visible {
+  outline: 2px solid var(--gold);
+}
+
+.card-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  margin: -6px -8px 6px 0;
+}
+
+.card-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.card-close:hover,
+.card-close:focus-visible {
+  background: var(--gold);
+  color: #241a05;
+}
+
+.lang-btn {
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.lang-btn:hover,
+.lang-btn:focus-visible {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.hotspot-card .icon {
+  font-size: 2.6rem;
+  margin: 0;
+  flex: none;
+}
+
+.card-titles {
+  min-width: 0;
+}
+
+.hotspot-card .name-heb {
+  font-size: 1.7rem;
+  line-height: 1.15;
+}
+
+.hotspot-card .name-en {
+  margin-bottom: 2px;
+}
+
+[dir='rtl'] .card-head {
+  flex-direction: row;
+}
+
+[dir='rtl'] .card-titles {
+  text-align: right;
+}
+
+.period-badge {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--gold-soft);
+  color: var(--gold);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+}
+
+.hotspot-card .desc {
+  font-size: 0.98rem;
+  line-height: 1.6;
+  margin-bottom: 14px;
+}
+
+.card-section {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+
+.card-section h4,
+.card-section summary {
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+[lang='he'] .card-section h4,
+[lang='he'] .card-section summary {
+  letter-spacing: 0;
+  font-size: 0.95rem;
+}
+
+.dims .dim {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: baseline;
+  padding: 4px 0;
+}
+
+.dims dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+  min-width: 90px;
+  text-transform: capitalize;
+}
+
+.dims dd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+}
+
+.dim-value {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.dim-note {
+  color: var(--faint);
+  font-size: 0.8rem;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.source-chip {
+  display: inline-block;
+  font-size: 0.72rem;
+  padding: 2px 9px;
+  border-radius: 12px;
+  background: var(--gold-soft);
+  color: var(--gold);
+  border: 1px solid var(--line);
+  direction: ltr;
+  transition: background 0.15s, color 0.15s;
+}
+
+.source-chip:hover,
+.source-chip:focus-visible {
+  background: var(--gold);
+  color: var(--surface);
+  text-decoration: none;
+}
+
+.disputes summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.disputes summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform 0.15s;
+}
+
+[dir='rtl'] .disputes summary::before {
+  margin-right: 0;
+  margin-left: 6px;
+}
+
+.disputes[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.disputes ul {
+  list-style: none;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.disputes > ul > li {
+  padding: 4px 0;
+}
+
+.disputes ul ul {
+  color: var(--muted);
+  padding-left: 14px;
+  margin-top: 2px;
+}
+
+.disputes ul ul li::before {
+  content: '– ';
+}
+
+.questions ul {
+  list-style: none;
+}
+
+.questions li {
+  padding: 3px 0;
+}
+
+.questions a {
+  display: block;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.questions a:hover,
+.questions a:focus-visible {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+  text-decoration: none;
+}
+
+.questions .ext {
+  color: var(--gold);
+}
+
+@media (max-width: 900px) {
+  .hotspot-card {
+    width: auto;
+    max-width: none;
+    max-height: 60vh;
+    max-height: 60dvh;
+  }
+}
+
+/* Touch controls (TouchControls.js; only mounted on coarse pointers) -------- */
+.touch-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 0; /* above the canvas, below the hotspot labels (1) and the HUD */
+  pointer-events: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.touch-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.touch-move {
+  left: 0;
+}
+
+.touch-look {
+  right: 0;
+}
+
+.joystick {
+  position: absolute;
+  width: 128px;
+  height: 128px;
+  margin: -64px 0 0 -64px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: rgba(30, 30, 51, 0.35);
+  opacity: 0;
+  transition: opacity 0.15s;
+  pointer-events: none;
+}
+
+.joystick.active {
+  opacity: 1;
+}
+
+.joystick-knob {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.55);
+  border: 1px solid var(--gold);
+  box-shadow: var(--glow);
+  transform: translate(-50%, -50%);
+}
+
+.touch-jump {
+  position: absolute;
+  right: max(24px, env(safe-area-inset-right));
+  bottom: calc(max(24px, env(safe-area-inset-bottom)) + 96px);
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 1px solid var(--gold);
+  background: rgba(30, 30, 51, 0.7);
+  color: var(--gold);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-jump:active {
+  background: var(--gold-soft);
+}
+
+/* Pointer-lock prompt ------------------------------------------------------ */
+.lock-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end; /* sits below the crosshair so hotspot pills and their hint stay readable */
+  padding-bottom: 22vh;
+  justify-content: center;
+  pointer-events: none; /* clicks fall through to the container, which locks the pointer */
+  background: rgba(13, 13, 26, 0.35);
+  animation: fadeIn 0.2s ease;
+}
+
+.lock-overlay-inner {
+  background: var(--panel-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+  padding: 18px 28px;
+  text-align: center;
+  box-shadow: var(--card-shadow), var(--glow);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.lock-overlay-title {
+  color: var(--gold);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.lock-overlay-sub {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 6px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Period toggle on the start screen ---------------------------------------- */
+.period-toggle {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  border: none;
+  margin: 8px 0 4px;
+  position: relative;
+}
+
+.period-toggle legend {
+  color: var(--faint);
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  width: 100%;
+  text-align: center;
+}
+
+.period-toggle label {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.period-toggle label [lang='he'] {
+  font-size: 1.15rem;
+  text-align: center;
+}
+
+.period-toggle label [lang='en'] {
+  font-size: 0.85rem;
+}
+
+.period-toggle label.active {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+  color: var(--ink);
+}
+
+.period-toggle label:has(input:focus-visible) {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.period-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+.start-panel .footer a {
+  color: var(--gold-dim);
+}
+
+.game-container:focus {
+  outline: none; /* programmatic focus target only (card close) */
+}

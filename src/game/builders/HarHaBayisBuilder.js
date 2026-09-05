@@ -1,92 +1,173 @@
 import * as THREE from 'three';
-import { BaseBuilder } from './BaseBuilder.js';
+import { CourtBuilder, GROUND, SLAB, WALL_T } from './CourtBuilder.js';
+import { instance } from '../instanced.js';
+import { AMAH } from '../../content/units.js';
 
 // ============================================================================
-// HAR HABAYIS BUILDER - Temple Mount platform and outer walls
+// HAR HABAYIS BUILDER - the 500 x 500 mount (Middot 2:1), its wall with the five
+// gates (Middot 1:3), the Soreg, the Cheil and the twelve steps up to the Ezras
+// Nashim gate (Middot 2:3). Amos in the azarah frame (temple.json).
 // ============================================================================
-export class HarHaBayisBuilder extends BaseBuilder {
+
+/** Wall tops, amos above the Azarah floor; the mount is at -13.5. Heights are not given in Middot. */
+const WALL_TOP = 11.5;
+/** The east wall is lower (Middot 2:4) so the Kohen on Har HaMishcha sees the Heichal entrance. */
+const EAST_WALL_TOP = 8.5;
+/** Merlon pitch along the wall tops, amos. */
+const MERLON_PITCH = 4;
+/** Soreg post pitch, amos. */
+const POST_PITCH = 1;
+/** The Cheil pavement is 2 cm proud of the mount so the two slabs never z-fight. */
+const CHEIL_LIP = 0.04;
+
+export class HarHaBayisBuilder extends CourtBuilder {
   build() {
-    this.buildPlatform();
-    this.buildChuldahGateStairs();
-    this.buildOuterWalls();
+    this.y = this.level('har_habayis');
+    this.area = this.entry('har_habayis');
+    this.buildPlaza();
+    this.buildOuterWall();
+    this.buildCheil();
+    this.buildSoreg();
+    this.buildCheilSteps();
   }
 
-  buildPlatform() {
-    // Main platform - the Temple Mount floor
-    // Extended north to accommodate Azara and Heichal (z=68 south to z=-95 north)
-    const platformCenterZ = -13;
-    const platformDepth = 166;  // From z=70 to z=-96
-    this.addFloor(0, 1.8, platformCenterZ, 140, platformDepth, this.mat.floor, 'har-habayis');
-
-    // Fill underneath the platform
-    const platformFill = new THREE.Mesh(
-      new THREE.BoxGeometry(140, 1.8, platformDepth),
-      this.mat.stone
-    );
-    platformFill.position.set(0, 0.9, platformCenterZ);
-    platformFill.receiveShadow = true;
-    this.scene.add(platformFill);
+  buildPlaza() {
+    const b = this.area.bounds;
+    this.group('har_habayis', () => {
+      this.floorA(b.minX, b.maxX, b.minZ, b.maxZ, this.y, this.mat.stone, 'har_habayis');
+    });
   }
 
-  buildChuldahGateStairs() {
-    // Stairs from ground (y=0) up to Har HaBayis (y=1.8) through the Chuldah Gates
-    // Left gate stairs (centered at x=-27)
-    this.addStairs(-27, 0, 78, 12, 1.8, 12, 9, this.mat.stone, 'north');
-    // Right gate stairs (centered at x=27)
-    this.addStairs(27, 0, 78, 12, 1.8, 12, 9, this.mat.stone, 'north');
+  gate(id, along) {
+    const e = this.entry(id);
+    return {
+      at: along === 'x' ? e.position.x : e.position.z, w: e.geometry.w, h: e.geometry.h, floor: e.position.y, entry: id, name: id,
+      frame: this.mat.gold, doors: 'open', doorMat: this.mat.goldEng, threshold: true,
+    };
   }
 
-  buildOuterWalls() {
-    const wallH = 24;
-    const wallThick = 5;
-    const southZ = 68;
-    const northZ = -95;  // Moved north to avoid blocking Azara/Heichal (was -22)
-    const eastX = 72;
-    const westX = -72;
-    const gateWidth = 14;
-    const gateHeight = 8;
+  /** The wall around the mount, 6 thick outside the 500 x 500, with merlons along its top. */
+  buildOuterWall() {
+    const b = this.area.bounds;
+    const x1 = b.minX - WALL_T;
+    const x2 = b.maxX + WALL_T;
+    const z1 = b.minZ - WALL_T;
+    const z2 = b.maxZ + WALL_T;
+    const m = this.mat.stone;
+    this.group('har_habayis', () => {
+      // South (two Chuldah gates), north (Tadi), west (Kiponus), east (Shushan, lower).
+      this.wallRunA({ along: 'z', across: [x1, b.minX], from: z1, to: z2, y1: GROUND, y2: WALL_TOP, mat: m, openings: [this.gate('chuldah_gate_west', 'z'), this.gate('chuldah_gate_east', 'z')] });
+      this.wallRunA({ along: 'z', across: [b.maxX, x2], from: z1, to: z2, y1: GROUND, y2: WALL_TOP, mat: m, openings: [this.gate('shaar_tadi', 'z')] });
+      this.wallRunA({ along: 'x', across: [z1, b.minZ], from: b.minX, to: b.maxX, y1: GROUND, y2: WALL_TOP, mat: m, openings: [this.gate('shaar_kiponus', 'x')] });
+      this.wallRunA({ along: 'x', across: [b.maxZ, z2], from: b.minX, to: b.maxX, y1: GROUND, y2: EAST_WALL_TOP, mat: m, openings: [this.gate('shaar_shushan', 'x')] });
+      this.buildTadiStones();
+      this.buildMerlons(x1, x2, z1, z2, b);
+    }, { part: 'wall' });
+  }
 
-    // === SOUTH WALL with two Chuldah Gate openings ===
-    this.addWall(-53, 0, southZ, 38, wallH, wallThick, this.mat.stone);
-    this.addWall(0, 0, southZ, 40, wallH, wallThick, this.mat.stone);
-    this.addWall(53, 0, southZ, 38, wallH, wallThick, this.mat.stone);
-    // Gate lintels
-    this.addWall(-27, gateHeight, southZ, gateWidth, wallH - gateHeight, wallThick, this.mat.stone);
-    this.addWall(27, gateHeight, southZ, gateWidth, wallH - gateHeight, wallThick, this.mat.stone);
-
-    // === OTHER WALLS ===
-    this.addWall(0, 0, northZ, 144, wallH, wallThick, this.mat.stone);
-    // Side walls extended to match north boundary
-    const sideWallCenterZ = (southZ + northZ) / 2;  // Center between south and north
-    const sideWallDepth = southZ - northZ;  // Full length from south to north
-    this.addWall(eastX, 0, sideWallCenterZ, wallThick, wallH, sideWallDepth, this.mat.stone);
-    this.addWall(westX, 0, sideWallCenterZ, wallThick, wallH, sideWallDepth, this.mat.stone);
-
-    // === Crenellations ===
-    for (let i = -68; i <= 68; i += 8) {
-      if (Math.abs(i + 27) > gateWidth/2 && Math.abs(i - 27) > gateWidth/2) {
-        this.addWall(i, wallH, southZ, 3, 3, wallThick + 0.5, this.mat.stone);
+  /** Shaar Tadi has two leaning stones instead of a lintel (Middot 2:3). */
+  buildTadiStones() {
+    const t = this.entry('shaar_tadi');
+    const b = this.area.bounds;
+    const { w, h } = t.geometry;
+    const top = t.position.y + h;
+    const len = (w / 2 + 1.5) / Math.cos(Math.PI / 5);
+    this.group('shaar_tadi', () => {
+      for (const s of [-1, 1]) {
+        const stone = new THREE.Mesh(this.box(WALL_T * AMAH, 1 * AMAH, len * AMAH, this.mat.stone), this.mat.stone);
+        stone.position.set(...this.pt(b.maxX + WALL_T / 2, top + Math.sin(Math.PI / 5) * len / 2 + 0.5, t.position.z + s * (w / 4 + 0.75)));
+        stone.rotation.x = s * (Math.PI / 5);
+        stone.castShadow = true;
+        this.scene.add(stone);
       }
-      this.addWall(i, wallH, northZ, 3, 3, wallThick + 0.5, this.mat.stone);
-    }
-    for (let z = northZ + 5; z <= southZ - 5; z += 8) {
-      this.addWall(eastX, wallH, z, wallThick + 0.5, 3, 3, this.mat.stone);
-      this.addWall(westX, wallH, z, wallThick + 0.5, 3, 3, this.mat.stone);
-    }
+    }, { part: 'leaning stones' });
+  }
 
-    // === Guard towers at corners ===
-    [[westX, southZ], [eastX, southZ], [westX, northZ], [eastX, northZ]].forEach(([tx, tz]) => {
-      const tower = new THREE.Mesh(new THREE.BoxGeometry(10, wallH + 8, 10), this.mat.stone);
-      tower.position.set(tx, (wallH + 8) / 2, tz);
-      tower.castShadow = true;
-      tower.receiveShadow = true;
-      this.scene.add(tower);
+  buildMerlons(x1, x2, z1, z2, b) {
+    const items = [];
+    const geo = this.box(MERLON_PITCH / 2 * AMAH, 2 * AMAH, WALL_T * AMAH, this.mat.stone);
+    const runZ = (x, top) => {
+      for (let z = z1 + MERLON_PITCH / 2; z < z2; z += MERLON_PITCH) items.push({ position: this.pt(x, top + 1, z), rotation: [0, Math.PI / 2, 0] });
+    };
+    const runX = (z, top) => {
+      for (let x = b.minX + MERLON_PITCH * 1.5; x < b.maxX - MERLON_PITCH; x += MERLON_PITCH) items.push({ position: this.pt(x, top + 1, z) });
+    };
+    runZ((x1 + b.minX) / 2, WALL_TOP);
+    runZ((b.maxX + x2) / 2, WALL_TOP);
+    runX((z1 + b.minZ) / 2, WALL_TOP);
+    runX((b.maxZ + z2) / 2, EAST_WALL_TOP);
+    this.scene.add(instance(geo, this.mat.stone, items, { name: 'merlons' }));
+  }
 
-      const roof = new THREE.Mesh(new THREE.ConeGeometry(7, 5, 4), this.mat.stonePolished);
-      roof.position.set(tx, wallH + 8 + 2.5, tz);
-      roof.rotation.y = Math.PI / 4;
-      roof.castShadow = true;
-      this.scene.add(roof);
+  /** Extents of the Soreg ring (10 amos outside the court walls). */
+  get ring() {
+    const s = this.entry('soreg');
+    const c = this.entry('cheil');
+    const xOut = 67.5 + WALL_T + c.geometry.w; // 83.5
+    const azarahWest = -187 - WALL_T - c.geometry.w; // -203
+    return { x1: -xOut, x2: xOut, z1: azarahWest, z2: s.position.z - 1, xIn: 67.5 + WALL_T, zIn1: -187 - WALL_T, zIn2: 141 + WALL_T };
+  }
+
+  /** The Cheil: a 10-amah pavement ring between the Soreg and the court walls. */
+  buildCheil() {
+    const r = this.ring;
+    const y = this.y + CHEIL_LIP;
+    const m = this.mat.stonePolished;
+    this.group('cheil', () => {
+      this.floorA(r.x1, -r.xIn, r.z1, r.z2, y, m, 'cheil');
+      this.floorA(r.xIn, r.x2, r.z1, r.z2, y, m, 'cheil');
+      this.floorA(-r.xIn, r.xIn, r.z1, r.zIn1, y, m, 'cheil');
+      this.floorA(-r.xIn, r.xIn, r.zIn2, r.z2, y, m, 'cheil');
+    });
+  }
+
+  /**
+   * The Soreg (Middot 2:3): a lattice 10 tefachim high around the Cheil, with an
+   * opening opposite every gate. Posts are one InstancedMesh; each straight run has
+   * two rails and an invisible collider.
+   */
+  buildSoreg() {
+    const s = this.entry('soreg');
+    const h = s.geometry.h;
+    const r = this.ring;
+    const gateZ = (id) => this.entry(id).position.z;
+    const gateX = (id) => this.entry(id).position.x;
+    const gapsSouth = ['water_gate', 'bechoros_gate', 'delek_gate', 'shaar_elyon'].map(gateZ);
+    const gapsNorth = ['nitzotz_gate', 'korban_gate', 'shaar_hanashim', 'beis_hamoked_gate'].map(gateZ);
+    const gapsWest = ['shaar_maaravi_north', 'shaar_maaravi_south'].map(gateX);
+    const gapsEast = [gateX('ezras_nashim_gate')];
+    const posts = [];
+    const y = this.y;
+    const run = (along, at, from, to, gaps) => {
+      const edges = [from, ...gaps.flatMap((g) => [g - 5, g + 5]).sort((a, b) => a - b), to];
+      for (let i = 0; i < edges.length; i += 2) {
+        const a = edges[i];
+        const b = edges[i + 1];
+        if (b - a < POST_PITCH) continue;
+        const rect = along === 'x' ? [a, b, at - 0.15, at + 0.15] : [at - 0.15, at + 0.15, a, b];
+        for (const ry of [h - 0.25, h / 2]) this.decoA(...rect, y + ry, y + ry + 0.15, this.mat.cedar);
+        this.colliderA(...rect, y, y + h);
+        for (let t = a + POST_PITCH / 2; t < b; t += POST_PITCH) posts.push({ position: along === 'x' ? this.pt(t, y + h / 2, at) : this.pt(at, y + h / 2, t) });
+      }
+    };
+    this.group('soreg', () => {
+      run('z', r.x1, r.z1, r.z2, gapsSouth);
+      run('z', r.x2, r.z1, r.z2, gapsNorth);
+      run('x', r.z1, r.x1, r.x2, gapsWest);
+      run('x', r.z2, r.x1, r.x2, gapsEast);
+      this.scene.add(instance(this.box(0.2 * AMAH, h * AMAH, 0.2 * AMAH, this.mat.cedar), this.mat.cedar, posts, { name: 'soreg posts', castShadow: false }));
+    });
+  }
+
+  /** Twelve half-amah steps from the Cheil up to the Ezras Nashim gate (Middot 2:3). */
+  buildCheilSteps() {
+    const e = this.entry('cheil_steps');
+    const steps = e.dimensions.find((x) => x.label === 'steps')?.value ?? 12;
+    const zTop = e.position.z - e.geometry.d / 2; // 147
+    const zBottom = e.position.z + e.geometry.d / 2; // 153
+    const half = e.geometry.w / 2;
+    this.group('cheil_steps', () => {
+      this.flightA({ axis: 'z', span: [-half, half], from: zBottom, to: zTop, yBase: this.y, bottom: this.y - SLAB, steps, rise: e.geometry.h / steps, mat: this.mat.marbleW, name: 'cheil_steps' });
     });
   }
 }

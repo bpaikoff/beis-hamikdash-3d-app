@@ -6,15 +6,34 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "format": "prettier --write \"src/**/*.{js,jsx}\" \"scripts/**/*.mjs\"",
+    "test": "vitest",
+    "screenshot": "node scripts/screenshot.mjs",
+    "bake": "node scripts/bake_textures.mjs"
   },
   "dependencies": {
+    "@hebcal/core": "^6.9.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "three": "^0.160.0"
+    "three": "^0.160.0",
+    "three-mesh-bvh": "^0.9.14",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.1",
-    "vite": "^5.0.10"
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
+    "@vitejs/plugin-react": "^5.2.0",
+    "eslint": "^10.10.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.6",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.6",
+    "vite": "^7.3.6",
+    "vitest": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

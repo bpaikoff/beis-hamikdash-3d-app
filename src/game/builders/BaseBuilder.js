@@ -1,5 +1,59 @@
 import * as THREE from 'three';
 
+/**
+ * World-space size of one texture tile per material key in TempleBuilder.mat. Materials
+ * are shared between every mesh (instancing-safe), so a box's UVs are scaled from its
+ * own size instead of setting texture.repeat globally. Keys not listed tile every
+ * DEFAULT_TILE_METRES; a material can override with `material.userData.tileMetres`.
+ */
+export const TILE_METRES = {
+  stone: 4,
+  stonePolished: 4,
+  floor: 2,
+  mosaic: 2,
+  marbleW: 3,
+  marbleR: 3,
+  cedar: 2,
+  acacia: 2,
+  paroches: 4,
+  ground: 10,
+};
+export const DEFAULT_TILE_METRES = 4;
+
+/**
+ * Scale a BoxGeometry's UVs per face so a RepeatWrapping texture tiles every
+ * `tileMetres` metres of world size on each face, whatever the box's dimensions.
+ * BoxGeometry lays its vertices out face by face (+x, -x, +y, -y, +z, -z); the side
+ * faces are (d x h), the top/bottom (w x d) and the front/back (w x h).
+ *
+ * @param {THREE.BoxGeometry} geo a fresh, unshared BoxGeometry
+ * @param {number} w width (x)   @param {number} h height (y)   @param {number} d depth (z)
+ * @param {number} [tileMetres]
+ * @returns {THREE.BoxGeometry} the same geometry, UVs scaled in place
+ */
+export function scaleBoxUVs(geo, w, h, d, tileMetres = DEFAULT_TILE_METRES) {
+  const uv = geo.attributes.uv;
+  if (!uv) return geo;
+  const seg = geo.parameters ?? {};
+  const sw = (seg.widthSegments ?? 1) + 1;
+  const sh = (seg.heightSegments ?? 1) + 1;
+  const sd = (seg.depthSegments ?? 1) + 1;
+  // Vertex count and (u, v) world extent per face, in BoxGeometry face order.
+  const faces = [
+    [sd * sh, d, h], [sd * sh, d, h], // +x, -x
+    [sw * sd, w, d], [sw * sd, w, d], // +y, -y
+    [sw * sh, w, h], [sw * sh, w, h], // +z, -z
+  ];
+  let i = 0;
+  for (const [count, uExtent, vExtent] of faces) {
+    const su = uExtent / tileMetres;
+    const sv = vExtent / tileMetres;
+    for (let k = 0; k < count && i < uv.count; k++, i++) uv.setXY(i, uv.getX(i) * su, uv.getY(i) * sv);
+  }
+  uv.needsUpdate = true;
+  return geo;
+}
+
 // ============================================================================
 // BASE BUILDER - Shared functionality for all temple section builders
 // ============================================================================
@@ -12,8 +66,20 @@ export class BaseBuilder {
     this.walls = walls;
   }
 
+  /** Tile size (metres) for a material: userData override, else its key in this.mat. */
+  tileMetresFor(mat) {
+    if (mat?.userData?.tileMetres) return mat.userData.tileMetres;
+    for (const key in this.mat) if (this.mat[key] === mat) return TILE_METRES[key] ?? DEFAULT_TILE_METRES;
+    return DEFAULT_TILE_METRES;
+  }
+
+  /** BoxGeometry whose UVs tile `mat`'s texture at a fixed world scale. */
+  box(w, h, d, mat) {
+    return scaleBoxUVs(new THREE.BoxGeometry(w, h, d), w, h, d, this.tileMetresFor(mat));
+  }
+
   addFloor(x, y, z, w, d, mat, name) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, 0.4, d), mat);
+    const m = new THREE.Mesh(this.box(w, 0.4, d, mat), mat);
     m.position.set(x, y, z);
     m.receiveShadow = true;
     m.userData = { isFloor: true, name };
@@ -23,7 +89,7 @@ export class BaseBuilder {
   }
 
   addWall(x, y, z, w, h, d, mat) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    const m = new THREE.Mesh(this.box(w, h, d, mat), mat);
     m.position.set(x, y + h/2, z);
     m.castShadow = true;
     m.receiveShadow = true;
@@ -35,7 +101,7 @@ export class BaseBuilder {
 
   // Wall that doesn't block player (for interior decoration)
   addWallNonCollide(x, y, z, w, h, d, mat) {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    const m = new THREE.Mesh(this.box(w, h, d, mat), mat);
     m.position.set(x, y + h/2, z);
     m.castShadow = true;
     m.receiveShadow = true;
@@ -49,7 +115,7 @@ export class BaseBuilder {
     for (let i = 0; i < steps; i++) {
       const sy = y + i * sh + sh/2;
       const sz = dir === 'north' ? z - i * sd : z + i * sd;
-      const step = new THREE.Mesh(new THREE.BoxGeometry(w, sh, sd), mat);
+      const step = new THREE.Mesh(this.box(w, sh, sd, mat), mat);
       step.position.set(x, sy, sz);
       step.receiveShadow = true;
       step.castShadow = true;
@@ -83,20 +149,14 @@ export class BaseBuilder {
 
   addSolidFill(x, bottomY, topY, z, width, depth) {
     const height = topY - bottomY;
-    const fill = new THREE.Mesh(
-      new THREE.BoxGeometry(width, height, depth),
-      this.mat.stone
-    );
+    const fill = new THREE.Mesh(this.box(width, height, depth, this.mat.stone), this.mat.stone);
     fill.position.set(x, bottomY + height/2, z);
     fill.receiveShadow = true;
     this.scene.add(fill);
   }
 
   addStepRow(x, baseY, z, width, rise) {
-    const step = new THREE.Mesh(
-      new THREE.BoxGeometry(width, rise, 1),
-      this.mat.marbleW
-    );
+    const step = new THREE.Mesh(this.box(width, rise, 1, this.mat.marbleW), this.mat.marbleW);
     step.position.set(x, baseY + rise/2, z);
     step.userData = { isFloor: true, isStep: true };
     step.receiveShadow = true;
@@ -107,17 +167,17 @@ export class BaseBuilder {
   addGateFrame(x, y, z, width, height, mat, name) {
     const frameThick = 0.8;
     // Left pillar
-    const left = new THREE.Mesh(new THREE.BoxGeometry(frameThick, height, frameThick), mat);
+    const left = new THREE.Mesh(this.box(frameThick, height, frameThick, mat), mat);
     left.position.set(x - width/2 + frameThick/2, y + height/2, z);
     left.castShadow = true;
     this.scene.add(left);
     // Right pillar
-    const right = new THREE.Mesh(new THREE.BoxGeometry(frameThick, height, frameThick), mat);
+    const right = new THREE.Mesh(this.box(frameThick, height, frameThick, mat), mat);
     right.position.set(x + width/2 - frameThick/2, y + height/2, z);
     right.castShadow = true;
     this.scene.add(right);
     // Top beam
-    const top = new THREE.Mesh(new THREE.BoxGeometry(width, frameThick, frameThick), mat);
+    const top = new THREE.Mesh(this.box(width, frameThick, frameThick, mat), mat);
     top.position.set(x, y + height - frameThick/2, z);
     top.castShadow = true;
     this.scene.add(top);

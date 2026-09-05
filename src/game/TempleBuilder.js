@@ -23,10 +23,13 @@ export class TempleBuilder {
 
   createMaterials() {
     this.mat = {
-      stone: new THREE.MeshStandardMaterial({ map: this.tex.get('jerusalemStone'), normalMap: this.tex.normalMap(), roughness: 0.85, metalness: 0.05 }),
+      stone: new THREE.MeshStandardMaterial({ map: this.tex.get('jerusalemStone'), normalMap: this.tex.get('normalMap'), roughness: 0.85, metalness: 0.05 }),
       stonePolished: new THREE.MeshStandardMaterial({ map: this.tex.get('jerusalemStone'), roughness: 0.4, metalness: 0.1 }),
-      gold: new THREE.MeshStandardMaterial({ map: this.tex.get('goldPolished'), roughness: 0.15, metalness: 0.95 }),
-      goldEng: new THREE.MeshStandardMaterial({ map: this.tex.get('goldEngraved'), roughness: 0.25, metalness: 0.9 }),
+      // Same stone at a finer tiling for objects a few metres across (altar, kiyor, steps): 4 m bricks read as slabs on them.
+      stoneFine: Object.assign(new THREE.MeshStandardMaterial({ map: this.tex.get('jerusalemStone'), normalMap: this.tex.get('normalMap'), roughness: 0.8, metalness: 0.05 }), { userData: { tileMetres: 1.25 } }),
+      // Roughness 0.15 mirrored the environment's bright panels into white blooms on the large gold walls.
+      gold: new THREE.MeshStandardMaterial({ map: this.tex.get('goldPolished'), roughness: 0.38, metalness: 0.9, envMapIntensity: 0.6 }),
+      goldEng: new THREE.MeshStandardMaterial({ map: this.tex.get('goldEngraved'), roughness: 0.45, metalness: 0.88, envMapIntensity: 0.5 }),
       copper: new THREE.MeshStandardMaterial({ map: this.tex.get('copper'), roughness: 0.35, metalness: 0.85 }),
       copperP: new THREE.MeshStandardMaterial({ map: this.tex.get('copperPatina'), roughness: 0.5, metalness: 0.7 }),
       cedar: new THREE.MeshStandardMaterial({ map: this.tex.get('cedarWood'), roughness: 0.7, metalness: 0.05 }),
@@ -40,9 +43,8 @@ export class TempleBuilder {
       water: new THREE.MeshStandardMaterial({ map: this.tex.get('water'), roughness: 0.1, metalness: 0.3, transparent: true, opacity: 0.8 }),
       altar: new THREE.MeshStandardMaterial({ color: 0x5A4A40, roughness: 0.9 })
     };
-    this.tex.get('jerusalemStone').repeat.set(4, 4);
-    this.tex.get('floorTiles').repeat.set(8, 8);
-    this.tex.get('marbleWhite').repeat.set(4, 4);
+    // Tiling is per mesh (BaseBuilder.scaleBoxUVs / TILE_METRES), not texture.repeat:
+    // the textures and materials stay shared, which keeps them instancing-safe.
   }
 
   build() {

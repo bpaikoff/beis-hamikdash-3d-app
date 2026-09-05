@@ -1,20 +1,22 @@
 #!/usr/bin/env node
 /**
- * verify_refs.mjs - check that every Sefaria ref in src/content/temple.json resolves.
+ * verify_refs.mjs - check that every Sefaria ref in src/content/temple.json and in the
+ * tours (src/content/tours/*.json) resolves.
  *
  * Collects every `sources[]` string, every `dimensions[].source`, every `position.source`
- * (and the same fields on `children[]`), dedupes them, and asks Sefaria's v3 texts API for
- * each one with a 300 ms gap between requests. A ref is bad on HTTP 404 or when the JSON
- * body carries an `error` key. Bad refs are printed and the process exits 1 if there are any.
+ * (and the same fields on `children[]`) from the entries, and `sources[]` on each tour and
+ * on each of its `stops[]`; dedupes them, and asks Sefaria's v3 texts API for each one with
+ * a 300 ms gap between requests. A ref is bad on HTTP 404 or when the JSON body carries an
+ * `error` key. Bad refs are printed and the process exits 1 if there are any.
  *
- *   node scripts/verify_refs.mjs                       # verify everything
+ *   node scripts/verify_refs.mjs                       # verify everything (entries + tours)
  *   node scripts/verify_refs.mjs --cache .refs-cache.json   # skip refs already verified
- *   node scripts/verify_refs.mjs --file path/to.json   # another content file
+ *   node scripts/verify_refs.mjs --file path/to.json   # one content or tour file only
  *
  * Node 22, no dependencies (uses global fetch).
  */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { resolve, dirname } from 'node:path';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { resolve, dirname, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -23,12 +25,14 @@ const argValue = (flag) => {
   const i = args.indexOf(flag);
   return i >= 0 ? args[i + 1] : undefined;
 };
-const file = resolve(argValue('--file') ?? resolve(here, '../src/content/temple.json'));
+const contentDir = resolve(here, '../src/content');
+const toursDir = join(contentDir, 'tours');
+const files = argValue('--file')
+  ? [resolve(argValue('--file'))]
+  : [join(contentDir, 'temple.json'), ...(existsSync(toursDir) ? readdirSync(toursDir).filter((f) => f.endsWith('.json')).sort().map((f) => join(toursDir, f)) : [])];
 const cachePath = argValue('--cache') ? resolve(argValue('--cache')) : null;
 const gapMs = Number(argValue('--gap') ?? 300);
 const API = 'https://www.sefaria.org/api/v3/texts/';
-
-const data = JSON.parse(readFileSync(file, 'utf8'));
 
 /** Collect refs from one entry-shaped object (entries and their children share the shape). */
 function collect(obj, where, out) {
@@ -37,8 +41,18 @@ function collect(obj, where, out) {
   if (obj.position?.source) out.push([obj.position.source, `${where}.position`]);
   for (const c of obj.children ?? []) collect(c, `${where}.children[${c.id ?? '?'}]`, out);
 }
+/** A tour file: `sources[]` on the tour and on each stop. */
+function collectTour(tour, where, out) {
+  for (const s of tour.sources ?? []) out.push([s, `${where}.sources`]);
+  for (const st of tour.stops ?? []) for (const s of st.sources ?? []) out.push([s, `${where}.stops[${st.id ?? '?'}].sources`]);
+}
 const found = [];
-for (const e of data.entries) collect(e, e.id, found);
+for (const file of files) {
+  const data = JSON.parse(readFileSync(file, 'utf8'));
+  const tag = basename(file, '.json');
+  if (Array.isArray(data.entries)) for (const e of data.entries) collect(e, e.id, found);
+  if (Array.isArray(data.stops)) collectTour(data, `tour:${tag}`, found);
+}
 
 const refs = new Map(); // ref -> [where...]
 for (const [ref, where] of found) {
@@ -89,7 +103,7 @@ const bad = [];
 let checked = 0;
 let skipped = 0;
 const all = [...refs.keys()].sort();
-console.log(`${all.length} distinct refs in ${file}`);
+console.log(`${all.length} distinct refs in ${files.map((f) => basename(f)).join(', ')}`);
 for (const ref of all) {
   if (cache[ref] === true) {
     skipped++;

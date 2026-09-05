@@ -18,10 +18,7 @@ const Z_WEST = -187;
 /** Court wall tops, amos above the Azarah floor (not given in Middot; the gates are 20 high). */
 const WALL_TOP = 30;
 const EAST_WALL_TOP = 25;
-/** The Heichal building and the Ulam footprint (HeichalBuilder's ground). */
-const BUILDING_X = 35;
-const ULAM_X = 50;
-const ULAM_Z = [-92, -76];
+/** The altar's west face and the foot of the Ulam steps: our floor ends here, HeichalBuilder's begins. */
 const STEPS_Z = -54;
 /** A 1-amah rise is exactly CONFIG.STEP_HEIGHT; the Duchan platform sits 5 mm lower so the float compare never blocks the step. */
 const NUDGE = 0.01;
@@ -82,25 +79,19 @@ export class AzaraBuilder extends CourtBuilder {
 
   /**
    * Ezras Kohanim floor: full width from the Duchan steps to the altar's west face at
-   * z -54 (the altar, kevesh and kiyor stand on it), then only the strips beside the
-   * building (x +-35 .. +-67.5, notched for the Ulam) and the strip behind it to z -187.
+   * z -54 (the altar, kevesh and kiyor stand on it). West of z -54 the floor is
+   * HeichalBuilder.buildWestCourtFloor's (the strips beside the building, notched for
+   * the Ulam steps, the Ulam and the Heichal, and the strip behind it to z -187); the
+   * two meet edge to edge at z -54, both with their top at the Ezras Kohanim level.
    */
   buildEzrasKohanim() {
     const y = this.yKohanim;
     const { x1: hx, z1: hz1 } = this.hall;
     const zDuchanTop = this.entry('duchan').position.z - this.entry('duchan').geometry.d / 2; // -14
     const m = this.mat.stonePolished;
-    const bldg = this.entry('heichal');
-    const zBack = bldg.position.z - bldg.geometry.d / 2 - 38; // building z -76 .. -176 (Middot 4:7); -176
     this.group('azaras_kohanim', () => {
       this.floorA(-X_IN, hx, zDuchanTop, hz1, y, m, 'azaras_kohanim');
       this.floorA(-X_IN, X_IN, hz1, STEPS_Z, y, m, 'azaras_kohanim');
-      for (const s of [1, -1]) {
-        this.floorA(s * ULAM_X, s * X_IN, STEPS_Z, zBack, y, m, 'azaras_kohanim');
-        this.floorA(s * BUILDING_X, s * ULAM_X, STEPS_Z, ULAM_Z[1], y, m, 'azaras_kohanim');
-        this.floorA(s * BUILDING_X, s * ULAM_X, ULAM_Z[0], zBack, y, m, 'azaras_kohanim');
-      }
-      this.floorA(-X_IN, X_IN, zBack, Z_WEST, y, m, 'azaras_kohanim');
     });
   }
 
@@ -209,7 +200,7 @@ export class AzaraBuilder extends CourtBuilder {
       dome.castShadow = true;
       this.scene.add(dome);
       // Stone ledges to sleep on (Middot 1:8), along the east and west inner faces between the corner chambers.
-      for (const [za, zb] of [[z2 - 2, z2 - 1], [z1 + 1, z1 + 2]]) this.decoA(x1 + 10, x2 - 10, za, zb, floor + LIP, floor + LIP + 1, this.mat.stonePolished);
+      for (const [za, zb] of [[z2 - 2, z2 - 1], [z1 + 1, z1 + 2]]) this.blockA(x1 + 10, x2 - 10, za, zb, floor + 2 * LIP, floor + LIP + 1, this.mat.stonePolished, 'beis_hamoked ledge');
       // Four 8 x 8 corner chambers (Middot 1:6), doors toward the middle of the hall.
       for (const c of e.children ?? []) {
         const s = 4;
@@ -261,7 +252,10 @@ export class AzaraBuilder extends CourtBuilder {
     });
     const [mad, par, mel] = rooms;
     const roofY = mad.floor + mad.h + 1;
-    const wellX = [mad.x1 + 1, mad.x1 + 6];
+    // Stair well along the court wall (the room's north side), so the door in the south
+    // face opens onto clear floor and not onto the side of the flight; the stair climbs
+    // westward from the well's east end.
+    const wellX = [mad.x2 - 6, mad.x2 - 1];
     const wellZ = [mad.z2 - 1.5, mad.z1 + 1];
     for (const r of rooms) {
       const first = r === mad;
@@ -274,25 +268,32 @@ export class AzaraBuilder extends CourtBuilder {
       });
     }
     this.group('lishkas_hamadichin', () => {
-      // Roof with a stair well; the stair climbs westward to the terrace.
+      // Roof in four slabs around the stair well.
+      this.floorA(mad.x1, wellX[0], mad.z1, mad.z2, roofY, this.mat.stone, 'lishkas_hamadichin roof');
       this.floorA(wellX[1], mad.x2, mad.z1, mad.z2, roofY, this.mat.stone, 'lishkas_hamadichin roof');
-      this.floorA(mad.x1, wellX[1], wellZ[0], mad.z2, roofY, this.mat.stone, 'lishkas_hamadichin roof');
-      this.floorA(mad.x1, wellX[1], mad.z1, wellZ[1], roofY, this.mat.stone, 'lishkas_hamadichin roof');
+      this.floorA(wellX[0], wellX[1], wellZ[0], mad.z2, roofY, this.mat.stone, 'lishkas_hamadichin roof');
+      this.floorA(wellX[0], wellX[1], mad.z1, wellZ[1], roofY, this.mat.stone, 'lishkas_hamadichin roof');
       this.flightA({ axis: 'z', span: wellX, from: wellZ[0], to: wellZ[1], yBase: mad.floor, steps: 22, rise: (roofY - mad.floor) / 22, mat: this.mat.stonePolished, name: 'lishkas_hamadichin stair' });
-      // Parapet around the terrace (south edge, east and west ends).
-      this.wallA(mad.x1, mad.x1 + 0.5, mel.z1, mad.z2, roofY, roofY + 1, this.mat.stone);
-      this.wallA(mad.x1, mad.x2, mad.z2 - 0.5, mad.z2, roofY, roofY + 1, this.mat.stone);
-      this.wallA(mad.x1, mad.x2, mel.z1, mel.z1 + 0.5, roofY, roofY + 1, this.mat.stone);
+      // Parapet around the terrace (court edge, east and west ends): 1.5 amos, a solid
+      // mass so it actually stops the player (a wall this low is below the head-height
+      // test), standing a LIP above the roof like every mass on a floor (see solidA).
+      const pY = roofY + LIP;
+      const pH = 1.5;
+      this.blockA(mad.x1, mad.x1 + 0.5, mel.z1, mad.z2, pY, pY + pH, this.mat.stone, 'terrace parapet');
+      this.blockA(mad.x1, mad.x2, mad.z2 - 0.5, mad.z2, pY, pY + pH, this.mat.stone, 'terrace parapet');
+      this.blockA(mad.x1, mad.x2, mel.z1, mel.z1 + 0.5, pY, pY + pH, this.mat.stone, 'terrace parapet');
     }, { part: 'roof' });
     this.group('lishkas_haparvah', () => {
-      // The mikveh on the roof (Middot 5:3, Yoma 3:3): a 4 x 4 tank rising 2 above the terrace.
+      // The mikveh on the roof (Middot 5:3, Yoma 3:3): a 4 x 4 tank rising 2 above the terrace (solid rim).
       const cx = (par.x1 + par.x2) / 2;
       const cz = (par.z1 + par.z2) / 2;
       const s = 2;
-      this.wallA(cx - s, cx - s + 0.5, cz - s, cz + s, roofY, roofY + 2, this.mat.stonePolished);
-      this.wallA(cx + s - 0.5, cx + s, cz - s, cz + s, roofY, roofY + 2, this.mat.stonePolished);
-      this.wallA(cx - s, cx + s, cz - s, cz - s + 0.5, roofY, roofY + 2, this.mat.stonePolished);
-      this.wallA(cx - s, cx + s, cz + s - 0.5, cz + s, roofY, roofY + 2, this.mat.stonePolished);
+      const rim = this.mat.stonePolished;
+      const rY = roofY + LIP;
+      this.blockA(cx - s, cx - s + 0.5, cz - s, cz + s, rY, rY + 2, rim, 'mikveh rim');
+      this.blockA(cx + s - 0.5, cx + s, cz - s, cz + s, rY, rY + 2, rim, 'mikveh rim');
+      this.blockA(cx - s, cx + s, cz - s, cz - s + 0.5, rY, rY + 2, rim, 'mikveh rim');
+      this.blockA(cx - s, cx + s, cz + s - 0.5, cz + s, rY, rY + 2, rim, 'mikveh rim');
       this.decoA(cx - s + 0.5, cx + s - 0.5, cz - s + 0.5, cz + s - 0.5, roofY + 1.5, roofY + 1.6, this.mat.water);
     }, { part: 'mikveh' });
   }
@@ -402,7 +403,12 @@ export class AzaraBuilder extends CourtBuilder {
       for (let i = 0; i < n; i++) positions.push({ position: this.pt(tables.position.x, y + h / 2, z1 - pitch * (i + 0.5)) });
       const mesh = instance(this.box(w * AMAH, h * AMAH, d * AMAH, this.mat.marbleW), this.mat.marbleW, positions, { name: 'slaughter_tables' });
       this.scene.add(mesh);
-      this.colliderA(tables.position.x - w / 2, tables.position.x + w / 2, z1, z2, y, y + h);
+      // One solid per table (a row-long collider sealed the amah between the tables), and
+      // as a mass rather than a wall: a 1.5-amah table is below the head-height wall test.
+      for (let i = 0; i < n; i++) {
+        const zc = z1 - pitch * (i + 0.5);
+        this.solidA(tables.position.x - w / 2, tables.position.x + w / 2, zc + d / 2, zc - d / 2, y, y + h, 'slaughter_tables');
+      }
     });
 
     this.group('slaughter_rings', () => {
@@ -441,7 +447,8 @@ export class AzaraBuilder extends CourtBuilder {
         }
       }
       this.scene.add(instance(new THREE.BoxGeometry(0.6 * AMAH, 0.08 * AMAH, 0.08 * AMAH), this.mat.copperP, hooks, { name: 'hanging_pillars hooks', castShadow: false }));
-      this.colliderA(px - w / 2, px + w / 2, zs[0] + 0.5, zs[n - 1] - 0.5, y, y + h);
+      // One solid per pillar so the two amos between them stay open.
+      for (const z of zs) this.solidA(px - w / 2, px + w / 2, z + w / 2, z - w / 2, y, y + h, 'hanging_pillars');
     });
   }
 

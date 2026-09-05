@@ -6,13 +6,15 @@ import { isTouchDevice } from '../game/TouchControls.js';
  * "Click to look around" prompt shown while the game runs without pointer lock (after the
  * browser released it on Escape, or before the first click). It does not intercept clicks:
  * the container underneath requests the lock. Hidden while a hotspot card is open, so the
- * card can be read and clicked, and on touch devices, which never lock the pointer.
+ * card can be read and clicked, while the Ask panel is open, and on touch devices, which
+ * never lock the pointer.
  */
 export function LockOverlay() {
   const locked = useStore((s) => s.locked);
   const selected = useStore((s) => s.selected);
+  const askOpen = useStore((s) => s.askOpen);
   const touch = useMemo(() => isTouchDevice(), []);
-  if (locked || selected || touch) return null;
+  if (locked || selected || askOpen || touch) return null;
   return (
     <div className="lock-overlay" aria-hidden="true">
       <div className="lock-overlay-inner">

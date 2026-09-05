@@ -3,7 +3,7 @@
  *
  * Two kinds of state live here:
  *  - ordinary state (loading, location, nearbyKli, selected, focused, debug, locked, period,
- *    lang) read with
+ *    lang, askOpen, askQuestion, askSeq) read with
  *    `useStore(selector)`; components re-render only when their slice changes;
  *  - `frame` (player position / heading), written every animation frame. Never select it
  *    from a component: subscribe with `store.subscribe(s => s.frame, fn)` and write to a
@@ -27,8 +27,17 @@ export const store = createStore(
     locked: false, // pointer lock held
     period: 'bayis_sheni', // 'bayis_sheni' | 'bayis_rishon'
     lang: 'en', // HUD language for descriptions
+    askOpen: false, // the "Ask the poskim" panel is open
+    askQuestion: null, // question the panel is streaming (or showing)
+    askSeq: 0, // bumps on every ask so the same question can be re-sent
     frame: initialFrame,
   }))
 );
+
+/** Open the Ask panel on `question` (a card question or free text) and start a new answer. */
+export const openAsk = (question) =>
+  store.setState((s) => ({ askOpen: true, askQuestion: String(question ?? '').trim(), askSeq: s.askSeq + 1 }));
+
+export const closeAsk = () => store.setState({ askOpen: false });
 
 export const useStore = (selector) => useZustandStore(store, selector);

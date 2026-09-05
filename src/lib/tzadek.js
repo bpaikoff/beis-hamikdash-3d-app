@@ -249,12 +249,7 @@ export function askStream({ question, language = 'en', quick = true }, handlers 
       return;
     }
     if (closed) return;
-    let body = null;
-    try {
-      body = await res.json();
-    } catch {
-      body = null;
-    }
+    const body = await res.json().catch(() => null);
     if (closed) return;
     if (!res.ok || !body?.token) {
       done = true;

@@ -1,5 +1,6 @@
 import { store, useStore } from '../store.js';
 import { byTourId } from '../content/tours/index.js';
+import { TIMES_OF_DAY } from '../game/sun.js';
 
 const TOUR = byTourId.tamid;
 
@@ -8,15 +9,25 @@ const PERIODS = [
   { id: 'bayis_rishon', he: 'בית ראשון', en: 'Bayis Rishon' },
 ];
 
+const TIME_LABELS = {
+  dawn: { he: 'שחר', en: 'Dawn' },
+  morning: { he: 'בוקר', en: 'Morning' },
+  afternoon: { he: 'צהריים', en: 'Afternoon' },
+  dusk: { he: 'בין הערביים', en: 'Dusk' },
+};
+const TIMES = TIMES_OF_DAY.map((id) => ({ id, ...TIME_LABELS[id] }));
+
 /**
  * Landing panel: Hebrew date, a one-paragraph description, the period toggle (writes
- * store.period; TempleGame rebuilds its hotspot list on change) and the Enter button.
+ * store.period; TempleGame rebuilds its hotspot list on change), the time-of-day toggle
+ * (store.timeOfDay; the sun and sky follow it, also while playing) and the Enter button.
  * `onEnter` runs inside the click so it can also request pointer lock. `onTour` enters
  * and starts the guided tour of the morning Tamid instead (no pointer lock: the tour
  * card is read and clicked).
  */
 export function StartScreen({ hebrewDate, webgl, onEnter, onTour }) {
   const period = useStore((s) => s.period);
+  const timeOfDay = useStore((s) => s.timeOfDay);
   return (
     <div className="start-screen">
       <div className="start-panel" role="region" aria-labelledby="start-title">
@@ -37,22 +48,40 @@ export function StartScreen({ hebrewDate, webgl, onEnter, onTour }) {
           {hebrewDate.isRoshChodesh && !hebrewDate.special && <div className="heb" style={{ marginTop: '8px' }}>ראש חודש</div>}
         </div>
 
-        <fieldset className="period-toggle">
-          <legend lang="en">Period</legend>
-          {PERIODS.map((p) => (
-            <label key={p.id} className={period === p.id ? 'active' : ''}>
-              <input
-                type="radio"
-                name="period"
-                value={p.id}
-                checked={period === p.id}
-                onChange={() => store.setState({ period: p.id })}
-              />
-              <span lang="he" dir="rtl">{p.he}</span>
-              <span lang="en">{p.en}</span>
-            </label>
-          ))}
-        </fieldset>
+        <div className="start-toggles">
+          <fieldset className="period-toggle">
+            <legend lang="en">Period</legend>
+            {PERIODS.map((p) => (
+              <label key={p.id} className={period === p.id ? 'active' : ''}>
+                <input
+                  type="radio"
+                  name="period"
+                  value={p.id}
+                  checked={period === p.id}
+                  onChange={() => store.setState({ period: p.id })}
+                />
+                <span lang="he" dir="rtl">{p.he}</span>
+                <span lang="en">{p.en}</span>
+              </label>
+            ))}
+          </fieldset>
+          <fieldset className="period-toggle time-toggle">
+            <legend lang="en">Time of day</legend>
+            {TIMES.map((t) => (
+              <label key={t.id} className={timeOfDay === t.id ? 'active' : ''} title={t.en}>
+                <input
+                  type="radio"
+                  name="timeOfDay"
+                  value={t.id}
+                  checked={timeOfDay === t.id}
+                  onChange={() => store.setState({ timeOfDay: t.id })}
+                />
+                <span lang="he" dir="rtl">{t.he}</span>
+                <span lang="en">{t.en}</span>
+              </label>
+            ))}
+          </fieldset>
+        </div>
 
         {webgl ? (
           <div className="start-actions">

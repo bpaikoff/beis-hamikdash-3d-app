@@ -6,6 +6,10 @@
  *   node scripts/screenshot.mjs --only hero        # one view (or a comma-separated list)
  *   node scripts/screenshot.mjs --only tour_1,tour_5 --out shots   # guided-tour stops
  *   node scripts/screenshot.mjs --base http://localhost:5173   # against a dev server
+ *   node scripts/screenshot.mjs --mobile --only hero,mizbeach_kevesh   # 390x844, touch controls
+ *   node scripts/screenshot.mjs --mobile --card                          # keep the hotspot card open
+ *   node scripts/screenshot.mjs --budget hero=1200            # exit 1 when a view draws more calls
+ *   node scripts/screenshot.mjs --time dusk                    # ?time= for every view
  *
  * Views are addressed with ?cam=x,y,z,yaw,pitch (world metres, degrees; yaw 0 faces -z,
  * positive yaw turns toward +x). Until TempleGame supports ?cam the script captures
@@ -14,7 +18,7 @@
  */
 import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
-import { chromium } from '@playwright/test';
+import { chromium, devices } from '@playwright/test';
 
 const VIEWS = [
   // `at` spawns just east of a content entry, facing west (follows the JSON when geometry moves);
@@ -49,28 +53,48 @@ const args = process.argv.slice(2);
 const opt = (k, d) => (args.includes(k) ? args[args.indexOf(k) + 1] : d);
 const only = opt('--only');
 const outDir = opt('--out', 'screenshots/auto');
+// Phone: a 390x844 portrait viewport with touch (pointer: coarse), so TouchControls mounts
+// and the HUD takes its small-screen layout. Frames are suffixed _mobile.
+const mobile = args.includes('--mobile');
+const keepCard = args.includes('--card'); // mobile: leave the ?at= card open instead of closing it
+const timeOfDay = opt('--time'); // dawn | morning | afternoon | dusk
+// `--budget hero=1200,heichal_interior=300`: soft draw-call budgets; the run fails when exceeded.
+const budget = Object.fromEntries(
+  (opt('--budget', '') || '')
+    .split(',')
+    .filter(Boolean)
+    .map((kv) => kv.split('='))
+    .map(([k, v]) => [k, Number(v)])
+);
+const port = opt('--port', '4173'); // pick another when several runs share a machine
 let base = opt('--base');
 
 let preview;
 if (!base) {
-  preview = spawn('npx', ['vite', 'preview', '--port', '4173', '--strictPort'], {
+  // Own process group so the kill below reaches vite itself, not only the npx wrapper.
+  preview = spawn('npx', ['vite', 'preview', '--port', port, '--strictPort'], {
     stdio: ['ignore', 'pipe', 'inherit'],
+    detached: true,
   });
   await new Promise((resolve, reject) => {
     preview.stdout.on('data', (d) => {
-      if (String(d).includes('4173')) resolve();
+      if (String(d).includes(port)) resolve();
     });
     preview.on('exit', (c) => reject(new Error(`vite preview exited ${c}`)));
     setTimeout(() => reject(new Error('vite preview did not start')), 20000);
   });
-  base = 'http://localhost:4173';
+  base = `http://localhost:${port}`;
 }
 
 mkdirSync(outDir, { recursive: true });
 const browser = await chromium.launch({
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
 });
-const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+const page = await browser.newPage(
+  mobile
+    ? { ...devices['iPhone 13'], viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 }
+    : { viewport: { width: 1280, height: 720 } }
+);
 page.on('pageerror', (e) => console.error('page error:', e.message));
 
 const results = [];
@@ -85,7 +109,8 @@ try {
         : `cam=${v.cam}`;
     // Bloom is off by default (the software rasteriser is slow); a view can opt in with `bloom: true`.
     const bloom = v.bloom ? '' : '&bloom=0';
-    await page.goto(`${base}/?${where}&autostart=1&shadows=0${bloom}`, { waitUntil: 'load', timeout: 60000 });
+    const time = timeOfDay ? `&time=${encodeURIComponent(timeOfDay)}` : '';
+    await page.goto(`${base}/?${where}&autostart=1&shadows=0${bloom}${time}`, { waitUntil: 'load', timeout: 60000 });
     // Older builds have no ?autostart; click through the start screen if it is there.
     const btn = page.locator('.start-btn');
     if (await btn.count()) await btn.first().click();
@@ -104,26 +129,62 @@ try {
       log(`view ${v.name}: tour dwelling=${dwelling}`);
     }
     await page.waitForTimeout(500); // one settled frame
+    if (mobile) {
+      // A phone user closes the card before walking; the frame then shows the whole HUD
+      // around the touch controls (--card keeps it open instead).
+      if (!keepCard) await page.evaluate(() => window.__mikdash?.game?.store?.setState({ selected: null }));
+      // Hold a thumb on the left half: TouchControls shows the joystick on pointerdown and
+      // hides it on release, so the touch stays down through the capture.
+      const vp = page.viewportSize();
+      const cdp = await page.context().newCDPSession(page);
+      await cdp
+        .send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: vp.width * 0.25, y: vp.height * 0.72 }] })
+        .catch(() => {});
+      await page.waitForTimeout(250);
+    }
     const info = await page.evaluate(() => {
       const m = window.__mikdash;
       if (!m) return null;
-      const snap = { calls: m.info.calls, triangles: m.info.triangles };
+      const snap = {
+        calls: m.info.calls,
+        triangles: m.info.triangles,
+        culled: m.culler?.hidden ?? null,
+        touch: Boolean(document.querySelector('.touch-controls')),
+        joystick: Boolean(document.querySelector('.joystick.active')),
+      };
       m.paused = true; // stop the render loop so the software rasteriser can composite a frame
       return snap;
     });
     await page.waitForTimeout(300);
-    const file = `${outDir}/${v.name}.png`;
+    const suffix = `${mobile ? '_mobile' : ''}${mobile && keepCard ? '_card' : ''}${timeOfDay ? `_${timeOfDay}` : ''}`;
+    const file = `${outDir}/${v.name}${suffix}.png`;
     log(`view ${v.name}: capture`);
     await page.screenshot({ path: file, timeout: 90000, animations: 'disabled' });
     // Do not talk to the page again: after a capture the software renderer can wedge and any
     // further page call hangs. The next view navigates away anyway.
-    results.push({ view: v.name, file, calls: info?.calls, triangles: info?.triangles });
-    console.log(`${v.name.padEnd(20)} ${file}${info ? `  calls=${info.calls} tris=${info.triangles}` : ''}`);
+    results.push({ view: v.name, file, calls: info?.calls, triangles: info?.triangles, culled: info?.culled, touch: info?.touch });
+    const extra = info ? `  calls=${info.calls} tris=${info.triangles}${info.culled != null ? ` culled=${info.culled}` : ''}${mobile ? ` touch=${info.touch} joystick=${info.joystick}` : ''}` : '';
+    console.log(`${v.name.padEnd(20)} ${file}${extra}`);
   }
 } finally {
   log('closing browser');
   await Promise.race([browser.close().catch(() => {}), new Promise((r) => setTimeout(r, 10000))]);
-  preview?.kill('SIGKILL');
+  if (preview) {
+    try { process.kill(-preview.pid, 'SIGKILL'); } catch { preview.kill('SIGKILL'); }
+  }
 }
 console.log(JSON.stringify(results));
+// Draw-call budgets (soft: generous enough to catch a regression, not a tuning target).
+let over = 0;
+for (const [view, max] of Object.entries(budget)) {
+  const r = results.find((x) => x.view === view);
+  if (!r) continue;
+  const ok = typeof r.calls === 'number' && r.calls <= max;
+  console.log(`budget ${view}: calls=${r.calls} max=${max} ${ok ? 'ok' : 'EXCEEDED'}`);
+  if (!ok) over++;
+}
+if (over) {
+  console.error(`screenshot: ${over} view(s) over the draw-call budget`);
+  process.exit(1);
+}
 process.exit(results.length ? 0 : 1);

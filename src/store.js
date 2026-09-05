@@ -3,7 +3,7 @@
  *
  * Two kinds of state live here:
  *  - ordinary state (loading, location, nearbyKli, selected, focused, debug, locked, period,
- *    lang, askOpen, askQuestion, askSeq) read with
+ *    timeOfDay, lang, askOpen, askQuestion, askSeq) read with
  *    `useStore(selector)`; components re-render only when their slice changes;
  *  - `frame` (player position / heading), written every animation frame. Never select it
  *    from a component: subscribe with `store.subscribe(s => s.frame, fn)` and write to a
@@ -12,6 +12,7 @@
 import { createStore } from 'zustand/vanilla';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { useStore as useZustandStore } from 'zustand';
+import { parseTimeOfDay } from './game/sun.js';
 
 export const initialFrame = { x: 0, y: 0, z: 62, yaw: 0, elev: 0 };
 
@@ -26,6 +27,8 @@ export const store = createStore(
     debug: false, // ghost mode + telemetry
     locked: false, // pointer lock held
     period: 'bayis_sheni', // 'bayis_sheni' | 'bayis_rishon'
+    // 'dawn' | 'morning' | 'afternoon' | 'dusk': where the sun stands (game/sun.js); `?time=dusk` presets it
+    timeOfDay: parseTimeOfDay(typeof window !== 'undefined' ? window.location.search : ''),
     lang: 'en', // HUD language for descriptions
     askOpen: false, // the "Ask the poskim" panel is open
     askQuestion: null, // question the panel is streaming (or showing)

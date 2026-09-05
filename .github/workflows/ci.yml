@@ -20,7 +20,9 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run bake
       - run: npm run build
-      - run: npm run screenshot
+      - run: node scripts/bundle_sizes.mjs
+      - run: npm run screenshot -- --budget hero=1200
+      - run: npm run screenshot -- --mobile --only hero,mizbeach_kevesh
       - uses: actions/upload-artifact@v4
         if: always()
         with:

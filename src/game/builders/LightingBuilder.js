@@ -15,8 +15,10 @@ export class LightingBuilder extends BaseBuilder {
   build() {
     this.scene.add(new THREE.AmbientLight(0xfff8f0, 0.15));
 
+    // Position, colour and intensity are overwritten by Daylight.set(timeOfDay); these
+    // are the morning values so the scene is lit even before it runs.
     const sun = new THREE.DirectionalLight(0xfffaf0, 1.6);
-    sun.position.set(60, 120, 50);
+    sun.position.set(-70, 92, 100);
     sun.castShadow = true;
     sun.shadow.mapSize.set(CONFIG.SHADOW_MAP_SIZE, CONFIG.SHADOW_MAP_SIZE);
     sun.shadow.camera.near = 10;
@@ -34,7 +36,9 @@ export class LightingBuilder extends BaseBuilder {
     fill.position.set(-50, 80, -40);
     this.scene.add(fill);
 
-    this.scene.add(new THREE.HemisphereLight(0x88aacc, 0xd4c4a8, 0.35));
+    const hemisphere = new THREE.HemisphereLight(0x88aacc, 0xd4c4a8, 0.35);
+    hemisphere.name = 'hemisphere'; // sky colour follows the dome (Daylight)
+    this.scene.add(hemisphere);
 
     // Heichal interior: candela, no cutoff, physical decay.
     const heichalLight = new THREE.PointLight(0xffdd88, 250, 0, 2);

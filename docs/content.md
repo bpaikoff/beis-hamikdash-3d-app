@@ -219,6 +219,45 @@ follows the Gemara's placement: Tamid 1:2 reads as if the first lottery was in B
 Yoma 25a puts it in the east of the Gazis; Tamid 3:3 puts the chamber of lambs in the
 north-west, Middot 1:6 in the south-west (Yoma 17a reconciles).
 
+### Engine (`src/game/Tour.js`, `src/components/TourCard.jsx`)
+
+`TempleGame.startTour(id, stop)` builds a `Tour` over the tour's data and hands the camera
+to it: while a tour is active `animate()` calls `tour.update(delta)` instead of
+`player.update`, the movement keys and pointer lock stand down, and the crosshair, the
+in-scene labels and the key hint are hidden (`.tour-active`). Escape or the card's Exit
+calls `tour.stop()`, which returns control at the current position (the player's euler,
+ground height and velocity are synced first). Deep links: `?tour=tamid` starts the tour
+after the first frame, `?tour=tamid&stop=5` starts at a stop (1-based); the start screen's
+"Take the tour" button does the same without taking the pointer.
+
+- `start(i)` stands at stop `i` (no travel); `next()`, `prev()`, `goTo(i)` travel along a
+  rail; a manual step turns auto-advance off until the card's play button (or Space)
+  turns it back on. `update()` counts the dwell down at a stop and advances; hovering or
+  focusing the card, or an open Ask panel, holds the countdown.
+- A stop's position is `stopCamera()` in metres with the y hint snapped to the floor
+  (`player.floorUnder`) and the eye at `PLAYER_HEIGHT`. The look point is the entry's
+  position a little up its body (an entry look), the given `{x, y, z}`, or level (`{x, z}`).
+- Rails: a centripetal Catmull-Rom curve through the current position, the routing
+  waypoints and the stop, sampled every 0.25 m with the feet re-probed progressively and
+  smoothed over ±1 m (ramps and stairs are followed without step jitter); a trapezoidal
+  speed profile at 3 m/s with 0.8 s ramps. The view turns to the heading over the first
+  20 % of the travel and to the stop's look target over the last 40 %.
+- Routing: a straight walk is accepted when every sample passes the player's own tests
+  (probe from step height not inside a solid, rise ≤ 0.6 m, drop ≤ 0.6 m, no wall box in
+  the body column, and no solid at chest height within the player's radius, which keeps
+  the camera off ledges such as the altar's yesod). Otherwise Dijkstra over a hard-coded
+  graph of walkable court nodes (`NODES`/`EDGES`: Nicanor threshold, the Kohanim strip
+  east of the altar and its ends, Beis HaMoked's gate and cross, the kevesh foot, the
+  south lane, the Gazis door, the Ulam steps' two corners and second step, the Ulam)
+  whose edges are verified with the same test at first use. Stops connect to any node
+  their straight line reaches. Stop 4 → 5 goes `kevesh_foot` and up the ramp's axis.
+  If a curve's rounded corner fails the test the polyline is used; if no route exists
+  the straight line is used and `rail.routed` is false.
+- Screenshot views `tour_1`, `tour_5`, `tour_9`, `tour_13` (`scripts/screenshot.mjs`)
+  load `?tour=tamid&stop=N&autostart=1` and wait for `window.__mikdash.tour.state ===
+  'dwell'`; `src/game/Tour.test.js` covers the profile, the router (a schematic court
+  with the altar, the kevesh wedge and the Duchan) and the tour's transitions.
+
 ## Review log
 
 ### 2026-09-04 — content-reviewer (94 rows, 39 "fix")

@@ -3,7 +3,8 @@
  * Capture fixed camera views of the built app with headless Chromium (SwiftShader).
  *
  *   npm run build && npm run screenshot            # -> screenshots/auto/<name>.png
- *   node scripts/screenshot.mjs --only hero        # one view
+ *   node scripts/screenshot.mjs --only hero        # one view (or a comma-separated list)
+ *   node scripts/screenshot.mjs --only tour_1,tour_5 --out shots   # guided-tour stops
  *   node scripts/screenshot.mjs --base http://localhost:5173   # against a dev server
  *
  * Views are addressed with ?cam=x,y,z,yaw,pitch (world metres, degrees; yaw 0 faces -z,
@@ -27,6 +28,12 @@ const VIEWS = [
   // The altar fire from the south-east of the Ezras Kohanim, ~25 m from the ma'aracha,
   // with bloom on (the flame core is tuned to cross the bloom threshold).
   { name: 'altar_fire', cam: '-22,9.75,0,-63,9', bloom: true },
+  // Guided tour stops (`?tour=<id>&stop=N`, N 1-based): the rail stands the camera at the
+  // stop and the script waits for the tour to dwell there, so the card is in the frame.
+  { name: 'tour_1', tour: 'tamid', stop: 1 },   // Beis HaMoked at night
+  { name: 'tour_5', tour: 'tamid', stop: 5 },   // the ma'aracha from the kevesh
+  { name: 'tour_9', tour: 'tamid', stop: 9 },   // the limbs on the kevesh, from the south-west
+  { name: 'tour_13', tour: 'tamid', stop: 13 }, // the Levites' song, the Duchan from the Ezras Yisrael
 ];
 
 // Hard watchdog: SwiftShader can wedge a renderer so that even browser.close() never
@@ -69,9 +76,13 @@ page.on('pageerror', (e) => console.error('page error:', e.message));
 const results = [];
 try {
   for (const v of VIEWS) {
-    if (only && v.name !== only) continue;
+    if (only && !only.split(',').includes(v.name)) continue;
     log(`view ${v.name}: goto`);
-    const where = v.at ? `at=${encodeURIComponent(v.at)}` : `cam=${v.cam}`;
+    const where = v.tour
+      ? `tour=${encodeURIComponent(v.tour)}&stop=${v.stop ?? 1}`
+      : v.at
+        ? `at=${encodeURIComponent(v.at)}`
+        : `cam=${v.cam}`;
     // Bloom is off by default (the software rasteriser is slow); a view can opt in with `bloom: true`.
     const bloom = v.bloom ? '' : '&bloom=0';
     await page.goto(`${base}/?${where}&autostart=1&shadows=0${bloom}`, { waitUntil: 'load', timeout: 60000 });
@@ -84,6 +95,14 @@ try {
       .catch(() => false);
     log(`view ${v.name}: ready=${ready}`);
     if (!ready) await page.waitForTimeout(5000);
+    if (v.tour) {
+      // The tour teleports to the stop and dwells there; capture only once it does.
+      const dwelling = await page
+        .waitForFunction(() => window.__mikdash?.tour?.state === 'dwell', null, { timeout: 30000 })
+        .then(() => true)
+        .catch(() => false);
+      log(`view ${v.name}: tour dwelling=${dwelling}`);
+    }
     await page.waitForTimeout(500); // one settled frame
     const info = await page.evaluate(() => {
       const m = window.__mikdash;

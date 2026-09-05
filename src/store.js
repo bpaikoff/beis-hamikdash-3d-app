@@ -30,6 +30,13 @@ export const store = createStore(
     askOpen: false, // the "Ask the poskim" panel is open
     askQuestion: null, // question the panel is streaming (or showing)
     askSeq: 0, // bumps on every ask so the same question can be re-sent
+    tour: null, // id of the running guided tour (src/content/tours), or null
+    tourStop: -1, // index of the current stop
+    tourPlaying: 'idle', // 'idle' | 'travel' | 'dwell' | 'paused' (see game/Tour.js)
+    tourDwell: 0, // seconds the current stop dwells
+    tourDwellLeft: 0, // countdown, written at 10 Hz while dwelling
+    tourEnded: false, // the last stop's dwell ran out
+    tourCtl: null, // the Tour instance while one exists (next/prev/pause/resume/stop)
     frame: initialFrame,
   }))
 );

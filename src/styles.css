@@ -1758,3 +1758,387 @@ canvas {
     margin: -4px 10px 4px 16px;
   }
 }
+
+/* Guided tour (TourCard.jsx, game/Tour.js) --------------------------------- */
+/* The rail drives the camera, so the crosshair, the in-scene labels, the inspect
+   prompt and the movement hint stand down while a tour runs. */
+.tour-active .crosshair,
+.tour-active .hotspot-layer,
+.tour-active .interact-hint,
+.tour-active .controls-hint {
+  display: none;
+}
+
+.tour-card {
+  position: absolute;
+  left: 50%;
+  bottom: var(--hud-gap);
+  transform: translateX(-50%);
+  width: 640px;
+  max-width: calc(100vw - 2 * var(--hud-gap));
+  max-height: min(50vh, calc(100vh - 150px));
+  max-height: min(50dvh, calc(100dvh - 150px));
+  display: flex;
+  flex-direction: column;
+  padding: 14px 20px 0;
+  pointer-events: auto;
+  animation: sheetIn 0.3s ease;
+  overflow: hidden;
+}
+
+.tour-card.travelling .tour-body {
+  opacity: 0.55;
+}
+
+.tour-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.tour-head-titles {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.tour-kicker {
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[dir='rtl'] .tour-kicker {
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 1rem;
+}
+
+.tour-counter {
+  color: var(--gold);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tour-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.tour-dots {
+  list-style: none;
+  display: flex;
+  gap: 6px;
+  margin: 10px 0 8px;
+  padding: 0;
+}
+
+.tour-dots li {
+  flex: 1 1 0;
+  display: flex;
+}
+
+.tour-dot {
+  flex: 1 1 0;
+  height: 6px;
+  border-radius: 3px;
+  border: none;
+  background: var(--line);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.tour-dot.seen {
+  background: rgba(212, 175, 55, 0.55);
+}
+
+.tour-dot.current {
+  background: var(--gold);
+  box-shadow: var(--glow);
+}
+
+.tour-dot:hover,
+.tour-dot:focus-visible {
+  transform: scaleY(1.6);
+  background: var(--gold-dim);
+}
+
+.tour-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  padding-bottom: 6px;
+  transition: opacity 0.3s;
+  animation: tourFade 0.35s ease;
+}
+
+@keyframes tourFade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tour-title {
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1.25;
+  margin: 2px 0 8px;
+}
+
+.tour-title[lang='he'] {
+  font-size: 1.6rem;
+}
+
+.tour-text {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.tour-text[lang='he'] {
+  font-size: 1.1rem;
+  line-height: 1.55;
+}
+
+.tour-sources,
+.tour-questions {
+  margin-top: 10px;
+}
+
+.tour-label {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 5px;
+}
+
+[dir='rtl'] .tour-label {
+  letter-spacing: 0;
+  text-transform: none;
+  font-size: 0.85rem;
+}
+
+.tour-sources .chips {
+  display: inline-flex;
+}
+
+.tour-questions ul {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+}
+
+.tour-questions li {
+  flex: 1 1 260px;
+  display: flex;
+}
+
+.tour-questions .question-btn {
+  font-size: 0.85rem;
+  padding: 6px 10px;
+}
+
+.tour-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0 10px;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+}
+
+.tour-btn {
+  height: 34px;
+  min-width: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tour-btn:hover:not(:disabled),
+.tour-btn:focus-visible {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+
+.tour-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.tour-btn-play {
+  font-size: 0.85rem;
+  color: var(--gold);
+}
+
+.tour-btn-exit {
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.tour-status {
+  margin: 0 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  min-width: 3.5em;
+}
+
+.tour-keys {
+  font-size: 0.72rem;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.tour-bar {
+  height: 3px;
+  background: var(--line);
+  margin: 0 -20px;
+}
+
+.tour-bar-inner {
+  height: 100%;
+  background: var(--gold);
+  transition: width 0.12s linear;
+}
+
+/* Start screen: the two ways in. */
+.start-actions {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.start-actions .start-btn {
+  margin-top: 28px;
+}
+
+.start-btn-tour {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  background: var(--surface-2);
+  color: var(--gold);
+  border: 1px solid var(--gold);
+  box-shadow: none;
+  padding: 14px 36px;
+}
+
+.start-btn-tour:hover,
+.start-btn-tour:focus-visible {
+  box-shadow: var(--glow);
+}
+
+.start-btn-sub {
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* The location panel shares the bottom edge: compact beside the card, gone where the
+   two would overlap. */
+.tour-active .location-panel {
+  max-width: 280px;
+  padding: 14px 18px;
+}
+
+.tour-active .location-hebrew {
+  font-size: 1.6rem;
+}
+
+.tour-active .location-english {
+  margin-bottom: 0;
+}
+
+.tour-active .location-desc {
+  display: none;
+}
+
+@media (max-width: 1300px) {
+  .tour-active .hud-bottom {
+    display: none;
+  }
+}
+
+/* The Ask panel opens to the right; keep the card clear of it on wide screens and
+   narrow it when both are up on a small one. */
+.ask-open .tour-card {
+  left: var(--hud-gap);
+  transform: none;
+  width: 520px;
+  max-width: calc(100vw - 480px - 3 * var(--hud-gap));
+}
+
+@media (max-width: 900px) {
+  .tour-card {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-width: none;
+    transform: none;
+    border-radius: 18px 18px 0 0;
+    max-height: 52vh;
+    max-height: 52dvh;
+    padding: 10px 14px 0;
+    z-index: 1;
+  }
+
+  .ask-open .tour-card {
+    display: none;
+  }
+
+  .tour-active .hud-bottom {
+    display: none;
+  }
+
+  .tour-keys,
+  .tour-btn-exit {
+    display: none;
+  }
+
+  .tour-title {
+    font-size: 1.15rem;
+  }
+
+  .tour-text {
+    font-size: 0.9rem;
+  }
+
+  .tour-bar {
+    margin: 0 -14px;
+  }
+}

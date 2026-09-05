@@ -290,10 +290,13 @@ export class TempleGame {
       entries: byId,
       worldPos,
       levelWorldY,
-      /** Areas with scene-space bounds and their floor level (metres), for the fuzz walker. */
+      /**
+       * Areas with scene-space bounds and their floor level (metres), for the fuzz walker.
+       * An area without a level in meta.levels ('outside') stands at its own position.y.
+       */
       areas: this.areaBounds.map(({ entry, bounds }) => {
-        let level = null;
-        try { level = levelWorldY(entry.id); } catch { /* 'outside' has no level */ }
+        let level;
+        try { level = levelWorldY(entry.id); } catch { level = worldPos(entry)[1]; }
         return { id: entry.id, bounds, level };
       }),
     };

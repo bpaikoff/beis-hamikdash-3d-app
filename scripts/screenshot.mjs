@@ -24,6 +24,9 @@ const VIEWS = [
   { name: 'ulam_facade', at: 'maalos_ulam' },        // the 12 steps and the Ulam front
   { name: 'heichal_interior', at: 'heichal' },       // looking west across the Heichal
   { name: 'kodesh_hakodashim', at: 'even_hashtiya' },
+  // The altar fire from the south-east of the Ezras Kohanim, ~25 m from the ma'aracha,
+  // with bloom on (the flame core is tuned to cross the bloom threshold).
+  { name: 'altar_fire', cam: '-22,9.75,0,-63,9', bloom: true },
 ];
 
 // Hard watchdog: SwiftShader can wedge a renderer so that even browser.close() never
@@ -69,7 +72,9 @@ try {
     if (only && v.name !== only) continue;
     log(`view ${v.name}: goto`);
     const where = v.at ? `at=${encodeURIComponent(v.at)}` : `cam=${v.cam}`;
-    await page.goto(`${base}/?${where}&autostart=1&shadows=0&bloom=0`, { waitUntil: 'load', timeout: 60000 });
+    // Bloom is off by default (the software rasteriser is slow); a view can opt in with `bloom: true`.
+    const bloom = v.bloom ? '' : '&bloom=0';
+    await page.goto(`${base}/?${where}&autostart=1&shadows=0${bloom}`, { waitUntil: 'load', timeout: 60000 });
     // Older builds have no ?autostart; click through the start screen if it is there.
     const btn = page.locator('.start-btn');
     if (await btn.count()) await btn.first().click();

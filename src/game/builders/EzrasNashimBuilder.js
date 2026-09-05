@@ -54,9 +54,16 @@ export class EzrasNashimBuilder extends CourtBuilder {
     }, { part: 'walls' });
   }
 
-  /** Four unroofed 40 x 40 chambers in the corners (Middot 2:5), each with a door toward the court. */
+  /**
+   * Four unroofed 40 x 40 chambers in the corners (Middot 2:5), each with a door toward
+   * the court. The gallery (buildBalcony) runs along their walls two amos below the wall
+   * tops, and the player's collision sphere is at head height, so an invisible collider
+   * carries each wall on up past head height above the gallery: otherwise a visitor on
+   * the gallery would walk over the wall top and drop into the chamber.
+   */
   buildCornerChambers() {
     const b = this.area.bounds;
+    const guardTop = this.entry('ezras_nashim_balcony').position.y + 4;
     const ids = ['chamber_oils', 'chamber_lepers', 'chamber_nazirites', 'chamber_wood'];
     for (const id of ids) {
       const e = this.entry(id);
@@ -74,6 +81,11 @@ export class EzrasNashimBuilder extends CourtBuilder {
           x1, x2, z1, z2, floor: this.y, h, floorMat: this.mat.marbleW, wallMat: this.mat.stonePolished, roof: false, skip, name: id,
           doors: [{ face: doorFace, at: e.position.z, w: 4, h: 8, frame: this.mat.stonePolished }],
         });
+        for (const f of ['n', 's', 'e', 'w']) {
+          if (skip.includes(f) || this.y + h >= guardTop) continue;
+          const face = { n: [x2 - 1, x2, z1, z2], s: [x1, x1 + 1, z1, z2], e: [x1, x2, z2 - 1, z2], w: [x1, x2, z1, z1 + 1] }[f];
+          this.colliderA(...face, this.y + h, guardTop);
+        }
         this.furnish(id, x1, x2, z1, z2, north, east);
       });
     }
@@ -130,39 +142,69 @@ export class EzrasNashimBuilder extends CourtBuilder {
     }
   }
 
-  /** Gallery 10 amos up along the south, east and north walls between the corner chambers (Middot 2:5). */
+  /**
+   * Gallery 10 amos up (Middot 2:5; Sukkah 51b) along the inside of the court: a
+   * continuous U of 4-amah runs on the south and north walls between the corner
+   * chambers, along the court-facing walls of the two eastern chambers, and across the
+   * east wall over the gate. Two flights of twenty half-amah steps rise to it along the
+   * east wall on either side of the gate; the sources give no stair, so the flights,
+   * like the gallery's depth and height, are a reconstruction. Walkable, with a
+   * parapet on the inner edge except where the flights land.
+   */
   buildBalcony() {
     const e = this.entry('ezras_nashim_balcony');
     const depth = e.geometry.w;
     const b = this.area.bounds;
     const y = e.position.y;
-    const zA = b.minZ + 40;
-    const zB = b.maxZ - 40;
-    const xA = -X_IN + 40;
-    const xB = X_IN - 40;
+    const rise = 0.5;
+    const steps = Math.round((y - this.y) / rise);
+    const zA = b.minZ + 40; // the western chambers end here
+    const zB = b.maxZ - 40; // the eastern chambers begin here
+    const xA = X_IN - 40; // the eastern chambers' court-facing walls
+    const zE = b.maxZ - depth; // inner edge of the east run
+    const flightLen = 20; // 20 steps of one amah tread
+    const landing = 4;
+    const xTop = xA - flightLen; // 7.5: the flights' top step
+    const xLand = xTop - landing; // 3.5
+    const P = 0.5; // parapet thickness
+    const runs = [];
+    const parapets = [];
+    for (const s of [-1, 1]) {
+      // Wall run, then along the eastern chamber's west and court-facing walls, in amos on the side's own sign.
+      const wallRun = { x1: X_IN - depth, x2: X_IN, z1: zA, z2: zB, along: 'z' };
+      const westRun = { x1: xA - depth, x2: X_IN - depth, z1: zB - depth, z2: zB, along: 'x' };
+      const courtRun = { x1: xA - depth, x2: xA, z1: zB, z2: zE, along: 'z' };
+      for (const r of [wallRun, westRun, courtRun]) runs.push({ ...r, x1: s * r.x1, x2: s * r.x2 });
+      parapets.push([s * (X_IN - depth), s * (X_IN - depth + P), zA, zB - depth + P]);
+      parapets.push([s * (xA - depth), s * (X_IN - depth + P), zB - depth, zB - depth + P]);
+      parapets.push([s * (xA - depth), s * (xA - depth + P), zB - depth, zE + P]);
+      parapets.push([s * (xA - depth), s * (xTop + 1), zE, zE + P]); // east run, up to the flight's top step
+    }
+    runs.push({ x1: -xA, x2: xA, z1: zE, z2: b.maxZ, along: 'x' }); // east wall, over the gate
+    parapets.push([-xLand, xLand, zE, zE + P]);
     this.group('ezras_nashim_balcony', () => {
-      const runs = [
-        { x1: -X_IN, x2: -X_IN + depth, z1: zA, z2: zB, inner: 'n' },
-        { x1: X_IN - depth, x2: X_IN, z1: zA, z2: zB, inner: 's' },
-        { x1: xA, x2: xB, z1: b.maxZ - depth, z2: b.maxZ, inner: 'w' },
-      ];
       const corbels = [];
       for (const r of runs) {
-        this.decoA(r.x1, r.x2, r.z1, r.z2, y - SLAB, y, this.mat.stonePolished);
-        // Parapet on the inner edge.
-        if (r.inner === 'n') this.decoA(r.x2 - 0.5, r.x2, r.z1, r.z2, y, y + 1.2, this.mat.stonePolished);
-        else if (r.inner === 's') this.decoA(r.x1, r.x1 + 0.5, r.z1, r.z2, y, y + 1.2, this.mat.stonePolished);
-        else this.decoA(r.x1, r.x2, r.z1, r.z1 + 0.5, y, y + 1.2, this.mat.stonePolished);
-        const along = r.inner === 'w' ? 'x' : 'z';
-        const len = along === 'x' ? r.x2 - r.x1 : r.z2 - r.z1;
+        const x1 = Math.min(r.x1, r.x2);
+        const x2 = Math.max(r.x1, r.x2);
+        this.floorA(x1, x2, r.z1, r.z2, y, this.mat.stonePolished, 'ezras_nashim_balcony');
+        const len = r.along === 'x' ? x2 - x1 : r.z2 - r.z1;
         const n = Math.floor(len / 8);
         for (let i = 0; i <= n; i++) {
           const t = i === n ? len - 1 : 1 + i * 8;
-          if (along === 'x') corbels.push({ position: this.pt(r.x1 + t, y - SLAB - 0.6, r.z2 - depth / 2), rotation: [0, Math.PI / 2, 0] });
-          else corbels.push({ position: this.pt(r.inner === 'n' ? r.x1 + depth / 2 : r.x2 - depth / 2, y - SLAB - 0.6, r.z1 + t) });
+          if (r.along === 'x') corbels.push({ position: this.pt(x1 + t, y - SLAB - 0.6, (r.z1 + r.z2) / 2), rotation: [0, Math.PI / 2, 0] });
+          else corbels.push({ position: this.pt((x1 + x2) / 2, y - SLAB - 0.6, r.z1 + t) });
         }
       }
+      // Solid masses, not walls: the player's collision sphere sits at head height, so a
+      // knee-high wall would never touch it; a mass taller than a step blocks the way.
+      for (const [x1, x2, z1, z2] of parapets) this.blockA(Math.min(x1, x2), Math.max(x1, x2), z1, z2, y, y + 1.2, this.mat.stonePolished, 'ezras_nashim_balcony parapet');
       this.scene.add(instance(this.box(depth * AMAH, 1.2 * AMAH, 1 * AMAH, this.mat.stone), this.mat.stone, corbels, { name: 'balcony corbels' }));
+      // The flights: from the eastern chambers' walls toward the gate, landing beside it.
+      for (const s of [-1, 1]) {
+        this.flightA({ axis: 'x', span: [zE - depth, zE], from: s * xA, to: s * xTop, yBase: this.y, steps, rise, mat: this.mat.stonePolished, name: 'ezras_nashim_balcony stair' });
+        this.blockA(s * xLand, s * xTop, zE - depth, zE, this.y - SLAB, y, this.mat.stonePolished, 'ezras_nashim_balcony landing');
+      }
     });
   }
 

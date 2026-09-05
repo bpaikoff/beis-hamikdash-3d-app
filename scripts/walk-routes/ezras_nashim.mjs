@@ -9,6 +9,8 @@ const amos = (x, z, o = {}) => {
 
 const EN = { level: 'ezras_nashim' };
 const EY = { level: 'azaras_yisrael' };
+/** The balcony is 10 amos over the Ezras Nashim floor, y 2.5: the same height as the Ezras Kohanim. */
+const BALCONY = { level: 'azaras_kohanim' };
 
 // dx/dz are METRES in the scene frame (+x north, +z east); amos(x, z) takes amos. Walks are
 // straight lines between waypoints, so route through doors and openings explicitly.
@@ -72,6 +74,38 @@ export const routes = {
     amos(0, 8, EY), // straight up at 30 degrees off the axis
     amos(0, 3, EY),
     amos(0, -5, EY),
+  ],
+
+  // Up the north flight to the gallery, round its whole U (east wall, in front of the
+  // corner chambers, north and south walls) and down the south flight.
+  ezras_nashim_balcony: [
+    amos(26.5, 125, EN),
+    amos(26.5, 135, EN), // foot of the north flight (against the wood store's wall)
+    amos(8, 135, BALCONY), // top step
+    amos(5.5, 135, BALCONY), // landing
+    amos(5.5, 139, BALCONY), // gallery over the gate
+    at('ezras_nashim_balcony', { dz: 1, ...BALCONY }), // the hotspot is on the parapet line
+    amos(25.5, 139, BALCONY),
+    amos(25.5, 99, BALCONY), // along the wood store's court wall
+    amos(45, 99, BALCONY), // along its west wall
+    amos(65.5, 99, BALCONY),
+    amos(65.5, 60, BALCONY), // north wall run, to the lepers' chamber
+    amos(65.5, 99, BALCONY),
+    amos(25.5, 99, BALCONY),
+    amos(25.5, 139, BALCONY),
+    amos(-25.5, 139, BALCONY),
+    amos(-25.5, 99, BALCONY),
+    amos(-45, 99, BALCONY),
+    amos(-65.5, 99, BALCONY),
+    amos(-65.5, 60, BALCONY), // south wall run, to the chamber of oils
+    amos(-65.5, 99, BALCONY),
+    amos(-25.5, 99, BALCONY),
+    amos(-25.5, 139, BALCONY),
+    amos(-5.5, 139, BALCONY),
+    amos(-5.5, 135, BALCONY), // south landing
+    amos(-8, 135, BALCONY), // top step
+    amos(-26.5, 135, { minY: 0, ...EN }), // foot of the south flight (reached on the lowest steps: level checked as a minimum)
+    amos(-26.5, 125, EN),
   ],
 
   // The Lishkos Klei Shir under the Ezras Yisrael (Middot 2:6), through their doors in the

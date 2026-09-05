@@ -34,20 +34,21 @@ export class ParticleSystem {
   }
 
   createFire(x, y, z, size = 1) {
-    const count = 80;
+    const count = 160; // many small, dim sprites read as flame; few large bright ones read as confetti
     const geo = new THREE.BufferGeometry();
     const pos = new Float32Array(count * 3);
     const col = new Float32Array(count * 3);
     const vel = [];
 
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (this.rand() - 0.5) * size;
-      pos[i * 3 + 1] = this.rand() * size * 2;
-      pos[i * 3 + 2] = (this.rand() - 0.5) * size;
-      const t = pos[i * 3 + 1] / (size * 2);
+      pos[i * 3] = (this.rand() - 0.5) * size * 0.8;
+      pos[i * 3 + 1] = this.rand() * size * 1.6;
+      pos[i * 3 + 2] = (this.rand() - 0.5) * size * 0.8;
+      const t = pos[i * 3 + 1] / (size * 1.6);
+      // Bright yellow-white core low down, fading to deep orange-red near the top.
       col[i * 3] = 1;
-      col[i * 3 + 1] = 0.5 - t * 0.3;
-      col[i * 3 + 2] = 0;
+      col[i * 3 + 1] = 0.75 - t * 0.55;
+      col[i * 3 + 2] = 0.25 - t * 0.25;
       vel.push(new THREE.Vector3((this.rand() - 0.5) * 0.5, 1 + this.rand() * 2, (this.rand() - 0.5) * 0.5));
     }
 
@@ -56,11 +57,11 @@ export class ParticleSystem {
 
     const mat = new THREE.PointsMaterial({
       map: this.sprite,
-      size: 1.2,
+      size: 0.75,
       sizeAttenuation: true,
       vertexColors: true,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.45,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });

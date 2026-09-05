@@ -231,15 +231,14 @@ export class TextureFactory {
     const img = ctx.createImageData(512, 512);
     for (let i = 0; i < base.length; i++) {
       const b = base[i], p = patina[i];
-      if (p > 0.55) {
-        img.data[i*4] = 70 + (p - 0.55) * 120;
-        img.data[i*4+1] = 120 + (p - 0.55) * 160 + this.rand() * 20;
-        img.data[i*4+2] = 90 + (p - 0.55) * 120;
-      } else {
-        img.data[i*4] = 160 + b * 40;
-        img.data[i*4+1] = 90 + b * 30;
-        img.data[i*4+2] = 55 + b * 20;
-      }
+      // Aged copper: a warm brown base with a soft verdigris bloom in the recesses, not
+      // saturated green/orange blotches. k eases in above p 0.6 and tops out around 0.55.
+      const k = Math.min(0.55, Math.max(0, (p - 0.6) * 2.2));
+      const r0 = 138 + b * 34, g0 = 84 + b * 26, b0 = 58 + b * 18;
+      const r1 = 96, g1 = 128, b1 = 112;
+      img.data[i*4] = r0 + (r1 - r0) * k;
+      img.data[i*4+1] = g0 + (g1 - g0) * k + this.rand() * 6;
+      img.data[i*4+2] = b0 + (b1 - b0) * k;
       img.data[i*4+3] = 255;
     }
     ctx.putImageData(img, 0, 0);

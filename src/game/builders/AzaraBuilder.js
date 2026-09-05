@@ -211,8 +211,11 @@ export class AzaraBuilder extends CourtBuilder {
    * North wall: Nitzotz (= Yechonya), Korban, Beis HaMoked (= HaShir) per Middot 1:5 / 2:6,
    * Shaar HaNashim, the hall and the Avtinas stair tower straddling it. The Avtinas storey
    * straddles the wall too, so its z range is cut from the run and the wall under its
-   * floor is built separately with the Korban gate in it (the storey's floor slab is the
-   * gate's lintel); above the floor the storey's own walls carry the wall line.
+   * floor is built separately with the Korban gate in it; above the floor the storey's
+   * own walls carry the wall line. The storey's floor (y 24) leaves 1.5 amos between the
+   * gate's top (22.5) and the underside of its slab (23.2), so the gate's frame keeps a
+   * lintel there, capped at the slab (`frameTop`); at the earlier y 22.5 the cap fell
+   * below the gate's top and the lintel was dropped.
    */
   buildNorthWall() {
     const { z1, z2 } = this.hall;
@@ -229,8 +232,9 @@ export class AzaraBuilder extends CourtBuilder {
           { at: (storey.z1 + storey.z2) / 2, w: storey.z2 - storey.z1, cut: true },
         ],
       });
-      // Under the storey, up to the underside of its floor slab; the tower's own wall
-      // closes z -51 .. -50 (buildBeisAvtinas), so the run stops at the tower.
+      // Under the storey, up to the underside of its floor slab (the gate's lintel is
+      // capped there too); the tower's own wall closes z -51 .. -50 (buildBeisAvtinas),
+      // so the run stops at the tower.
       const under = storey.floor - SLAB;
       this.wallRunA({
         along: 'z', across: [X_IN, X_OUT], from: storey.z1, to: Math.min(tower.z1, storey.z2), y1: GROUND, y2: under, mat: this.mat.stone,
@@ -323,7 +327,9 @@ export class AzaraBuilder extends CourtBuilder {
   /**
    * Madichin, Parvah and Melach against the north wall (Middot 5:3). The Parvah's roof
    * carries the Kohen Gadol's mikveh, reached by a stair inside the Madichin; the three
-   * roofs form one walkable terrace with a parapet.
+   * roofs form one walkable terrace with a parapet. Each room's width is its own
+   * (the Madichin is 15, the others 16), so the court-edge parapet follows each roof's
+   * edge with a return where the edge steps.
    */
   buildNorthernLishkos() {
     const ids = ['lishkas_hamadichin', 'lishkas_haparvah', 'lishkas_hamelach'];
@@ -359,11 +365,21 @@ export class AzaraBuilder extends CourtBuilder {
       // Parapet around the terrace (court edge, east and west ends): 1.5 amos, a solid
       // mass so it actually stops the player (a wall this low is below the head-height
       // test), standing a LIP above the roof like every mass on a floor (see solidA).
+      // The court edge runs along each roof's own edge; where a wider roof follows a
+      // narrower one, a return across the step (on the wider roof) closes the corner.
       const pY = roofY + LIP;
       const pH = 1.5;
-      this.blockA(mad.x1, mad.x1 + 0.5, mel.z1, mad.z2, pY, pY + pH, this.mat.stone, 'terrace parapet');
+      for (const r of rooms) this.blockA(r.x1, r.x1 + 0.5, r.z1, r.z2, pY, pY + pH, this.mat.stone, 'terrace parapet');
+      for (let i = 1; i < rooms.length; i++) {
+        const [a, b] = [rooms[i - 1], rooms[i]];
+        if (Math.abs(a.x1 - b.x1) < 1e-6) continue;
+        const wide = a.x1 < b.x1 ? a : b;
+        const zc = a.z1; // the seam between the two roofs (a.z1 === b.z2)
+        const [za, zb] = wide === a ? [zc, zc + 0.5] : [zc - 0.5, zc];
+        this.blockA(Math.min(a.x1, b.x1), Math.max(a.x1, b.x1) + 0.5, za, zb, pY, pY + pH, this.mat.stone, 'terrace parapet');
+      }
       this.blockA(mad.x1, mad.x2, mad.z2 - 0.5, mad.z2, pY, pY + pH, this.mat.stone, 'terrace parapet');
-      this.blockA(mad.x1, mad.x2, mel.z1, mel.z1 + 0.5, pY, pY + pH, this.mat.stone, 'terrace parapet');
+      this.blockA(mel.x1, mel.x2, mel.z1, mel.z1 + 0.5, pY, pY + pH, this.mat.stone, 'terrace parapet');
       // Round the stair well too (its court side, its east end and the amah between it and
       // the court wall), open only at the flight's top end: without it a step sideways off
       // the terrace dropped 11 amos onto the flight.
@@ -477,9 +493,10 @@ export class AzaraBuilder extends CourtBuilder {
   /**
    * Beis Avtinas: an upper storey over a court gate on whichever wall the content puts it
    * (north, over Shaar HaKorban, per Yoma 19a), reached by a stair tower beside the
-   * gate's east jamb in the storey's own x band: four flights of ten half-amah steps
-   * (20 amos, the gate's height) round the tower's walls, a door from the court in its
-   * east face and a door into the storey at the top. The Kohen Gadol's first immersion
+   * gate's east jamb in the storey's own x band: four flights of half-amah steps round
+   * the tower's walls (the storey's floor is 21.5 amos over the court: the 20-amah gate,
+   * its lintel and the floor slab, so 43 steps in flights of 11, 11, 11 and 10), a door
+   * from the court in its east face and a door into the storey at the top. The Kohen Gadol's first immersion
    * was on the roof of the Water Gate beside Palhedrin (Yoma 31a), so the mikveh sits on
    * the south wall top over that gate.
    */
@@ -523,12 +540,16 @@ export class AzaraBuilder extends CourtBuilder {
       const iz2 = tower.z2 - t;
       const landing = 2.5;
       const band = (iz2 - iz1) / 4;
-      const steps = 10;
-      const rise = (floor - yCourt) / (4 * steps); // 0.5
+      // Half-amah risers throughout (the Cheil steps' profile): the last flight is a step
+      // short, so the 43 steps close exactly on the storey's floor.
+      const rise = 0.5;
+      const total = Math.round((floor - yCourt) / rise); // 43
+      const flights = [0, 1, 2, 3].map((k) => Math.ceil((total - k) / 4)); // 11, 11, 11, 10
       const from = ix1 + landing;
       const to = ix2 - landing;
       let y = yCourt + LIP;
       for (let k = 0; k < 4; k++) {
+        const steps = flights[k];
         const za = iz2 - k * band;
         const zb = za - band;
         const up = k % 2 === 0; // even flights climb north (+x), odd ones back south
@@ -561,30 +582,35 @@ export class AzaraBuilder extends CourtBuilder {
   }
 
   /**
-   * North of the altar (Middot 3:5, 5:2): 24 rings set in the floor (x 24 .. 48), eight
-   * marble tables at x 52, eight short pillars at x 58 with cedar beams and three rows
-   * of hooks.
+   * North of the altar (Middot 3:5, 5:2): 24 rings set in the floor (x 24 .. 48, z -26 ..
+   * -50, with the altar), eight marble tables at x 52 and eight short pillars at x 58
+   * with cedar beams and three rows of hooks. The tables' column and the pillars' row
+   * are as long as the ring area but centred on their own `position.z` (-39: an amah
+   * further west than the rings, so their north ends stand clear of Beis HaMoked's
+   * corner at z -26).
    */
   buildSlaughterArea() {
     const y = this.yKohanim;
     const tables = this.entry('slaughter_tables');
     const rings = this.entry('slaughter_rings');
     const pillars = this.entry('hanging_pillars');
-    const z1 = rings.position.z + rings.geometry.d / 2; // -26
-    const z2 = rings.position.z - rings.geometry.d / 2; // -50
+    const half = rings.geometry.d / 2; // 12
+    const z1 = rings.position.z + half; // -26
+    const z2 = rings.position.z - half; // -50
 
     this.group('slaughter_tables', () => {
       const { w, d, h } = tables.geometry;
       const n = 8;
-      const pitch = (z1 - z2) / n;
+      const pitch = (2 * half) / n; // 3
+      const tz1 = tables.position.z + half; // -27: the column's east end
       const positions = [];
-      for (let i = 0; i < n; i++) positions.push({ position: this.pt(tables.position.x, y + h / 2, z1 - pitch * (i + 0.5)) });
+      for (let i = 0; i < n; i++) positions.push({ position: this.pt(tables.position.x, y + h / 2, tz1 - pitch * (i + 0.5)) });
       const mesh = instance(this.box(w * AMAH, h * AMAH, d * AMAH, this.mat.marbleW), this.mat.marbleW, positions, { name: 'slaughter_tables' });
       this.scene.add(mesh);
       // One solid per table (a row-long collider sealed the amah between the tables), and
       // as a mass rather than a wall: a 1.5-amah table is below the head-height wall test.
       for (let i = 0; i < n; i++) {
-        const zc = z1 - pitch * (i + 0.5);
+        const zc = tz1 - pitch * (i + 0.5);
         this.solidA(tables.position.x - w / 2, tables.position.x + w / 2, zc + d / 2, zc - d / 2, y, y + h, 'slaughter_tables');
       }
     });
@@ -610,7 +636,8 @@ export class AzaraBuilder extends CourtBuilder {
       const n = 8;
       const gap = 3;
       const zs = [];
-      for (let i = 0; i < n; i++) zs.push(z1 - 1 - i * gap); // -27 .. -48
+      const pz1 = pillars.position.z + half - 1; // -28: the first pillar, an amah in from the row's east end
+      for (let i = 0; i < n; i++) zs.push(pz1 - i * gap); // -28 .. -49
       const px = pillars.position.x;
       const shafts = zs.map((z) => ({ position: this.pt(px, y + h / 2, z) }));
       this.scene.add(instance(this.box(w * AMAH, h * AMAH, w * AMAH, this.mat.stone), this.mat.stone, shafts, { name: 'hanging_pillars' }));

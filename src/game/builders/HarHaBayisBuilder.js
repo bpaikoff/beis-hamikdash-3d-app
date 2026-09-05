@@ -110,7 +110,7 @@ export class HarHaBayisBuilder extends CourtBuilder {
     const c = this.entry('cheil');
     const xOut = 67.5 + WALL_T + c.geometry.w; // 83.5
     const azarahWest = -187 - WALL_T - c.geometry.w; // -203
-    return { x1: -xOut, x2: xOut, z1: azarahWest, z2: s.position.z - 1, xIn: 67.5 + WALL_T, zIn1: -187 - WALL_T, zIn2: 141 + WALL_T };
+    return { x1: -xOut, x2: xOut, z1: azarahWest, z2: s.position.z, xIn: 67.5 + WALL_T, zIn1: -187 - WALL_T, zIn2: 141 + WALL_T };
   }
 
   /** The Cheil: a 10-amah pavement ring between the Soreg and the court walls. */

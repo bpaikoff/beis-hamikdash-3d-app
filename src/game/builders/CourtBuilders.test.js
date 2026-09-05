@@ -235,11 +235,17 @@ describe('court builders', () => {
       expect(solidAt(x, 1, 3), `klei shir lintel x ${x}`).toBe(true);
       expect(solidAt(x, -3, 3), `klei shir door x ${x}`).toBe(false);
     }
-    // The Beis Avtinas storey's interior is clear of the north wall, which stands under its floor with the Korban gate in it.
-    for (const z of [-64, -58, -52]) expect(solidAt(70, 23.5, z), `storey interior z ${z}`).toBe(false);
+    // The Beis Avtinas storey's interior (floor y 24) is clear of the north wall, which stands under its floor with the Korban gate in it.
+    for (const z of [-64, -58, -52]) expect(solidAt(70, 25, z), `storey interior z ${z}`).toBe(false);
     for (const z of [-64.5, -51.5]) expect(solidAt(70, 10, z), `wall under the storey z ${z}`).toBe(true);
+    for (const z of [-64.5, -51.5]) expect(solidAt(70, 23, z), `wall under the storey slab z ${z}`).toBe(true);
     expect(solidAt(70.5, 10, -58), 'korban gate leaves').toBe(true);
     expect(solidAt(69, 10, -58), 'korban gate reveal').toBe(false);
+    // The gate's frame keeps its lintel between the gate's top (22.5) and the storey's slab (23.2).
+    const lintel = built.scene.getObjectByName('korban_gate frame');
+    expect(lintel, 'korban gate frame').toBeTruthy();
+    const frameBox = new THREE.Box3().setFromObject(lintel);
+    expect(frameBox.max.y).toBeCloseTo(toWorld({ x: 0, y: 23.2, z: 0 })[1], 2);
     // Balustrades between the stair tower's flights, open at the landing that joins each pair.
     expect(solidAt(66, 5, -44.75)).toBe(true);
     expect(solidAt(70, 5, -46.5)).toBe(true);

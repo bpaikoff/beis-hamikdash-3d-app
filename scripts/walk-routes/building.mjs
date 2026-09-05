@@ -47,9 +47,9 @@ export const routes = {
   ],
 
   // The Kohanim-level strips beside the building. The three northern lishkos
-  // (x 51.5 .. 67.5, z -88 .. -136) leave only a 1.5-amah slot past the Ulam's north
-  // wing (x 50, z -76 .. -92), so the north strip behind the wing is reached the long
-  // way: the pocket beside the north wing, across in front of the flight, down the south
+  // (z -92 .. -140; the Madichin x 52.5 .. 67.5, the other two from x 51.5) leave only a
+  // 2.5-amah slot past the Ulam's north wing (x 50, z -76 .. -92), so the north strip
+  // behind the wing is reached the long way: the pocket beside the north wing, across in front of the flight, down the south
   // strip past Lishkas HaGazis (x -57.5) and HaGolah (x -51.5), round the back of the
   // Kodesh HaKodashim and up the north strip to the back of the north wing.
   around_building: [
@@ -169,8 +169,9 @@ export const routes = {
 
   // The kiyor and the Heichal vessels are solid: go around each, hugging it.
   keilim: [
-    // The kiyor stands 2 amos south of the Ulam steps; the muchni post is on its south
-    // side (1.3 m out), so it is passed on the south wide of the post: slide round and back.
+    // The kiyor's centre is 4 amos south of the Ulam steps' end (x -20; its body reaches
+    // x -22.5); the muchni post is on its south side (1.3 m out), so it is passed on the
+    // south side of the post: slide round and back.
     at('kiyor', { dz: 3, level: K }),
     at('kiyor', { dx: -2.4, dz: -3, level: K }), // clear of the muchni post
     at('kiyor', { dx: -3.4, dz: 0, level: K }),

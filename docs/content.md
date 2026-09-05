@@ -332,3 +332,65 @@ flight is built only if the hall lies below the court; the Ulam steps group 4-4-
 top rovad; the ta storey height is read from `geometry.h`; Yachin/Boaz use their content z;
 the Aron's keruvim stand at the ends of its long (north-south) side. Two test waypoints
 moved with the entries (Beis HaMoked hall level; Lishkas HaEtz west wall).
+
+### Round 3 (September 2026) — content positions, builders, tour stops
+
+Content (`id.field old -> new`), with the reasoning:
+
+- `beis_avtinas.position.y` 22.5 -> 24. Shaar HaKorban is 20 high (Middot 2:3) from the
+  Ezras Kohanim floor (2.5), so its opening tops out at 22.5; the gate frame's lintel takes
+  an amah more and the storey's 0.8-amah floor slab has to sit on that. At 22.5 the
+  `frameTop` cap fell below the gate's top and `buildNorthWall` dropped the lintel; the
+  cap (the slab's underside, 23.2) is now above it and the lintel is built again. The
+  stair tower's four flights keep half-amah risers (the Cheil steps' profile, Middot 2:3)
+  and are 11, 11, 11 and 10 steps (43, 21.5 amos) instead of 4 × 10. Notes updated;
+  `CourtBuilders.test.js` probes the storey interior at y 25, asserts the lintel top at
+  23.2 and the wall under the slab; `AzarahRoutes.test.js` reads the landing height from
+  the JSON.
+- `slaughter_tables.position.z` / `hanging_pillars.position.z` -38 -> -39 (tables z -27 ..
+  -51, pillars -28 .. -49). Beis HaMoked's south-west corner is at z -26 (its 24-amah
+  depth from z -2, chosen so the hall does not reach the pillars, Middot 5:2); at -38 the
+  first table and pillar stood half an amah from it. `buildSlaughterArea` spread both rows
+  over the rings' z range; it now centres each on its own `position.z` (same 24-amah
+  length). `azarah_slaughter`, `azarah_hug_altar` and `azarah_hug_north` thread the new
+  first gaps (z -30 between the tables, -29.5 between the pillars).
+- `kiyor.position.x` -22 -> -24. Middot 3:6 draws the laver toward the south so that it
+  does not stand between the altar and the Ulam entrance; its 3-amah body (x -25.5 ..
+  -22.5) now stands an amah clear of the Ulam steps' south end at x -20 instead of
+  touching it. The muchni stays on its south side (KeilimBuilder). `azarah_hug_altar` now
+  loops all four sides; `azarah_hug_building` passes the post at x -27.6; `keilim` in
+  building.mjs is relative and unchanged; the Tour router's `south_lane` comment follows.
+- `soreg.position.z` 158 -> 157: the note and `meta.zLayout` say 157 (the Cheil's 10
+  amos beyond the Ezras Nashim wall at 147, Middot 2:3). `HarHaBayisBuilder.ring` had
+  subtracted the amah back out (`position.z - 1`); it now reads `position.z`, so the
+  built ring does not move.
+- `outside.position.y` -19.5 -> -13.5. The ground outside is drawn flush with the mount
+  at the Har HaBayis level; the drop from the mount to the streets is not given in Middot
+  and is not modelled, so the hotspot no longer sits 6 amos under the ground that is
+  built. `outside.bounds` untouched (edited separately).
+- `lishkas_hamadichin.geometry.w` 16 -> 15 (x 52.5 .. 67.5). Middot 5:3 gives the three
+  northern chambers no size; an amah off the Madichin makes the slot between its court
+  face and the Ulam's north wing (x 50) 2.5 amos instead of 1.5, wide enough to walk
+  without hugging. The stair well is placed from the room's wall side and is unchanged;
+  the terrace parapet now follows each roof's own court edge with a return across the
+  step at z -108 (the west-end parapet spans the Melach's full width, which the old
+  Madichin-based extent left an amah short). `azarah_hug_north` and `azarah_hug_terrace`
+  re-derived; `AzarahRoutes.test.js` probes the stepped parapet.
+- `tours/tamid.json` stop 9 `camera` (-52, -52) -> (-55, -53.5) and stop 13 `offset.dz`
+  3.75 -> 5.5 m: each camera moved 3.4-3.5 amos back along its look direction so the
+  kevesh's west half and the Duchan flight fill the frame instead of crowding it. Every
+  stop was probed with `floorAt`/`insideSolid` (all on their floors, none in a solid) and
+  the 8 -> 9 and 12 -> 13 transitions were driven with the real renderer (both routed).
+
+Checked and left alone: `beis_hamoked` / `lishkas_hagazis` and their builder functions
+(stairs being added concurrently); `outside.bounds`; `scripts/walk-routes/har_habayis.mjs`.
+
+Verification: `npm run lint` (one pre-existing warning in BaseBuilder.js), 212 tests,
+`npm run build`, 196 refs verified; walked `azarah_slaughter`, `azarah_hug_altar`,
+`azarah_hug_north`, `azarah_northern_lishkos`, `azarah_hug_terrace`, `azarah_avtinas`,
+`azarah_hug_avtinas`, `azarah_hug_building`, `azarah_gates_north`, `azarah_kohanim`,
+`keilim`, `ladder`, `around_building`, `cheil`, `cheil_ring`, `soreg_openings`,
+`har_habayis_gates` (one flaky `cheil_ring` step at the foot of the twelve steps in the
+long batch; the route passes alone on this build and on master). Screenshots
+`altar_fire`, `mizbeach_kevesh`, `tour_9`, `tour_13` plus ad-hoc views of the kiyor, the
+tables, the storey over the Korban gate and the terrace parapet.

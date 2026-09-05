@@ -22,7 +22,7 @@
       "desc": {"he": "הדרך העולה אל הר הבית מדרום. משם עולים במדרגות אל שערי חולדה ונכנסים אל הר הבית, ומי שרואה את המקדש מברך ומשתחווה.", "en": "The approach to the Temple Mount from the south. From here pilgrims climbed the steps to the Chuldah Gates and entered Har HaBayis."},
       "period": ["bayis_sheni"],
       "bounds": {"minX": -420, "maxX": 237.5, "minZ": -262, "maxZ": 318},
-      "position": {"frame": "azarah", "x": -340, "y": -19.5, "z": 30, "unit": "amah", "source": "Mishnah Middot 1:3", "note": "legacy: x 0, y -10, z 194 (pre-2026 scene coordinates converted to amos); now south of the Har HaBayis south wall, where the Chuldah Gates open (Middot 1:3); the ground outside is set 6 amos below the mount (not given in Middot)"},
+      "position": {"frame": "azarah", "x": -340, "y": -13.5, "z": 30, "unit": "amah", "source": "Mishnah Middot 1:3", "note": "legacy: x 0, y -10, z 194 (pre-2026 scene coordinates converted to amos); now south of the Har HaBayis south wall, where the Chuldah Gates open (Middot 1:3). The ground outside is drawn flush with the mount at the Har HaBayis level (y -13.5): the drop from the mount to the streets outside is not given in Middot and is not modelled (an earlier y -19.5 put the hotspot 6 amos under the ground that is built)"},
       "sources": ["Mishnah Middot 1:3","Mishnah Berakhot 9:5"],
       "questions": [
         {"he": "מאיזה כיוון נכנסו רוב עולי הרגל להר הבית?", "en": "From which direction did most pilgrims enter the Temple Mount?"},
@@ -469,7 +469,7 @@
         {"label": "spouts", "value": 12, "unit": "count", "source": "Mishnah Yoma 3:10", "note": "Ben Katin's addition"},
         {"label": "muchni", "value": 1, "unit": "count", "source": "Mishnah Yoma 3:10", "note": "the wheel Ben Katin made to sink the laver into a cistern so its water would not be disqualified overnight"}
       ],
-      "position": {"frame": "azarah", "x": -22, "y": 2.5, "z": -65, "unit": "amah", "source": "Mishnah Middot 3:6", "note": "legacy: x -16, y 1, z -92 (pre-2026 scene coordinates converted to amos); now between the Ulam and the altar (z -54 .. -76), drawn toward the south (Middot 3:6) so that it does not stand between the altar and the Ulam entrance: south of the Ulam steps, centre z -65"},
+      "position": {"frame": "azarah", "x": -24, "y": 2.5, "z": -65, "unit": "amah", "source": "Mishnah Middot 3:6", "note": "legacy: x -16, y 1, z -92 (pre-2026 scene coordinates converted to amos); now between the Ulam and the altar (z -54 .. -76), drawn toward the south (Middot 3:6) so that it does not stand between the altar and the Ulam entrance: south of the Ulam steps, centre z -65, x -24 so that its 3-amah body (x -25.5 .. -22.5) stands an amah clear of the steps' south end at x -20 (at the earlier x -22 it touched them); the muchni is on its south side"},
       "sources": ["Exodus 30:18","Exodus 38:8","Mishnah Middot 3:6","Mishnah Yoma 3:10","Yoma 37a","Zevachim 59a"],
       "questions": [
         {"he": "למה הכיור משוך לדרום ולא באמצע?", "en": "Why was the laver set off to the south rather than centred?"},
@@ -490,7 +490,7 @@
       "dimensions": [
         {"label": "tables", "value": 8, "unit": "count", "source": "Mishnah Shekalim 6:4", "note": ""}
       ],
-      "position": {"frame": "azarah", "x": 52, "y": 2.5, "z": -38, "unit": "amah", "source": "Mishnah Middot 5:2", "note": "legacy: x 28, y 1, z -92 (pre-2026 scene coordinates converted to amos); now Middot 5:2: 8 north of the altar face at x 16, 24 for the rings (x 24 .. 48), 4 to the tables: tables at x 52, in a row along the altar's length"},
+      "position": {"frame": "azarah", "x": 52, "y": 2.5, "z": -39, "unit": "amah", "source": "Mishnah Middot 5:2", "note": "legacy: x 28, y 1, z -92 (pre-2026 scene coordinates converted to amos); now Middot 5:2: 8 north of the altar face at x 16, 24 for the rings (x 24 .. 48), 4 to the tables: tables at x 52, in a row along the altar's length; the row's centre is at z -39 (z -27 .. -51), an amah west of the altar's centre line, so its north end stands an amah clear of Beis HaMoked's south-west corner (z -26) rather than half an amah"},
       "sources": ["Mishnah Middot 3:5","Mishnah Shekalim 6:4","Mishnah Middot 5:2","Mishnah Tamid 4:3"],
       "questions": [
         {"he": "למה שולחנות של שיש ולא של כסף?", "en": "Why marble tables rather than silver?"},
@@ -500,7 +500,7 @@
       "legacyId": "slaughterTables",
       "icon": "🔪",
       "area": "azaras_kohanim",
-      "geometry": {"kind": "box", "w": 1, "d": 2, "h": 1.5, "notes": "eight marble tables 1 x 2 in a north-south column at x 52 spread over z -26 .. -50; size of each not given. Middot 3:5 says the marble tables stood 'between the pillars'; the 4-amah gap between tables and pillars in Middot 5:2 is the Tosafos Yom Tov reconciliation used here."}
+      "geometry": {"kind": "box", "w": 1, "d": 2, "h": 1.5, "notes": "eight marble tables 1 x 2 in a column at x 52 along the court's length, spread over z -27 .. -51 (centre z -39; the builder reads the column's centre from `position`); size of each not given. Middot 3:5 says the marble tables stood 'between the pillars'; the 4-amah gap between tables and pillars in Middot 5:2 is the Tosafos Yom Tov reconciliation used here."}
     },
     {
       "id": "slaughter_rings",
@@ -541,7 +541,7 @@
         {"label": "pillars", "value": 8, "unit": "count", "source": "Mishnah Middot 3:5", "note": "short (nanasin), of stone, with cedar blocks"},
         {"label": "rows of hooks per pillar", "value": 3, "unit": "count", "source": "Mishnah Middot 3:5", "note": ""}
       ],
-      "position": {"frame": "azarah", "x": 58, "y": 2.5, "z": -38, "unit": "amah", "source": "Mishnah Middot 5:2", "note": "legacy: x 12, y 1, z -88 (pre-2026 scene coordinates converted to amos); now Middot 5:2: 4 amos north of the tables at x 52, then 8 amos from the pillars to the north wall at 67.5: pillars in a row at x 58"},
+      "position": {"frame": "azarah", "x": 58, "y": 2.5, "z": -39, "unit": "amah", "source": "Mishnah Middot 5:2", "note": "legacy: x 12, y 1, z -88 (pre-2026 scene coordinates converted to amos); now Middot 5:2: 4 amos north of the tables at x 52, then 8 amos from the pillars to the north wall at 67.5: pillars in a row at x 58, z -28 .. -49, centred with the tables at z -39 so the first pillar stands two amos clear of Beis HaMoked's corner (z -26)"},
       "sources": ["Mishnah Middot 3:5","Mishnah Tamid 3:5","Mishnah Pesachim 5:9","Mishnah Shekalim 6:4"],
       "questions": [
         {"he": "למה היו העמודים נמוכים ומה היה עליהם?", "en": "Why were the pillars short, and what sat on top of them?"},
@@ -551,7 +551,7 @@
       "legacyId": "hangingPillars",
       "icon": "🪝",
       "area": "azaras_kohanim",
-      "geometry": {"kind": "pillar", "w": 1, "d": 1, "h": 4, "notes": "eight short stone pillars at x 58, z -27 .. -48 (3 amos apart), each topped by a cedar block with three rows of iron hooks; height not given (short enough to hang a carcass)."}
+      "geometry": {"kind": "pillar", "w": 1, "d": 1, "h": 4, "notes": "eight short stone pillars at x 58, z -28 .. -49 (3 amos apart; the builder reads the row's centre from `position`), each topped by a cedar block with three rows of iron hooks; height not given (short enough to hang a carcass)."}
     },
     {
       "id": "tamid_lamb",
@@ -1096,7 +1096,7 @@
         {"label": "breaches", "value": 13, "unit": "count", "source": "Mishnah Middot 2:3", "note": "made by the Greek kings and later fenced up"},
         {"label": "distance from the Ezras Nashim wall", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:3", "note": "the width of the Cheil"}
       ],
-      "position": {"frame": "azarah", "x": 0, "y": -13.5, "z": 158, "unit": "amah", "source": "Mishnah Middot 2:3", "note": "10 amos (the Cheil) outside the Ezras Nashim east wall (141 .. 147): at z 157; runs around the whole complex at that offset"},
+      "position": {"frame": "azarah", "x": 0, "y": -13.5, "z": 157, "unit": "amah", "source": "Mishnah Middot 2:3", "note": "10 amos (the Cheil) outside the Ezras Nashim east wall (141 .. 147): at z 157 (an earlier z 158 disagreed with this note and with the builder's ring); runs around the whole complex at that offset"},
       "sources": ["Mishnah Middot 2:3","Mishnah Kelim 1:8","Mishneh Torah, The Chosen Temple 5:3","Mishnah Shekalim 6:1"],
       "disputes": [
         {
@@ -1451,7 +1451,7 @@
       "dimensions": [
         {"label": "mesibah to the Parvah roof", "value": 1, "unit": "count", "source": "Mishnah Middot 5:3"}
       ],
-      "position": {"frame": "azarah", "x": 59.5, "y": 2.5, "z": -100, "unit": "amah", "source": "Mishnah Middot 5:3", "note": "one of the three northern chambers (Middot 5:3), placed nearest the slaughtering area west of Shaar HaNitzotz: x 51.5 .. 67.5, z -92 .. -108; order along the wall is not given, and the 12-amah shift west (earlier z -88 .. -104) keeps the strip beside the Ulam's north wing open, see disputes"},
+      "position": {"frame": "azarah", "x": 59.5, "y": 2.5, "z": -100, "unit": "amah", "source": "Mishnah Middot 5:3", "note": "one of the three northern chambers (Middot 5:3), placed nearest the slaughtering area west of Shaar HaNitzotz: x 52.5 .. 67.5, z -92 .. -108 (15 wide, an amah narrower than Parvah and Melach, so the slot between its court face and the Ulam's north wing at x 50 is 2.5 amos; hotspot x 59.5); order along the wall is not given, and the 12-amah shift west (earlier z -88 .. -104) keeps the strip beside the Ulam's north wing open, see disputes"},
       "sources": ["Mishnah Middot 5:3","Mishnah Tamid 4:2","Mishnah Shekalim 6:4","Mishneh Torah, The Chosen Temple 5:17"],
       "disputes": [
         {
@@ -1464,7 +1464,7 @@
         {"he": "מדוע הודחו הקרביים לפני ההקטרה?", "en": "Why were the innards rinsed before being burned?"},
         {"he": "מה הקשר בין לשכת המדיחין לבית הפרוה?", "en": "How was the rinsing chamber connected to Beis HaParvah?"}
       ],
-      "geometry": {"kind": "room", "w": 16, "d": 16, "h": 10, "notes": "room against the inside of the north wall with a stair up to the Parvah roof; size not given (16 x 16 reconstruction)."}
+      "geometry": {"kind": "room", "w": 15, "d": 16, "h": 10, "notes": "room against the inside of the north wall with a stair up to the Parvah roof; size not given (15 x 16 reconstruction: an amah narrower than the other two so the slot past the Ulam's north wing, x 50 .. 52.5, is 2.5 amos; the stair well and the roof terrace's parapet follow its own width)."}
     },
     {
       "type": "chamber",
@@ -1601,14 +1601,14 @@
       "dimensions": [
         {"label": "height above the Azarah floor", "value": 20, "unit": "amah", "source": "Mishnah Middot 2:3", "note": "an upper storey over a 20-amah gate; which northern gate is a reconstruction"}
       ],
-      "position": {"frame": "azarah", "x": 67.5, "y": 22.5, "z": -58, "unit": "amah", "source": "Yoma 19a", "note": "an upper storey on the north wall over Shaar HaKorban: Yoma 19a places the Kohen Gadol's two chambers one in the north and one in the south and concludes that Palhedrin was the southern one, so Beis Avtinas was in the north, where Middot 1:1's three Kohanim watch-posts (Avtinas, Nitzotz, Moked) then all lie; which northern gate is a reconstruction. Earlier placed over the Water Gate after the beraisa in Yoma 31a ('over the Water Gate and beside his chamber'), which per Yoma 19a refers to Palhedrin"},
+      "position": {"frame": "azarah", "x": 67.5, "y": 24, "z": -58, "unit": "amah", "source": "Yoma 19a", "note": "an upper storey on the north wall over Shaar HaKorban, floor at y 24: the gate is 20 high from the Ezras Kohanim floor (2.5 + 20 = 22.5), its frame's lintel takes an amah more and the storey's 0.8-amah floor slab sits on that (an earlier y 22.5 left no room for the lintel). Yoma 19a places the Kohen Gadol's two chambers one in the north and one in the south and concludes that Palhedrin was the southern one, so Beis Avtinas was in the north, where Middot 1:1's three Kohanim watch-posts (Avtinas, Nitzotz, Moked) then all lie; which northern gate is a reconstruction. Earlier placed over the Water Gate after the beraisa in Yoma 31a ('over the Water Gate and beside his chamber'), which per Yoma 19a refers to Palhedrin"},
       "sources": ["Mishnah Middot 1:1","Mishnah Yoma 1:5","Mishnah Yoma 3:3","Mishnah Shekalim 5:1","Yoma 19a","Yoma 38a","Yoma 31a"],
       "questions": [
         {"he": "מה סירבו בני אבטינס ללמד?", "en": "What did the house of Avtinas refuse to teach?"},
         {"he": "מהי חפינת הקטורת ומדוע היא קשה?", "en": "What is the handful of incense, and why was it difficult?"},
         {"he": "היכן טבל הכהן הגדול את טבילתו הראשונה ביום הכיפורים?", "en": "Where did the Kohen Gadol make his first immersion on Yom Kippur?"}
       ],
-      "geometry": {"kind": "room", "w": 12, "d": 16, "h": 8, "stair": "internal, from the court beside the Korban gate", "notes": "upper storey straddling the north wall over korban_gate, floor at y 22.5; size not given. Reached by an internal stair tower beside the gate's east jamb (x 61.5 .. 73.5, z -52 .. -42): four flights of ten half-amah steps, 20 amos in all, with a door from the court on its east side and a door into the storey at the top (a reconstruction; the sources give no stair). The Kohen Gadol's first Yom Kippur immersion was on the roof of the Water Gate in the south (Yoma 31a), not here."}
+      "geometry": {"kind": "room", "w": 12, "d": 16, "h": 8, "stair": "internal, from the court beside the Korban gate", "notes": "upper storey straddling the north wall over korban_gate, floor at y 24 (the gate's 20 amos, its lintel and the floor slab); size not given. Reached by an internal stair tower beside the gate's east jamb (x 61.5 .. 73.5, z -51 .. -42): four flights of half-amah steps (11, 11, 11 and 10: 43 steps, 21.5 amos from the Ezras Kohanim floor), with a door from the court on its east side and a door into the storey at the top (a reconstruction; the sources give no stair). The Kohen Gadol's first Yom Kippur immersion was on the roof of the Water Gate in the south (Yoma 31a), not here."}
     },
     {
       "id": "kevesh_katan_east",

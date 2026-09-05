@@ -70,26 +70,28 @@ export const routes = {
     p(-62, -18, K),
   ],
 
-  // Slaughtering area (Middot 3:5, 5:2): along the tables, between the tables and the
-  // pillars, between the pillars and the north wall, through the gaps, and into a table
-  // and a pillar (both must stop the player).
+  // Slaughtering area (Middot 3:5, 5:2): along the tables (x 51.5 .. 52.5, centres z
+  // -28.5, -31.5 .. -49.5) and the pillars (x 57.5 .. 58.5, z -28, -31 .. -49), between the
+  // tables and the pillars, between the pillars and the north wall, through the first
+  // gap of each (z -30 between the tables, -29.5 between the pillars), and into the
+  // first table and the first pillar (both must stop the player).
   azarah_slaughter: [
     p(50, -20, K),
-    p(50, -52, K),
-    p(55, -52, K),
-    p(55, -28.5, K, { reach: 0.4 }),
-    p(60, -28.5, K),
-    p(60, -52, K), // between the pillars and the Beis Avtinas stair tower (x 61.5 .. 73.5, z -51 .. -42)
-    p(60, -28.5, K, { reach: 0.4 }),
-    p(55, -28.5, K, { reach: 0.4 }),
-    p(55, -29, K, { reach: 0.4 }),
-    p(48, -29, K),
-    p(48, -27.5, K, { reach: 0.4 }),
-    p(56, -27.5, K, blocked),
-    p(48, -29, K, { reach: 0.4 }),
-    p(55, -29, K, { reach: 0.4 }),
-    p(55, -27, K, { reach: 0.4 }),
-    p(61, -27, K, blocked),
+    p(50, -53, K),
+    p(55, -53, K),
+    p(55, -29.5, K, { reach: 0.4 }),
+    p(60, -29.5, K),
+    p(60, -53, K), // between the pillars and the Beis Avtinas stair tower (x 61.5 .. 73.5, z -51 .. -42)
+    p(60, -29.5, K, { reach: 0.4 }),
+    p(55, -29.5, K, { reach: 0.4 }),
+    p(55, -30, K, { reach: 0.4 }),
+    p(48, -30, K),
+    p(48, -28.5, K, { reach: 0.4 }),
+    p(56, -28.5, K, blocked),
+    p(48, -30, K, { reach: 0.4 }),
+    p(55, -30, K, { reach: 0.4 }),
+    p(55, -28, K, { reach: 0.4 }),
+    p(61, -28, K, blocked),
     p(55, -45, K),
     at('tamid_lamb', { ...amos(0, 4), level: K }),
     p(50, -20, K),
@@ -154,8 +156,9 @@ export const routes = {
   ],
 
   // Beis Avtinas: from the court beside the Korban gate into the stair tower (door on its
-  // east face, x 62.5 .. 65), up its four flights (bands 1.75 amos wide, landings at
-  // alternate ends) to the storey 20 amos up, into the storey, and back down.
+  // east face, x 62.5 .. 65), up its four flights of half-amah steps (11, 11, 11, 10; bands
+  // 1.75 amos wide, landings at alternate ends) to the storey 21.5 amos up, into the
+  // storey, and back down.
   azarah_avtinas: [
     p(60, -30, K),
     p(63.75, -38, K),
@@ -441,13 +444,13 @@ Object.assign(routes, {
     h(52.5 - HUG, -14, K),
     h(56, -14, K), // the hall's open gate
     hc(52.5 - HUG, -14, K),
-    h(52.5 - HUG, -25, K), // the slaughter tables (x 51.5 .. 52.5) start at z -26.5, half an amah from the hall's corner
-    h(51.5 - HUG, -29, K),
-    h(52.5 + HUG, -29, K), // through the gap between the first two tables
+    h(52.5 - HUG, -25, K), // the slaughter tables (x 51.5 .. 52.5) start at z -27.5, an amah and a half from the hall's corner
+    h(51.5 - HUG, -30, K),
+    h(52.5 + HUG, -30, K), // through the gap between the first two tables (z -29.5 .. -30.5)
     h(52.5 + HUG, -26 - HUG, K),
-    h(57.5 - HUG, -26 - HUG, K), // the hall's west face, to the first pillar (x 57.5 .. 58.5, z -27.5 .. -26.5)
-    h(57.5 - HUG, -28.5, K),
-    h(58.5 + HUG, -28.5, K), // through the gap between the first two pillars
+    h(57.5 - HUG, -26 - HUG, K), // the hall's west face, to the first pillar (x 57.5 .. 58.5, z -28.5 .. -27.5)
+    h(57.5 - HUG, -29.5, K),
+    h(58.5 + HUG, -29.5, K), // through the gap between the first two pillars (z -28.5 .. -30.5)
     h(58.5 + HUG, -26 - HUG, K),
     h(X_IN - HUG, -26 - HUG, K), // the rest of the hall's west face
     ...gateReveal(1, -36),
@@ -462,10 +465,12 @@ Object.assign(routes, {
     h(50 + HUG, -92 + HUG, K),
     h(50 + HUG, -76 + HUG, K),
     h(50 + HUG, -92 + HUG, K),
-    h(50 + HUG, -93.5, K), // through the 1.5-amah slot between the wing and the Madichin
-    h(51.5 - HUG, -100, K),
-    h(54, -100, K), // Lishkas HaMadichin through its door
-    hc(51.5 - HUG, -100, K),
+    h(50 + HUG, -93.5, K), // through the 2.5-amah slot between the wing and the Madichin (x 52.5)
+    h(52.5 - HUG, -100, K),
+    h(55, -100, K), // Lishkas HaMadichin through its door
+    hc(52.5 - HUG, -100, K),
+    h(52.5 - HUG, -108 + HUG, K), // the Madichin's face to the Parvah's east face (z -108), which steps out an amah
+    h(51.5 - HUG, -108 + HUG, K),
     h(51.5 - HUG, -116, K),
     h(54, -116, K), // Lishkas HaParvah
     hc(51.5 - HUG, -116, K),
@@ -516,28 +521,27 @@ Object.assign(routes, {
     h(-35 - HUG, -92 - HUG, K), // the south ta'im wall
     hc(-50 - HUG, -92 - HUG, K),
     hc(-50 - HUG, -76 + HUG, K), // the south wing's end wall
-    h(-25.6, -76 + HUG, K), // the Ulam front to the kiyor (x -22, its solid to -20.4, the muchni on its south)
-    h(-25.6, -62.4, K),
+    h(-27.6, -76 + HUG, K), // the Ulam front to the kiyor (x -24, its solid x -25.6 .. -22.4, the muchni post on its south at x -26.5)
+    h(-27.6, -62.4, K), // past the post's south side
     h(-20 - HUG, -62.4, K),
     h(-20 - HUG, -54.6, K), // the flight's south end
     p(-44, -54.5, K),
   ]),
 
-  // (d) The altar zone: a loop round the kiyor and its muchni (its north side stands
-  // against the flight), the yesod's west face along the first Ulam tread, the yesod's
+  // (d) The altar zone: a loop round the kiyor and its muchni (the body x -25.6 .. -22.4,
+  // z -66.6 .. -63.4, the post on its south at x -26.5; an amah of court between it and
+  // the flight's south end at x -20), the yesod's west face along the first Ulam tread, the yesod's
   // north face, the sovev's east and south faces, the kevesh's north flank, its foot, its
   // south flank clear of the small western kevesh's shelf; then the slaughter furniture:
   // the tables' court side, between the tables and the pillars, between the pillars and
   // the wall, through a gap between two pillars and through a gap between two tables.
   azarah_hug_altar: pushed([
-    p(-21.5, -62.4, K),
-    h(-25.6, -62.4, K),
-    h(-25.6, -67.6, K),
-    h(-21.5, -67.6, K),
-    h(-25.6, -67.6, K),
-    h(-25.6, -62.4, K),
-    h(-21.5, -62.4, K),
-    h(-21.5, -54.6, K),
+    p(-21.6, -62.4, K),
+    h(-27.6, -62.4, K), // the kiyor's east side, past the post
+    h(-27.6, -67.6, K),
+    h(-21.6, -67.6, K), // its west side
+    h(-21.6, -62.4, K), // its north side, between the body and the flight's end (x -20)
+    h(-21.6, -54.6, K),
     h(16 + HUG, -54.6, K), // the yesod's west face, along the first Ulam tread
     h(16 + HUG, -22 + HUG, K), // the yesod's north face
     h(-15 - HUG, -22 + HUG, K), // the sovev's east face
@@ -549,22 +553,22 @@ Object.assign(routes, {
     h(-19.5, -48 - HUG - 0.4, K),
     h(-19.5, -54.6, K),
     p(44, -54.6, K),
-    h(51.5 - HUG, -49.5 - HUG, K),
-    h(51.5 - HUG, -27, K), // the tables' court side, up to the hall's corner (z -26)
-    h(51.5 - HUG, -29, K),
-    h(52.5 + HUG, -29, K), // through the gap between the first two tables
+    h(51.5 - HUG, -50.5 - HUG, K), // the last table ends at z -50.5
+    h(51.5 - HUG, -27, K), // the tables' court side, past their north end (z -27.5) toward the hall's corner (z -26)
+    h(51.5 - HUG, -30, K),
+    h(52.5 + HUG, -30, K), // through the gap between the first two tables (z -29.5 .. -30.5)
     h(52.5 + HUG, -27, K),
-    h(52.5 + HUG, -49.5 - HUG, K), // between the tables and the pillars
-    h(57.5 - HUG, -49.5 - HUG, K),
+    h(52.5 + HUG, -50.5 - HUG, K), // between the tables and the pillars
+    h(57.5 - HUG, -50.5 - HUG, K),
     h(57.5 - HUG, -27, K),
-    h(57.5 - HUG, -28.5, K),
-    h(58.5 + HUG, -28.5, K), // through the gap between the first two pillars
+    h(57.5 - HUG, -29.5, K),
+    h(58.5 + HUG, -29.5, K), // through the gap between the first two pillars (z -28.5 .. -30.5)
     h(58.5 + HUG, -27, K),
-    h(58.5 + HUG, -48.5 - HUG, K), // between the pillars and the wall
-    h(58.5 + HUG, -28.5, K),
-    h(57.5 - HUG, -28.5, K),
-    h(52.5 + HUG, -29, K),
-    h(51.5 - HUG, -29, K),
+    h(58.5 + HUG, -49.5 - HUG, K), // between the pillars and the wall (the last pillar ends at z -49.5)
+    h(58.5 + HUG, -29.5, K),
+    h(57.5 - HUG, -29.5, K),
+    h(52.5 + HUG, -30, K),
+    h(51.5 - HUG, -30, K),
   ]),
 
   // (e) The terrace over Madichin / Parvah / Melach: up the Madichin stair, round the
@@ -582,8 +586,13 @@ Object.assign(routes, {
     p(64, -95, K, { ...blocked, minY: 11 * AMAH }), // into it
     h(60, -93 - HUG, K, { minY: 11 * AMAH }),
     p(60, -90, K, { ...blocked, minY: 11 * AMAH }), // the east end parapet
-    h(52 + HUG, -93 - HUG, K, { minY: 11 * AMAH }),
-    h(52 + HUG, -120, K, { minY: 11 * AMAH }), // along the court-edge parapet
+    h(53 + HUG, -93 - HUG, K, { minY: 11 * AMAH }), // the Madichin roof's court-edge parapet (x 52.5 .. 53: the room is 15 wide)
+    h(53 + HUG, -108 + HUG, K, { minY: 11 * AMAH }), // to the return where the Parvah's roof steps out an amah
+    p(51.5, -108.25, K, { ...blocked, minY: 11 * AMAH }), // into the return (x 51.5 .. 53, z -108.5 .. -108)
+    h(53 + HUG, -108 + HUG, K, { minY: 11 * AMAH }),
+    h(53 + HUG, -110, K, { minY: 11 * AMAH }),
+    h(52 + HUG, -110, K, { minY: 11 * AMAH }), // round it onto the Parvah's roof
+    h(52 + HUG, -120, K, { minY: 11 * AMAH }), // along the court-edge parapet (x 51.5 .. 52)
     p(50, -120, K, { ...blocked, minY: 11 * AMAH }), // into it
     h(52 + HUG, -139.5 + HUG, K, { minY: 11 * AMAH }),
     h(66, -139.5 + HUG, K, { minY: 11 * AMAH }), // the west end parapet

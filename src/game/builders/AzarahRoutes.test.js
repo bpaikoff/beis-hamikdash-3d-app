@@ -219,13 +219,21 @@ describe('Ezras Kohanim floor over the whole Temple', () => {
     for (const [x, z] of [[61.25, -95], [61.25, -106], [67, -100], [64, -93.25]]) expect(under(x, z, roof + 3), `${x},${z}`).toBeCloseTo(parapet, 2);
     expect(under(64, -107.5, roof + 3)).toBeCloseTo(roof, 2);
     expect(under(60, -95, roof + 3)).toBeCloseTo(roof, 2);
-    // The muchni post stands on the kiyor's south side, outside the Ulam steps' x range (x -20 .. 20).
+    // The court-edge parapet follows each roof's own edge (the Madichin is 15 wide, x 52.5 .. 67.5; Parvah and Melach 16), with a return across the step at z -108.
+    for (const [x, z] of [[52.75, -100], [51.75, -116], [51.75, -132], [52.25, -108.25], [52.75, -108.25], [52, -139.75]]) expect(under(x, z, roof + 3), `${x},${z}`).toBeCloseTo(parapet, 2);
+    expect(under(53.25, -100, roof + 3)).toBeCloseTo(roof, 2);
+    expect(under(52, -100, roof + 3), 'no ledge outside the Madichin parapet').toBeLessThan(roof - 1);
+    // The muchni post stands on the kiyor's south side, outside the Ulam steps' x range (x -20 .. 20),
+    // and the kiyor's own body (3 amos) is clear of the steps' south end.
     const box = new THREE.Box3();
     const post = walls.find((w) => w.userData?.name === 'muchni-solid');
     box.setFromObject(post);
-    const [kx] = xz(-22, -65);
+    const [kx] = xz(byId.kiyor.position.x, byId.kiyor.position.z);
     expect(box.max.x).toBeLessThan(kx);
     expect(box.max.x).toBeLessThan(xz(-20, -65)[0]);
+    const body = walls.find((w) => w.userData?.name === 'kiyor-solid');
+    box.setFromObject(body);
+    expect(box.max.x).toBeLessThan(xz(-20 - 1, -65)[0]);
   });
 
   it('floors Palhedrin at the Cheil level and lands its stair and the Avtinas stair at the levels of their doors', () => {
@@ -234,8 +242,9 @@ describe('Ezras Kohanim floor over the whole Temple', () => {
     expect(under(-76, -23.5, K + 6)).toBeCloseTo(K, 2); // its upper landing
     expect(under(-70.5, -23)).toBeCloseTo(K, 2); // the Water Gate passage bay
     expect(under(63.75, -43.9)).toBeCloseTo(K + LIP, 2); // the tower's entry landing
-    expect(under(63.75, -49.1)).toBeCloseTo(K + 20 * AMAH + LIP, 2); // its top landing
-    expect(under(67.5, -58, K + 25 * AMAH)).toBeCloseTo(K + 20 * AMAH + LIP, 2); // the storey floor (cast from under its roof)
+    const storey = (byId.beis_avtinas.position.y - byId.azaras_kohanim.position.y) * AMAH; // 21.5 amos over the court
+    expect(under(63.75, -49.1)).toBeCloseTo(K + storey + LIP, 2); // its top landing, 21.5 amos up (43 half-amah steps)
+    expect(under(67.5, -58, K + 26 * AMAH)).toBeCloseTo(K + storey + LIP, 2); // the storey floor (cast from under its roof)
   });
 });
 

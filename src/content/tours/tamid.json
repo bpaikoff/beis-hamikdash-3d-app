@@ -159,7 +159,7 @@
     {
       "id": "limbs_on_kevesh",
       "at": "kevesh",
-      "camera": { "x": -52, "y": 2.5, "z": -52 },
+      "camera": { "x": -55, "y": 2.5, "z": -53.5 },
       "look": { "x": -38, "z": -44 },
       "dwell": 12,
       "title": { "he": "ניתוח האברים והנחתם על הכבש", "en": "Dismembering; the Limbs on the Kevesh" },
@@ -227,7 +227,7 @@
     {
       "id": "shir_shel_yom",
       "at": "duchan",
-      "offset": { "dx": 0, "dz": 3.75 },
+      "offset": { "dx": 0, "dz": 5.5 },
       "look": "duchan",
       "dwell": 14,
       "title": { "he": "שיר של יום על הדוכן", "en": "The Levites' Song on the Duchan" },

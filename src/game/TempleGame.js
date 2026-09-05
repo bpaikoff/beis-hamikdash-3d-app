@@ -13,6 +13,8 @@ import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { mulberry32 } from './random.js';
 import { areas, byId, hotspots, worldBounds, worldPos, levelWorldY } from '../content/index.js';
 import { AMAH } from '../content/units.js';
+import { byTourId } from '../content/tours/index.js';
+import { Tour } from './Tour.js';
 import { Hotspots } from './Hotspots.js'; // HUD: in-scene labels
 import { TouchControls, isTouchDevice } from './TouchControls.js'; // HUD: virtual joystick
 
@@ -236,8 +238,10 @@ export class TempleGame {
     this.setupControls();
     this.hotspotLabels = new Hotspots(this.camera, this.container, this.store); // HUD: in-scene labels
     if (isTouchDevice()) this.touch = new TouchControls(this.container, this.player); // HUD: joystick + drag-look
-    this.store.setState({ loading: null });
     const q = new URLSearchParams(window.location.search);
+    // `?tour=tamid[&stop=N]` (N 1-based): stand at the stop before the first frame.
+    if (q.get('tour') && byTourId[q.get('tour')]) this.startTour(q.get('tour'), (Number(q.get('stop')) || 1) - 1);
+    this.store.setState({ loading: null });
     // Test hooks (scripts/walk.mjs, scripts/screenshot.mjs). ?render=0 keeps the simulation
     // running at full rAF speed without drawing; ?step=<seconds> fixes the frame delta.
     this.renderEnabled = q.get('render') !== '0';
@@ -251,6 +255,11 @@ export class TempleGame {
       get player() {
         return this.game.player;
       },
+      /** The running guided tour (game/Tour.js), or null; `state` is 'dwell' once it stands at a stop. */
+      get tour() {
+        return this.game.tour ?? null;
+      },
+      startTour: (id, stop = 0) => this.startTour(id, stop),
       /** Walk without pointer lock (headless drivers cannot lock the pointer). */
       lock: () => {
         this.player.isLocked = true;
@@ -295,6 +304,22 @@ export class TempleGame {
   }
 
   /**
+   * Start (or restart) the guided tour `id` at stop `stop` (0-based). The Tour drives the
+   * camera from animate() instead of the player until it is stopped (Escape / Exit).
+   */
+  startTour(id = 'tamid', stop = 0) {
+    const data = byTourId[id];
+    if (!data || !this.player) return null;
+    if (this.tour?.data !== data) {
+      this.tour?.stop();
+      this.tour = new Tour(this, data);
+    }
+    this.tour.start(stop);
+    this.store.setState({ tourCtl: this.tour, selected: null });
+    return this.tour;
+  }
+
+  /**
    * RenderPass -> UnrealBloomPass -> OutputPass on an MSAA half-float target. Tone
    * mapping and the sRGB transfer happen in OutputPass (it reads renderer.toneMapping),
    * so the renderer settings above stay the single source of truth. Without post-fx
@@ -331,6 +356,7 @@ export class TempleGame {
   setupControls() {
     const p = this.player;
     this.on(document, 'keydown', (e) => {
+      if (this.tour?.active) return; // the rail drives the camera; the TourCard owns the keys
       if (e.code === 'KeyW' || e.code === 'ArrowUp') p.moveF = true;
       if (e.code === 'KeyS' || e.code === 'ArrowDown') p.moveB = true;
       if (e.code === 'KeyA' || e.code === 'ArrowLeft') p.moveL = true;
@@ -360,6 +386,7 @@ export class TempleGame {
   }
 
   async requestLock() {
+    if (this.tour?.active) return; // the tour reads without the pointer
     if (document.pointerLockElement === this.container) return;
     try {
       await this.container.requestPointerLock();
@@ -409,7 +436,8 @@ export class TempleGame {
     this.raf = requestAnimationFrame(() => this.animate());
     if (window.__mikdash?.paused) return; // screenshot tooling holds the last frame
     const delta = this.fixedStep || Math.min(this.clock.getDelta(), 0.1);
-    this.player.update(delta);
+    if (this.tour?.active) this.tour.update(delta);
+    else this.player.update(delta);
     this.characters.update(delta);
     this.particles.update(delta, this.camera);
     this.checkLocation();
@@ -446,6 +474,9 @@ export class TempleGame {
     for (const off of this.listeners) off();
     this.listeners = [];
     if (document.pointerLockElement === this.container) document.exitPointerLock();
+    this.tour?.stop();
+    this.tour = null;
+    this.store.setState({ tourCtl: null });
     this.hotspotLabels?.dispose(); // HUD
     this.hotspotLabels = null;
     this.touch?.dispose(); // HUD

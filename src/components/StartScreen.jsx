@@ -1,4 +1,7 @@
 import { store, useStore } from '../store.js';
+import { byTourId } from '../content/tours/index.js';
+
+const TOUR = byTourId.tamid;
 
 const PERIODS = [
   { id: 'bayis_sheni', he: 'בית שני', en: 'Bayis Sheni' },
@@ -8,9 +11,11 @@ const PERIODS = [
 /**
  * Landing panel: Hebrew date, a one-paragraph description, the period toggle (writes
  * store.period; TempleGame rebuilds its hotspot list on change) and the Enter button.
- * `onEnter` runs inside the click so it can also request pointer lock.
+ * `onEnter` runs inside the click so it can also request pointer lock. `onTour` enters
+ * and starts the guided tour of the morning Tamid instead (no pointer lock: the tour
+ * card is read and clicked).
  */
-export function StartScreen({ hebrewDate, webgl, onEnter }) {
+export function StartScreen({ hebrewDate, webgl, onEnter, onTour }) {
   const period = useStore((s) => s.period);
   return (
     <div className="start-screen">
@@ -50,7 +55,15 @@ export function StartScreen({ hebrewDate, webgl, onEnter }) {
         </fieldset>
 
         {webgl ? (
-          <button type="button" className="start-btn" onClick={onEnter}>Enter the Temple</button>
+          <div className="start-actions">
+            <button type="button" className="start-btn" onClick={() => onEnter()}>Enter the Temple</button>
+            {TOUR && onTour && (
+              <button type="button" className="start-btn start-btn-tour" onClick={onTour} title={TOUR.intro.en}>
+                <span lang="en">Take the tour</span>
+                <span className="start-btn-sub" lang="en">{TOUR.title.en} · {TOUR.stops.length} stops</span>
+              </button>
+            )}
+          </div>
         ) : (
           <p className="footer">This walkthrough needs WebGL 2, which this browser does not provide.</p>
         )}

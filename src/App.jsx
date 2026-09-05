@@ -10,8 +10,10 @@ import { HotspotCard } from './components/HotspotCard.jsx';
 import { AskPanel } from './components/AskPanel.jsx';
 import { LockOverlay } from './components/LockOverlay.jsx';
 import { StartScreen } from './components/StartScreen.jsx';
+import { TourCard } from './components/TourCard.jsx';
 import { store, useStore } from './store.js';
 import { byId } from './content/index.js';
+import { byTourId } from './content/tours/index.js';
 
 const hasWebGL2 = () => {
   try {
@@ -21,8 +23,10 @@ const hasWebGL2 = () => {
   }
 };
 
+// `?tour=<id>` is a deep link into a guided tour: TempleGame starts it once the scene is built.
 const autostart = () => new URLSearchParams(window.location.search).has('cam') ||
   new URLSearchParams(window.location.search).has('at') ||
+  Boolean(byTourId[new URLSearchParams(window.location.search).get('tour')]) ||
   new URLSearchParams(window.location.search).get('autostart') === '1';
 
 // ============================================================================
@@ -31,6 +35,7 @@ const autostart = () => new URLSearchParams(window.location.search).has('cam') |
 export default function BeisHamikdash3D() {
   const containerRef = useRef(null);
   const gameRef = useRef(null);
+  const pendingTour = useRef(null); // tour id the start screen asked for; started once the game is ready
   const [started, setStarted] = useState(autostart);
   const webgl = useMemo(() => hasWebGL2(), []);
 
@@ -43,6 +48,7 @@ export default function BeisHamikdash3D() {
   const debug = useStore((s) => s.debug);
   const lang = useStore((s) => s.lang);
   const askOpen = useStore((s) => s.askOpen);
+  const tour = useStore((s) => s.tour);
 
   const hebrewDate = useMemo(() => HebrewCalendar.getDate(), []);
   const korbanos = useMemo(() => Korbanos.getDaily(hebrewDate), [hebrewDate]);
@@ -60,6 +66,14 @@ export default function BeisHamikdash3D() {
         if (!game.disposed && !store.getState().error) store.setState({ selected: at });
       });
     }
+    // "Take the tour" on the start screen: begin once the first frame is in.
+    const wanted = pendingTour.current;
+    if (wanted) {
+      pendingTour.current = null;
+      game.ready.then(() => {
+        if (!game.disposed && !store.getState().error) game.startTour(wanted, 0);
+      });
+    }
     return () => {
       game.dispose();
       gameRef.current = null;
@@ -69,9 +83,12 @@ export default function BeisHamikdash3D() {
   const t = (obj) => (obj ? obj[lang] ?? obj.en : '');
 
   // Start and take the pointer in the same user gesture; the game syncs the lock state once
-  // its controls exist. Browsers without pointer lock (touch) just start.
-  const enter = () => {
+  // its controls exist. Browsers without pointer lock (touch) just start. A tour runs
+  // without the pointer (the card must stay clickable), so it does not take it.
+  const enter = (opts = {}) => {
+    if (opts.tour) pendingTour.current = opts.tour;
     setStarted(true);
+    if (opts.tour) return;
     const el = containerRef.current;
     try {
       el?.requestPointerLock?.()?.catch?.(() => {});
@@ -82,9 +99,9 @@ export default function BeisHamikdash3D() {
 
   return (
     <>
-      <div className="game-container" ref={containerRef} tabIndex={-1}>
+      <div className={`game-container${tour ? ' tour-active' : ''}`} ref={containerRef} tabIndex={-1}>
         {started && !loading && !error && (
-          <div className={`overlay${askOpen ? ' ask-open' : ''}`}>
+          <div className={`overlay${askOpen ? ' ask-open' : ''}${tour ? ' tour-active' : ''}`}>
             <div className="crosshair" aria-hidden="true"><div className="crosshair-dot"></div></div>
 
             <div className="hud-top">
@@ -105,6 +122,7 @@ export default function BeisHamikdash3D() {
 
             <HotspotCard />
             <AskPanel />
+            <TourCard />
             <LockOverlay />
 
             {showKorbanos && (
@@ -162,7 +180,7 @@ export default function BeisHamikdash3D() {
           </div>
         )}
 
-        {!started && <StartScreen hebrewDate={hebrewDate} webgl={webgl} onEnter={enter} />}
+        {!started && <StartScreen hebrewDate={hebrewDate} webgl={webgl} onEnter={enter} onTour={() => enter({ tour: 'tamid' })} />}
       </div>
     </>
   );

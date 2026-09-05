@@ -95,15 +95,19 @@ export const routes = {
     p(50, -20, K),
   ],
 
-  // Lishkas HaGazis (both halves) and its closed door to the Cheil in the chol half.
+  // Lishkas HaGazis (both halves): the chol half past the Sanhedrin's benches to its
+  // south wall (the door to the Cheil is at the Cheil level, in the vestibule below:
+  // stairs.mjs), and round the stair well's parapet at its east end.
   azarah_gazis: [
     p(-45, -103, K),
     p(-56, -103, K),
     at('lishkas_hagazis', { level: K }),
-    p(-70, -96, K),
-    p(-70, -110, K),
+    p(-72, -100, K),
+    p(-72, -110, K),
     p(-79, -110, K, blocked),
-    p(-70, -110, K),
+    p(-72, -100, K),
+    p(-72, -90.5, K),
+    p(-66, -90.5, K),
     at('lishkas_hagazis', { level: K }),
     p(-56, -103, K),
     p(-45, -103, K),
@@ -223,7 +227,8 @@ export const routes = {
 
   // Beis HaMoked: the gate, the hall, each of the four corner chambers (children of the
   // entry, so given by position: Telaei Korban, Osei Lechem HaPanim, Avnei HaMizbeach,
-  // Beis HaTevilah) through its door, and the closed gate to the Cheil.
+  // Beis HaTevilah) through its door, and the closed gate to the Cheil, reached along
+  // z -15 past the stair well's parapet (x 68 .. 71, z -14 .. -8.5; stairs.mjs).
   azarah_beis_hamoked: [
     p(40, -14, K),
     p(50, -14, K),
@@ -240,10 +245,11 @@ export const routes = {
     p(66.5, -20, K),
     p(76.5, -20, K),
     p(66.5, -20, K),
-    p(66.5, -14, K),
-    p(80.5, -14, K),
+    p(66.5, -15, K),
+    p(80.5, -15, K),
     p(84, -14, K, blocked),
-    p(66.5, -14, K),
+    p(80.5, -15, K),
+    p(66.5, -15, K),
     p(56, -14, K),
     p(40, -14, K),
   ],

@@ -6,6 +6,7 @@ import { areas, byId, worldBounds, worldPos, levelWorldY } from '../../content/i
 import { CONFIG } from '../../config.js';
 import { AMAH, toWorld } from '../../content/units.js';
 import { routes } from '../../../scripts/walk-routes/azarah.mjs';
+import { routes as stairRoutes } from '../../../scripts/walk-routes/stairs.mjs';
 
 /**
  * Walks every Azarah route of scripts/walk-routes/azarah.mjs with the real
@@ -237,10 +238,25 @@ describe('Ezras Kohanim floor over the whole Temple', () => {
     expect(under(63.75, -49.1)).toBeCloseTo(K + 20 * AMAH + LIP, 2); // its top landing
     expect(under(67.5, -58, K + 25 * AMAH)).toBeCloseTo(K + 20 * AMAH + LIP, 2); // the storey floor (cast from under its roof)
   });
+
+  it('floors the Beis HaMoked and Gazis vestibules at the Cheil level and lands their stairs in the wells', () => {
+    const under = (x, z, from = 200) => player.getFloorHeight(...xz(x, z), from);
+    const cheil = levelWorldY('cheil');
+    const below = K - 0.5; // under the chamber floor slabs
+    for (const [x, z] of [[78, -14], [72, -20], [-72, -110], [-70, -100]]) expect(under(x, z, below), `${x},${z}`).toBeCloseTo(cheil + 0.09 * AMAH, 2); // the vestibule floors, cast from under the chamber floors
+    expect(under(70, -15, below)).toBeCloseTo(K + LIP - 5 * AMAH, 2); // landing L2 under the Beis HaMoked hall
+    expect(under(69.5, -8.75)).toBeCloseTo(K + LIP, 2); // the top tread in the well, level with the hall floor
+    expect(under(69.5, -13.25)).toBeCloseTo(K + LIP - 4.5 * AMAH, 2); // the first tread of flight C, seen from above through the well
+    expect(under(-70.5, -98.5, below)).toBeCloseTo(K + LIP - 5 * AMAH, 2); // landing L2 under the Gazis
+    expect(under(-69.5, -92.25)).toBeCloseTo(K + LIP, 2);
+    expect(under(-69.5, -96.75)).toBeCloseTo(K + LIP - 4.5 * AMAH, 2);
+    expect(under(75, -14)).toBeCloseTo(K + LIP, 2); // the hall floor over the vestibule
+    expect(under(-72, -103)).toBeCloseTo(K + LIP, 2);
+  });
 });
 
-describe('Azarah walking routes (scripts/walk-routes/azarah.mjs)', () => {
-  for (const [name, waypoints] of Object.entries(routes)) {
+describe('Azarah walking routes (scripts/walk-routes/azarah.mjs, stairs.mjs)', () => {
+  for (const [name, waypoints] of [...Object.entries(routes), ...Object.entries(stairRoutes)]) {
     it(name, () => {
       const failures = walkRoute(waypoints);
       expect(failures, failures.join('\n')).toEqual([]);

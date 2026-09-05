@@ -1,0 +1,241 @@
+{
+  "sets": {
+    "ashlar": {
+      "assetId": "Tiles143",
+      "page": "https://ambientcg.com/view?id=Tiles143",
+      "url": "https://ambientcg.com/get?file=Tiles143_1K-JPG.zip",
+      "license": "CC0-1.0",
+      "zipSha256": "afbda7adaf4c0048a9224a09ab326fe0f8313e9add1343ad8c09c157a98d881f",
+      "use": "Jerusalem limestone ashlar: court and chamber walls (stone)",
+      "files": {
+        "color.jpg": {
+          "source": "Tiles143_1K-JPG_Color.jpg",
+          "bytes": 1308964,
+          "sha256": "1ac88787cb3965de38231c59072cb6eddc2677f731b97788768e4da63d195185"
+        },
+        "normal.jpg": {
+          "source": "Tiles143_1K-JPG_NormalGL.jpg",
+          "bytes": 500845,
+          "sha256": "8ac51be0a6631cb104add1d516048b6fdd113c9af049c35f12147ba52a67d806"
+        },
+        "roughness.jpg": {
+          "source": "Tiles143_1K-JPG_Roughness.jpg",
+          "bytes": 550105,
+          "sha256": "ec1960dcc4eec4e6f9d7789124ae2bfd7a23170b72ecab72d2bdf8a6fdbcfe0b"
+        }
+      }
+    },
+    "limestone": {
+      "assetId": "Travertine009",
+      "page": "https://ambientcg.com/view?id=Travertine009",
+      "url": "https://ambientcg.com/get?file=Travertine009_1K-JPG.zip",
+      "license": "CC0-1.0",
+      "zipSha256": "09fa1ce1cd590e87ed4053864ebaf0186718fba6373559a8458eb4fa6146fdb7",
+      "use": "fine dressed limestone: altar, kiyor, steps, gate frames (stoneFine, stonePolished)",
+      "files": {
+        "color.jpg": {
+          "source": "Travertine009_1K-JPG_Color.jpg",
+          "bytes": 922573,
+          "sha256": "6561c87d92aef321aef4095fbcc5518cec4d711e642be6beaa90d13829e6cd2b"
+        },
+        "normal.jpg": {
+          "source": "Travertine009_1K-JPG_NormalGL.jpg",
+          "bytes": 332407,
+          "sha256": "635256a78537253a2d2bc5fef5fcda6e4e03349b960c57f15cf721b7cf5ba098"
+        },
+        "roughness.jpg": {
+          "source": "Travertine009_1K-JPG_Roughness.jpg",
+          "bytes": 298778,
+          "sha256": "f4094c2149e257f4b6e17e5c5da70101fcbffaf0ce4016ab5d6aac7e45112e37"
+        },
+        "ao.jpg": {
+          "source": "Travertine009_1K-JPG_AmbientOcclusion.jpg",
+          "bytes": 37077,
+          "sha256": "6333a47aa0ee5007da41f095aad67536658a68cdd88a3d21e7dd4469fdb6389b"
+        }
+      }
+    },
+    "limestoneTiles": {
+      "assetId": "Tiles139",
+      "page": "https://ambientcg.com/view?id=Tiles139",
+      "url": "https://ambientcg.com/get?file=Tiles139_1K-JPG.zip",
+      "license": "CC0-1.0",
+      "zipSha256": "0ac4f6e094874948027a1477ad4b9e4986d48ccede608ae59874672ab46265db",
+      "use": "limestone floor slabs (floor)",
+      "files": {
+        "color.jpg": {
+          "source": "Tiles139_1K-JPG_Color.jpg",
+          "bytes": 1118671,
+          "sha256": "0cf149289117110beea32b4e2e8d2b402d758edefbd1ca1987173fdaffca651b"
+        },
+        "normal.jpg": {
+          "source": "Tiles139_1K-JPG_NormalGL.jpg",
+          "bytes": 645030,
+          "sha256": "0e569d9e44bd3eb7ca2b79ee343c37cdd1a2adead0f25a69dc6b2fce79dbe7c4"
+        },
+        "roughness.jpg": {
+          "source": "Tiles139_1K-JPG_Roughness.jpg",
+          "bytes": 577266,
+          "sha256": "2b1d09518bd6baf4f36a2109f5c811fe740e2dbc597f552861fae0a27fe361c1"
+        }
+      }
+    },
+    "marbleWhite": {
+      "assetId": "Marble021",
+      "page": "https://ambientcg.com/view?id=Marble021",
+      "url": "https://ambientcg.com/get?file=Marble021_1K-JPG.zip",
+      "license": "CC0-1.0",
+      "zipSha256": "7e75982560079476f6051666985553deb3eb77b07d2923a12d0665733b8f043e",
+      "use": "white marble: Ulam, Heichal, chamber floors (marbleW)",
+      "files": {
+        "color.jpg": {
+          "source": "Marble021_1K-JPG_Color.jpg",
+          "bytes": 1067026,
+          "sha256": "3d3f3b3dd4730b22aeb72cc10ba34a658fb58282fc64e9e867bd67382c98a777"
+        },
+        "normal.jpg": {
+          "source": "Marble021_1K-JPG_NormalGL.jpg",
+          "bytes": 339360,
+          "sha256": "4e5fb0adb06f81707c4cb3aebf67bde399e0c2098ee2e03d0f2745a24af3b728"
+        },
+        "roughness.jpg": {
+          "source": "Marble021_1K-JPG_Roughness.jpg",
+          "bytes": 348218,
+          "sha256": "5a20d923f9f048fa88ffb445038cca0c7973cbe0a88bfd8822e7d10348f1e1fb"
+        }
+      }
+    },
+    "marbleRose": {
+      "assetId": "Onyx010",
+      "page": "https://ambientcg.com/view?id=Onyx010",
+      "url": "https://ambientcg.com/get?file=Onyx010_1K-JPG.zip",
+      "license": "CC0-1.0",
+      "zipSha256": "e9212c2c6d5696c1ddee277d0b31091f95634e5fe0377865aff5b9f4c3d747e9",
+      "use": "rose / red-veined marble (marbleR)",
+      "files": {
+        "color.jpg": {
+          "source": "Onyx010_1K-JPG_Color.jpg",
+          "bytes": 1319866,
+          "sha256": "220e8a1efa603164472f4e872fafbe238f822fe711ff51721589924c06138f98"
+        },
+        "normal.jpg": {
+          "source": "Onyx010_1K-JPG_NormalGL.jpg",
+          "bytes": 309494,
+          "sha256": "2cd2e33420caf2e8fd5b29c7c5e171b8aebb7357328029b0df60311fdd9830b0"
+        },
+        "roughness.jpg": {
+          "source": "Onyx010_1K-JPG_Roughness.jpg",
+          "bytes": 269535,
+          "sha256": "710b49dc40b7fc3a2881c19cfa52cdaa5cadfefe23fb8fa3dfff3d148fa99030"
+        }
+      }
+    },
+    "cedar": {
+      "assetId": "Wood030",
+      "page": "https://ambientcg.com/view?id=Wood030",
+      "url": "https://ambientcg.com/get?file=Wood030_1K-JPG.zip",
+      "license": "CC0-1.0",
+      "zipSha256": "0ce0b42f0c9940b0f347f842005567ca643c2318c91a212bc157a0ae3edcb861",
+      "use": "cedar panelling, doors, beams (cedar)",
+      "files": {
+        "color.jpg": {
+          "source": "Wood030_1K-JPG_Color.jpg",
+          "bytes": 1476493,
+          "sha256": "087b731c661da3f43661df61fc7915120b45956911267b1138f4f93bd5325a2d"
+        },
+        "normal.jpg": {
+          "source": "Wood030_1K-JPG_NormalGL.jpg",
+          "bytes": 1372931,
+          "sha256": "1f6410a1a13a4288187ea17368adb41038106e27042013fe77b76b9bff3ba230"
+        },
+        "roughness.jpg": {
+          "source": "Wood030_1K-JPG_Roughness.jpg",
+          "bytes": 458496,
+          "sha256": "ef77ed87c9c5867b2ec203c11e62e89ec8d934bed45891513ff1dc50510a925a"
+        }
+      }
+    },
+    "acacia": {
+      "assetId": "Wood023",
+      "page": "https://ambientcg.com/view?id=Wood023",
+      "url": "https://ambientcg.com/get?file=Wood023_1K-JPG.zip",
+      "license": "CC0-1.0",
+      "zipSha256": "944e3eef179ccadda87a223374f717a1b52e23aa816f8f15ef8cd7e413932e7d",
+      "use": "acacia wood: Aron, Shulchan cores (acacia)",
+      "files": {
+        "color.jpg": {
+          "source": "Wood023_1K-JPG_Color.jpg",
+          "bytes": 850783,
+          "sha256": "0c8f440e6c620ea5488838b5ea9929730ff317223bea8b03eeb34ab227db99e4"
+        },
+        "normal.jpg": {
+          "source": "Wood023_1K-JPG_NormalGL.jpg",
+          "bytes": 1432910,
+          "sha256": "598cf5f006648bebf63d909da358a26c324dd952af74d961a62c99ff499fc18e"
+        },
+        "roughness.jpg": {
+          "source": "Wood023_1K-JPG_Roughness.jpg",
+          "bytes": 515315,
+          "sha256": "a7516d2c52f82c45ce5be0591f39ba7d0fe5aa551fbcfa879cab9cf863d62cb8"
+        }
+      }
+    },
+    "sand": {
+      "assetId": "Ground093C",
+      "page": "https://ambientcg.com/view?id=Ground093C",
+      "url": "https://ambientcg.com/get?file=Ground093C_1K-JPG.zip",
+      "license": "CC0-1.0",
+      "zipSha256": "5f1a1ec87a6d51e7a0391928a6ee9bb862b7e41524c36e0964eaa15c83630dd2",
+      "use": "dusty ground on Har HaBayis (ground)",
+      "files": {
+        "color.jpg": {
+          "source": "Ground093C_1K-JPG_Color.jpg",
+          "bytes": 563256,
+          "sha256": "947ebef9b25cc90c315d4d3008fe640d61fc95b713ea31053144fedd11dea51c"
+        },
+        "normal.jpg": {
+          "source": "Ground093C_1K-JPG_NormalGL.jpg",
+          "bytes": 1058031,
+          "sha256": "fcc02973d605291844ce9c8f94769fcff9617bb7cba11c8c68cbda0d7b0546f9"
+        },
+        "roughness.jpg": {
+          "source": "Ground093C_1K-JPG_Roughness.jpg",
+          "bytes": 593683,
+          "sha256": "284619748a1cb65f55778e01ba1dc3291238e0087c52c78c9459a8cd22fbc156"
+        },
+        "ao.jpg": {
+          "source": "Ground093C_1K-JPG_AmbientOcclusion.jpg",
+          "bytes": 178366,
+          "sha256": "4d7556344ed8f3255da14cde62ddac44ffd427cf74d01e3a7310f2da7534de4c"
+        }
+      }
+    },
+    "gold": {
+      "assetId": "Metal048C",
+      "page": "https://ambientcg.com/view?id=Metal048C",
+      "url": "https://ambientcg.com/get?file=Metal048C_1K-JPG.zip",
+      "license": "CC0-1.0",
+      "zipSha256": "c24d2f8b82d1ed5e876d6ceae4bedff76f32a5d565ecf21e2b370e56df61fb14",
+      "use": "burnished gold: normal + roughness only, the albedo stays procedural (gold, goldEng)",
+      "files": {
+        "color.jpg": {
+          "source": "Metal048C_1K-JPG_Color.jpg",
+          "bytes": 871864,
+          "sha256": "35ad052e3e29aa63523e63e2dd6b62e2466c56e8a77a5dbee4947199e459e58c"
+        },
+        "normal.jpg": {
+          "source": "Metal048C_1K-JPG_NormalGL.jpg",
+          "bytes": 545805,
+          "sha256": "300bb39b55aba9e60cfa1e991ebdfe5f4c0fb69c0f1a4defa4527fbb48a5a9ca"
+        },
+        "roughness.jpg": {
+          "source": "Metal048C_1K-JPG_Roughness.jpg",
+          "bytes": 539353,
+          "sha256": "f8e84de90c62ce0a7f5c59a3b1af4a3a1c23905ea4707a635646437639b1a21d"
+        }
+      }
+    }
+  },
+  "fetchedAt": "2026-09-05",
+  "source": "https://ambientcg.com (CC0 1.0)"
+}

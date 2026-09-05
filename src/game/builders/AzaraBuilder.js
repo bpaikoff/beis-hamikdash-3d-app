@@ -211,8 +211,11 @@ export class AzaraBuilder extends CourtBuilder {
    * North wall: Nitzotz (= Yechonya), Korban, Beis HaMoked (= HaShir) per Middot 1:5 / 2:6,
    * Shaar HaNashim, the hall and the Avtinas stair tower straddling it. The Avtinas storey
    * straddles the wall too, so its z range is cut from the run and the wall under its
-   * floor is built separately with the Korban gate in it (the storey's floor slab is the
-   * gate's lintel); above the floor the storey's own walls carry the wall line.
+   * floor is built separately with the Korban gate in it; above the floor the storey's
+   * own walls carry the wall line. The storey's floor (y 24) leaves 1.5 amos between the
+   * gate's top (22.5) and the underside of its slab (23.2), so the gate's frame keeps a
+   * lintel there, capped at the slab (`frameTop`); at the earlier y 22.5 the cap fell
+   * below the gate's top and the lintel was dropped.
    */
   buildNorthWall() {
     const { z1, z2 } = this.hall;
@@ -229,8 +232,9 @@ export class AzaraBuilder extends CourtBuilder {
           { at: (storey.z1 + storey.z2) / 2, w: storey.z2 - storey.z1, cut: true },
         ],
       });
-      // Under the storey, up to the underside of its floor slab; the tower's own wall
-      // closes z -51 .. -50 (buildBeisAvtinas), so the run stops at the tower.
+      // Under the storey, up to the underside of its floor slab (the gate's lintel is
+      // capped there too); the tower's own wall closes z -51 .. -50 (buildBeisAvtinas),
+      // so the run stops at the tower.
       const under = storey.floor - SLAB;
       this.wallRunA({
         along: 'z', across: [X_IN, X_OUT], from: storey.z1, to: Math.min(tower.z1, storey.z2), y1: GROUND, y2: under, mat: this.mat.stone,
@@ -477,9 +481,10 @@ export class AzaraBuilder extends CourtBuilder {
   /**
    * Beis Avtinas: an upper storey over a court gate on whichever wall the content puts it
    * (north, over Shaar HaKorban, per Yoma 19a), reached by a stair tower beside the
-   * gate's east jamb in the storey's own x band: four flights of ten half-amah steps
-   * (20 amos, the gate's height) round the tower's walls, a door from the court in its
-   * east face and a door into the storey at the top. The Kohen Gadol's first immersion
+   * gate's east jamb in the storey's own x band: four flights of half-amah steps round
+   * the tower's walls (the storey's floor is 21.5 amos over the court: the 20-amah gate,
+   * its lintel and the floor slab, so 43 steps in flights of 11, 11, 11 and 10), a door
+   * from the court in its east face and a door into the storey at the top. The Kohen Gadol's first immersion
    * was on the roof of the Water Gate beside Palhedrin (Yoma 31a), so the mikveh sits on
    * the south wall top over that gate.
    */
@@ -523,12 +528,16 @@ export class AzaraBuilder extends CourtBuilder {
       const iz2 = tower.z2 - t;
       const landing = 2.5;
       const band = (iz2 - iz1) / 4;
-      const steps = 10;
-      const rise = (floor - yCourt) / (4 * steps); // 0.5
+      // Half-amah risers throughout (the Cheil steps' profile): the last flight is a step
+      // short, so the 43 steps close exactly on the storey's floor.
+      const rise = 0.5;
+      const total = Math.round((floor - yCourt) / rise); // 43
+      const flights = [0, 1, 2, 3].map((k) => Math.ceil((total - k) / 4)); // 11, 11, 11, 10
       const from = ix1 + landing;
       const to = ix2 - landing;
       let y = yCourt + LIP;
       for (let k = 0; k < 4; k++) {
+        const steps = flights[k];
         const za = iz2 - k * band;
         const zb = za - band;
         const up = k % 2 === 0; // even flights climb north (+x), odd ones back south

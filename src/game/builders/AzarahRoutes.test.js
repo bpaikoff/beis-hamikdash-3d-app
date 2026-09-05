@@ -234,8 +234,9 @@ describe('Ezras Kohanim floor over the whole Temple', () => {
     expect(under(-76, -23.5, K + 6)).toBeCloseTo(K, 2); // its upper landing
     expect(under(-70.5, -23)).toBeCloseTo(K, 2); // the Water Gate passage bay
     expect(under(63.75, -43.9)).toBeCloseTo(K + LIP, 2); // the tower's entry landing
-    expect(under(63.75, -49.1)).toBeCloseTo(K + 20 * AMAH + LIP, 2); // its top landing
-    expect(under(67.5, -58, K + 25 * AMAH)).toBeCloseTo(K + 20 * AMAH + LIP, 2); // the storey floor (cast from under its roof)
+    const storey = (byId.beis_avtinas.position.y - byId.azaras_kohanim.position.y) * AMAH; // 21.5 amos over the court
+    expect(under(63.75, -49.1)).toBeCloseTo(K + storey + LIP, 2); // its top landing, 21.5 amos up (43 half-amah steps)
+    expect(under(67.5, -58, K + 26 * AMAH)).toBeCloseTo(K + storey + LIP, 2); // the storey floor (cast from under its roof)
   });
 });
 

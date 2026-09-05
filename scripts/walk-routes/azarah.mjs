@@ -154,8 +154,9 @@ export const routes = {
   ],
 
   // Beis Avtinas: from the court beside the Korban gate into the stair tower (door on its
-  // east face, x 62.5 .. 65), up its four flights (bands 1.75 amos wide, landings at
-  // alternate ends) to the storey 20 amos up, into the storey, and back down.
+  // east face, x 62.5 .. 65), up its four flights of half-amah steps (11, 11, 11, 10; bands
+  // 1.75 amos wide, landings at alternate ends) to the storey 21.5 amos up, into the
+  // storey, and back down.
   azarah_avtinas: [
     p(60, -30, K),
     p(63.75, -38, K),

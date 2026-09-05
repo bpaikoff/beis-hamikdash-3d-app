@@ -8,11 +8,9 @@ these block the build; the routes and fuzz pass with the geometry as it stands.
 - `outside.position.y` is -19.5 amos but the environment ground plane is at world y 0
   (amos -13.6), flush with the mount. Nothing models the six-amah drop, and the Chuldah
   thresholds meet the ground with a 5 cm step.
-- `beis_hamoked`'s Cheil gate (north wall, z -19..-9) opens at the hall floor (y 2.5),
-  16 amos above the Cheil (-13.5), with nothing to climb. The hall's north wall at x 82.5
-  leaves one amah to the Soreg, so the Soreg opening opposite it leads to a strip the
-  player cannot enter. `lishkas_hagazis`' chol-side door (y 2.5, x -77.5, z -112..-108)
-  has the same problem.
+- The mikveh passage of Middot 1:9 (down from Beis HaMoked under the Birah) is not
+  built; the hall's Cheil gate is reached by the vestibule and stair under its chol half
+  (docs/content.md, GEO-D), and the hall's own north gateway stays closed above it.
 - `soreg.position.z` is 158 while its notes and the builder put the ring at 157.
 - `beis_avtinas` y 22.5 should be 24 (its floor is the storey over the Water Gate).
 - Slaughter tables and pillars sit one amah too far north; `kiyor` x should be -24 so its

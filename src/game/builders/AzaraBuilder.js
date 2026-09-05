@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CourtBuilder, GROUND, LIP, ROOM_WALL_T, SLAB, WALL_T } from './CourtBuilder.js';
+import { CHEIL_LIP, CourtBuilder, GROUND, LIP, ROOM_WALL_T, SLAB, WALL_T } from './CourtBuilder.js';
 import { instance } from '../instanced.js';
 import { AMAH } from '../../content/units.js';
 
@@ -29,6 +29,9 @@ const FRONTAGE_STEPS = 5;
 const FRONTAGE_RUN = 3;
 /** Jamb thickness of a gate frame (CourtBuilder.gateA), amos. */
 const FRAME_T = 1;
+/** The kodesh / chol line through a chamber that straddles a court wall (Yoma 25a): an inlaid strip in its floor, amos wide and high. */
+const LINE_W = 0.3;
+const LINE_H = 0.03;
 
 export class AzaraBuilder extends CourtBuilder {
   build() {
@@ -256,7 +259,17 @@ export class AzaraBuilder extends CourtBuilder {
    * Beis HaMoked: a domed hall straddling the north wall (Middot 1:6-8), its gate to the
    * Azarah at x 52.5 (threshold at the Ezras Kohanim level; the hall floor is at that
    * level too, y 2.5, and a flight down is built only if the content ever lowers it),
-   * a closed gate to the Cheil, four corner chambers and stone ledges.
+   * its gate to the Cheil (Middot 1:7) in its north wall, four corner chambers and
+   * stone ledges.
+   *
+   * The Cheil lies 16 amos below the hall floor, so the gate to it is built as a door
+   * at the Cheil level into a vestibule under the hall's chol half (x 67.5 .. 82.5,
+   * the Cheil pavement its floor), from which a switchback of 32 half-amah steps in
+   * three flights climbs to a well beside the kodesh line in the hall floor, between
+   * the two chol chambers and the hall's free cross ({@link CourtBuilder#switchbackA}).
+   * The hall's own north gateway, over the door, is kept closed. A reconstruction (the
+   * sources give the two gates and, in 1:9, a passage down to the mikveh, no stair);
+   * the kodesh half's base stays solid and the line is inlaid in the hall floor.
    */
   buildBeisHamoked() {
     const e = this.entry('beis_hamoked');
@@ -265,14 +278,27 @@ export class AzaraBuilder extends CourtBuilder {
     const floor = e.position.y;
     const h = 25; // temple.json gives 12, too low for the 20-amah gate (Middot 2:3); "large domed hall"
     const zc = gate.position.z;
+    const yPav = this.level('cheil') + CHEIL_LIP; // the Cheil pavement's top
+    const under = floor - SLAB; // the underside of the hall floor slab
     this.group('beis_hamoked', () => {
       this.roomA({
-        x1, x2, z1, z2, floor, h, base: GROUND, floorMat: this.mat.floor, roofMat: this.mat.stone, name: 'beis_hamoked',
+        x1, x2, z1, z2, floor, h, roofMat: this.mat.stone, name: 'beis_hamoked',
         doors: [
           { face: 's', at: zc, w: gate.geometry.w, h: gate.geometry.h, floor: this.yKohanim, entry: 'beis_hamoked_gate', labels: ['shaar_hashir'], frame: this.mat.stonePolished, doors: 'open', doorMat: this.mat.goldEng, threshold: true, name: 'beis_hamoked_gate' },
           { face: 'n', at: zc, w: gate.geometry.w, h: gate.geometry.h, floor: floor + LIP, frame: this.mat.stonePolished, doors: 'closed', doorMat: this.mat.goldEng, name: 'beis_hamoked north gate' },
         ],
       });
+      // The kodesh half stands on a solid base; the chol half on the vestibule.
+      this.wallA(x1, X_IN, z1, z2, GROUND, under, this.mat.stone);
+      this.roomA({
+        x1: X_IN, x2, z1, z2, floor: yPav, h: under - yPav, base: GROUND, floorMat: this.mat.floor, wallMat: this.mat.stone, roof: false, name: 'beis_hamoked vestibule',
+        doors: [{ face: 'n', at: zc, w: 5, h: 8, frame: this.mat.cedar, name: 'beis_hamoked cheil door' }],
+      });
+      const { well } = this.switchbackA({ x0: X_IN + ROOM_WALL_T, sx: 1, zFoot: zc + 0.5, floor: yPav + LIP, top: floor + LIP, ceiling: under, name: 'beis_hamoked' });
+      this.floorWithWellA(x1, x2, z1, z2, well, floor + LIP, this.mat.floor, 'beis_hamoked');
+      this.wellParapetA(well, floor + LIP, this.mat.stonePolished, 'beis_hamoked well parapet');
+      // The kodesh / chol line (Yoma 25a), inlaid across the hall floor.
+      this.decoA(X_IN - LINE_W / 2, X_IN + LINE_W / 2, z1 + ROOM_WALL_T, z2 - ROOM_WALL_T, floor + LIP, floor + LIP + LINE_H, this.mat.marbleR);
       // Down from the Azarah gate to the hall floor, when the hall lies below the court.
       if (this.yKohanim - floor - LIP > 0.01) {
         this.flightA({ axis: 'x', span: [zc - gate.geometry.w / 2, zc + gate.geometry.w / 2], from: x1 + 3.5, to: x1 + 1, yBase: floor + LIP, steps: 5, rise: (this.yKohanim - floor - LIP) / 5, mat: this.mat.marbleW, name: 'beis_hamoked steps' });
@@ -300,7 +326,16 @@ export class AzaraBuilder extends CourtBuilder {
     });
   }
 
-  /** Lishkas HaGazis straddles the south wall (Yoma 25a), half in the kodesh and half in the chol. */
+  /**
+   * Lishkas HaGazis straddles the south wall (Yoma 25a), half in the kodesh and half in
+   * the chol, with a door to each. The Cheil lies 16 amos below its floor, so the chol
+   * door is built at the Cheil level, in the outer wall of a vestibule under the chol
+   * half (x -77.5 .. -67.5, the Cheil pavement its floor), from which a switchback of
+   * 32 half-amah steps in three flights climbs to a well beside the kodesh line in the
+   * chamber floor, at its east end ({@link CourtBuilder#switchbackA}); a reconstruction.
+   * The Sanhedrin's benches keep the west of the chol half; the kodesh half's base is
+   * solid and the line is inlaid in the floor.
+   */
   buildLishkasHagazis() {
     const e = this.entry('lishkas_hagazis');
     const { w, d, h } = e.geometry;
@@ -308,19 +343,34 @@ export class AzaraBuilder extends CourtBuilder {
     const x2 = e.position.x + w / 2;
     const z1 = e.position.z - d / 2;
     const z2 = e.position.z + d / 2;
+    const floor = e.position.y;
+    const yPav = this.level('cheil') + CHEIL_LIP;
+    const under = floor - SLAB;
+    const t = ROOM_WALL_T;
+    const zDoor = z1 + 5; // -113: the Cheil door, in the west of the chol half beside the benches
     this.group('lishkas_hagazis', () => {
       this.roomA({
-        x1, x2, z1, z2, floor: e.position.y, h, base: GROUND, floorMat: this.mat.marbleW, wallMat: this.mat.stonePolished, name: 'lishkas_hagazis',
+        x1, x2, z1, z2, floor, h, wallMat: this.mat.stonePolished, name: 'lishkas_hagazis',
         doors: [
           { face: 'n', at: e.position.z, w: 5, h: 8, frame: this.mat.cedar, doors: 'open', doorMat: this.mat.cedar },
-          { face: 's', at: e.position.z - 7, w: 4, h: 7, frame: this.mat.cedar, doors: 'closed', doorMat: this.mat.cedar }, // to the Cheil, 16 amos below (no steps in the sources): kept closed
           { face: 'w', at: this.etzDoorX, w: 3, h: 7, frame: this.mat.cedar }, // into Lishkas HaEtz behind (Abba Shaul)
         ],
       });
-      // Seats of the Sanhedrin in a half-circle facing east (Sanhedrin 4:3): three tiers of benches.
-      for (let t = 0; t < 3; t++) this.decoA(x1 + 2 + t * 1.5, x1 + 3 + t * 1.5, z1 + 3 + t, z2 - 3 - t, e.position.y + LIP + t * 0.5, e.position.y + LIP + t * 0.5 + 0.6, this.mat.cedar);
+      this.wallA(-X_IN, x2, z1, z2, GROUND, under, this.mat.stone);
+      this.roomA({
+        x1, x2: -X_IN, z1, z2, floor: yPav, h: under - yPav, base: GROUND, floorMat: this.mat.floor, wallMat: this.mat.stone, roof: false, name: 'lishkas_hagazis vestibule',
+        doors: [{ face: 's', at: zDoor, w: 4, h: 7, frame: this.mat.cedar, name: 'lishkas_hagazis cheil door' }],
+      });
+      // Flight A runs along the outer wall, so it is 3 wide and needs no wall of its own;
+      // landing L1 ends against the chamber's east wall.
+      const { well } = this.switchbackA({ x0: -X_IN - t, sx: -1, zFoot: z2 - t - 8, floor: yPav + LIP, top: floor + LIP, ceiling: under, wA: 3, eWall: false, nWall: false, name: 'lishkas_hagazis' });
+      this.floorWithWellA(x1, x2, z1, z2, well, floor + LIP, this.mat.marbleW, 'lishkas_hagazis');
+      this.wellParapetA(well, floor + LIP, this.mat.stonePolished, 'lishkas_hagazis well parapet');
+      this.decoA(-X_IN - LINE_W / 2, -X_IN + LINE_W / 2, z1 + t, z2 - t, floor + LIP, floor + LIP + LINE_H, this.mat.marbleR);
+      // Seats of the Sanhedrin in a half-circle facing east (Sanhedrin 4:3): three tiers of benches, west of the stair head.
+      for (let k = 0; k < 3; k++) this.decoA(x1 + 2 + k * 1.5, x1 + 3 + k * 1.5, z1 + 3 + k, well.z1 - 2 - k, floor + LIP + k * 0.5, floor + LIP + k * 0.5 + 0.6, this.mat.cedar);
       // The court wall continues above the chamber.
-      this.decoA(-X_OUT, -X_IN, z1, z2, e.position.y + h + 1, WALL_TOP, this.mat.stone);
+      this.decoA(-X_OUT, -X_IN, z1, z2, floor + h + 1, WALL_TOP, this.mat.stone);
     });
   }
 

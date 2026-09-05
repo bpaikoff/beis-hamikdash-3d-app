@@ -3,14 +3,13 @@ import { CONFIG } from '../config.js';
 import { TextureFactory } from './TextureFactory.js';
 import { TempleBuilder } from './TempleBuilder.js';
 import { PlayerController } from './PlayerController.js';
-import { CharacterSystem } from './CharacterSystem.js';
+import { CharacterSystem, templePlacements } from './CharacterSystem.js';
 import { ParticleSystem } from './ParticleSystem.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
-import { mulberry32 } from './random.js';
 import { areas, byId, hotspots, worldBounds, worldPos, levelWorldY } from '../content/index.js';
 import { AMAH } from '../content/units.js';
 import { byTourId } from '../content/tours/index.js';
@@ -176,32 +175,17 @@ export class TempleGame {
 
     await this.setLoading('Placing Kohanim and animals...');
     this.characters = new CharacterSystem(this.scene, this.tex);
-    // Placements derive from the content JSON so they follow the geometry when it moves.
+    // The model files (public/assets/characters/) load once through the shared manager;
+    // placements derive from the content JSON (CharacterSystem.templePlacements) so they
+    // follow the geometry when it moves, and Characters.test.js probes every spot.
+    await this.characters.load();
+    if (this.disposed) return;
+    for (const p of templePlacements()) this.characters.place(p);
+    // Content-relative positions for the fire below (same helper templePlacements uses).
     const at = (id, dx = 0, dz = 0, level) => {
       const [x, y, z] = worldPos(byId[id]);
       return [x + dx, level ? levelWorldY(level) : y, z + dz];
     };
-    const kohanimY = levelWorldY('azaras_kohanim');
-    const yisraelY = levelWorldY('azaras_yisrael');
-    const nashimY = levelWorldY('ezras_nashim');
-    this.characters.createKohen(...at('mizbeach_hazahav', 0, 3, 'heichal'), true); // Kohen Gadol in the Heichal
-    // Kohanim around the altar and the slaughter area (x north/south of the altar, z east of it)
-    const [ax, , az] = at('mizbeach');
-    [[10, 12], [-10, 12], [14, -2], [-14, 6], [22, 4], [-22, -4], [6, 18], [-6, 18]]
-      .forEach(([dx, dz]) => this.characters.createKohen(ax + dx, kohanimY, az + dz));
-    // Yisraelim in the Ezras Yisrael, west of the Nicanor threshold
-    const [nx, , nz] = at('nicanor_gate');
-    [[8, -3], [-8, -3], [0, -4]].forEach(([dx, dz]) => this.characters.createKohen(nx + dx, yisraelY, nz + dz));
-    // People in the Ezras Nashim
-    const [ex, , ez] = at('ezras_nashim', 0, 0, 'ezras_nashim');
-    [[0, 6], [15, 10], [-15, 10], [10, -8], [-10, -8]].forEach(([dx, dz]) => this.characters.createKohen(ex + dx, nashimY, ez + dz));
-    // Animals waiting by the Tamid pen in the Kohanim court; doves over the courts
-    const rand = mulberry32(11); // same flock on every load
-    const [px, , pz] = at('tamid_lamb');
-    for (let i = 0; i < 8; i++) this.characters.createAnimal('sheep', px + (rand() - 0.5) * 8, pz + (rand() - 0.5) * 8);
-    for (let i = 0; i < 4; i++) this.characters.createAnimal('goat', px + 6 + (rand() - 0.5) * 6, pz + 6 + (rand() - 0.5) * 6);
-    for (let i = 0; i < 2; i++) this.characters.createAnimal('bull', px - 6 - i * 4, pz + 8);
-    for (let i = 0; i < 12; i++) this.characters.createDove(ex + (rand() - 0.5) * 60, nashimY + 12 + rand() * 10, ez + (rand() - 0.5) * 60);
 
     if (this.tex.total > this.tex.loaded) {
       await this.setLoading(`Loading textures ${this.tex.loaded}/${this.tex.total}...`);
@@ -438,7 +422,7 @@ export class TempleGame {
     const delta = this.fixedStep || Math.min(this.clock.getDelta(), 0.1);
     if (this.tour?.active) this.tour.update(delta);
     else this.player.update(delta);
-    this.characters.update(delta);
+    this.characters.update(delta, this.camera);
     this.particles.update(delta, this.camera);
     this.checkLocation();
     if (this.sky) this.sky.position.copy(this.camera.position);
@@ -482,6 +466,7 @@ export class TempleGame {
     this.touch?.dispose(); // HUD
     this.touch = null;
     this.particles?.dispose();
+    this.characters?.dispose();
     this.scene.traverse((o) => {
       o.geometry?.dispose?.();
       const mats = Array.isArray(o.material) ? o.material : o.material ? [o.material] : [];

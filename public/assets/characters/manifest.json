@@ -1,0 +1,53 @@
+{
+  "files": {
+    "kohen.glb": {
+      "pack": "universal-animation-library",
+      "page": "https://quaternius.itch.io/universal-animation-library",
+      "license": "CC0-1.0",
+      "zip": "Universal Animation Library[Standard].zip",
+      "zipSha256": "cc73fc4e495b82958207316596317a3f40b9fa38065bde1027937452da537724",
+      "entry": "Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb",
+      "clips": [
+        "Idle_Loop",
+        "Idle_Talking_Loop",
+        "Walk_Loop"
+      ],
+      "height": null,
+      "use": "rigged human (the UAL mannequin, 1.8 m, 8.5k vertices): every kohen, the Kohen Gadol and the Yisraelim, with the materials replaced at load",
+      "bytes": 1624540,
+      "sha256": "b0dd07131d1b28a0ee0c204b959e1b0546dc3110e25194d177b2f396a8884a8a"
+    },
+    "sheep.glb": {
+      "pack": "lowpoly-animated-animals",
+      "page": "https://quaternius.itch.io/lowpoly-animated-animals",
+      "license": "CC0-1.0",
+      "zip": "Farm Animals Animated  by Quaternius.zip",
+      "zipSha256": "b4bc5f209368cafc21962934e7d676cf1cfb1f746a363086cd9f45c4385db70e",
+      "entry": "FBX/Sheep.fbx",
+      "clips": [
+        "Idle"
+      ],
+      "height": 0.95,
+      "use": "sheep (also the goats, recoloured and narrowed) at the Tamid pen",
+      "bytes": 192496,
+      "sha256": "f11188e2a4f7db6781da13449893bb0886f6f7bb730c04cfdd2fbc28232bb70c"
+    },
+    "bull.glb": {
+      "pack": "lowpoly-animated-animals",
+      "page": "https://quaternius.itch.io/lowpoly-animated-animals",
+      "license": "CC0-1.0",
+      "zip": "Farm Animals Animated  by Quaternius.zip",
+      "zipSha256": "b4bc5f209368cafc21962934e7d676cf1cfb1f746a363086cd9f45c4385db70e",
+      "entry": "FBX/Cow.fbx",
+      "clips": [
+        "Idle"
+      ],
+      "height": 1.5,
+      "use": "bull (the pack's cow, recoloured dark) at the Tamid pen",
+      "bytes": 239424,
+      "sha256": "d4556dad1d61f0e0b779943c9751479d58e337123da9e6c7ad03a431eaf77636"
+    }
+  },
+  "fetchedAt": "2026-09-05",
+  "source": "https://quaternius.itch.io (CC0 1.0)"
+}

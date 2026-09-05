@@ -66,7 +66,7 @@ const SECTION = {
   xTaOut: 22, // ta band x +-16 .. +-22
   zWestTa: [-165, -171], // western ta 6
   zBack: -176, // its wall 5
-  ulamEndWallT: 5, // assumed equal to the front wall (not given in Middot)
+  ulamEndWallT: 5, // assumed equal to the front wall (not given in Middot); inside the 100 (Middot 4:7: 70 + 15 + 15)
 };
 
 export class HeichalBuilder extends BaseBuilder {
@@ -142,7 +142,7 @@ export class HeichalBuilder extends BaseBuilder {
 
   // --------------------------------------------------------------------------
   // Ezras Kohanim floor west of the altar: z -54 .. -187, x +-67.5, level 2.5,
-  // minus the footprint of the steps, the Ulam (x +-55) and the building (x +-35).
+  // minus the footprint of the steps, the Ulam (x +-50) and the building (x +-35).
   // GEO-B's Kohanim floor ends at z -54; this one starts there.
   // --------------------------------------------------------------------------
   buildWestCourtFloor() {
@@ -153,7 +153,7 @@ export class HeichalBuilder extends BaseBuilder {
     const zEast = byId.mizbeach.position.z - byId.mizbeach.geometry.d / 2; // -54, altar west face
     const ulam = byId.ulam.bounds; // x -50..50, z -92..-76
     const halfSteps = byId.maalos_ulam.geometry.w / 2; // 20
-    const xUlam = ulam.maxX + SECTION.ulamEndWallT; // 55
+    const xUlam = ulam.maxX; // 50, the outer face of the Ulam's end walls
     const floor = this.mat.floor;
     const slabs = [
       { x: [b.minX, -halfSteps], z: [zEast, ulam.maxZ] },
@@ -235,19 +235,33 @@ export class HeichalBuilder extends BaseBuilder {
     const zFront = b.maxZ; // -76
     const zIn = zFront - wallT; // -81
     const zBack = b.minZ; // -92
-    const xEnd = b.maxX + SECTION.ulamEndWallT; // 55
+    // Middot 4:7: the Ulam is 100 north-south, 15 beyond the 70-wide building on each
+    // side, so its end walls lie inside x +-50 (the court strips beside the building
+    // and the Beis HaMoked-side lishkos start at x +-51.5).
+    const xEnd = b.maxX; // 50, outer face of the end walls
+    const xIn = xEnd - SECTION.ulamEndWallT; // 45, interior
     const base = U - FT;
 
     // Foundation of the whole building from the court floor up to the floor slabs
-    // (Middot 4:6 counts a 6-amah foundation, which is exactly the 6-amah rise).
-    this.block(g, { x: [-xEnd, xEnd], y: [K - FT, base], z: [zFront, SECTION.zBack] }, this.mat.stone, {
+    // (Middot 4:6 counts a 6-amah foundation, which is exactly the 6-amah rise): the
+    // Ulam's footprint including its wings (x +-50) and, behind it, the 70-wide
+    // building (x +-35) so the court strips beside it stay clear.
+    // Both collide: the walls above start at the Ulam floor, so at court level the
+    // foundation is what keeps the player out of the building's footprint.
+    this.block(g, { x: [-xEnd, xEnd], y: [K - FT, base], z: [zFront, zBack] }, this.mat.stone, {
+      wall: true,
       name: 'building-foundation',
+      shadow: false,
+    });
+    this.block(g, { x: [-SECTION.xBuilding, SECTION.xBuilding], y: [K - FT, base], z: [zBack, SECTION.zBack] }, this.mat.stone, {
+      wall: true,
+      name: 'building-foundation-w',
       shadow: false,
     });
 
     // Floor (0.1 into the walls so no slab edge is coplanar with a wall face)
     // Adjoining slabs overlap by 0.1 amah so a ray on a seam always hits one of them.
-    this.floorAt(g, U, [b.minX - 0.1, b.maxX + 0.1], [zIn + 0.1, zBack + 0.1], this.mat.marbleW, 'ulam');
+    this.floorAt(g, U, [-xIn - 0.1, xIn + 0.1], [zIn + 0.1, zBack + 0.1], this.mat.marbleW, 'ulam');
     this.floorAt(g, U, [-doorW / 2 - 0.1, doorW / 2 + 0.1], [zFront + 0.1, zIn - 0.1], this.mat.marbleW, 'ulam-threshold');
 
     // Front wall with the opening; the lintel above it does not collide.
@@ -256,8 +270,8 @@ export class HeichalBuilder extends BaseBuilder {
     this.block(g, { x: [doorW / 2, xEnd], y: [base, U + H], z: [zFront, zIn] }, facade, { wall: true, name: 'ulam-front-n' });
     this.block(g, { x: [-doorW / 2, doorW / 2], y: [U + doorH, U + H], z: [zFront, zIn] }, facade, { name: 'ulam-lintel' });
     // End walls
-    this.block(g, { x: [-xEnd, b.minX], y: [base, U + H], z: [zFront, zBack] }, facade, { wall: true, name: 'ulam-end-s' });
-    this.block(g, { x: [b.maxX, xEnd], y: [base, U + H], z: [zFront, zBack] }, facade, { wall: true, name: 'ulam-end-n' });
+    this.block(g, { x: [-xEnd, -xIn], y: [base, U + H], z: [zFront, zBack] }, facade, { wall: true, name: 'ulam-end-s' });
+    this.block(g, { x: [xIn, xEnd], y: [base, U + H], z: [zFront, zBack] }, facade, { wall: true, name: 'ulam-end-n' });
 
     // Middot 3:7: five oak beams above the opening, the lowest one amah wider than
     // the opening on each side, each one above a further amah wider, a course of
@@ -297,7 +311,7 @@ export class HeichalBuilder extends BaseBuilder {
     const b = e.bounds; // x -10..10, z -138..-98
     const { wallT } = SECTION;
     const khk = byId.kodesh_hakodashim.bounds; // z -159..-139
-    const xEnd = byId.ulam.bounds.maxX + SECTION.ulamEndWallT; // 55, the Ulam wings share the east wall
+    const xEnd = byId.ulam.bounds.maxX; // 50, the Ulam wings share the east wall
     const base = U - FT;
     const zEastOut = byId.ulam.bounds.minZ; // -92
     const zEastIn = b.maxZ; // -98
@@ -500,7 +514,7 @@ export class HeichalBuilder extends BaseBuilder {
     const xIn = byId.heichal.bounds.maxX + SECTION.wallT; // 16
     const zEast = byId.ulam.bounds.minZ; // -92
     const zWest = byId.kodesh_hakodashim.bounds.minZ - SECTION.wallT; // -165
-    const xUlam = byId.ulam.bounds.maxX + SECTION.ulamEndWallT; // 55
+    const xUlam = byId.ulam.bounds.maxX; // 50
     const zFront = byId.ulam.bounds.maxZ; // -76
     this.block(g, { x: [-xIn, xIn], y: [U + H - 1, U + H], z: [zEast, zWest] }, this.mat.stone, { name: 'heichal-roof' });
     const p = 3;

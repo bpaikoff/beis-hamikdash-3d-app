@@ -28,6 +28,9 @@ function segment(from, to, radius) {
   );
 }
 
+/** Material of the invisible collision boxes (never rendered). */
+const SOLID_MAT = new THREE.MeshBasicMaterial({ visible: false });
+
 export class KeilimBuilder extends BaseBuilder {
   build() {
     this.redLine = new THREE.MeshStandardMaterial({ color: 0x8b0000, roughness: 0.8 });
@@ -70,6 +73,20 @@ export class KeilimBuilder extends BaseBuilder {
       this.floors.push(m);
     }
     g.add(m);
+    return m;
+  }
+
+  /**
+   * Invisible collision box (metres, group-local, y from the group's base) so a vessel
+   * blocks the player without its many small parts each becoming a wall box.
+   */
+  solid(g, { x = 0, z = 0, w, h, d, name }) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), SOLID_MAT);
+    m.position.set(x, h / 2, z);
+    m.visible = false;
+    m.userData = { isWall: true, name: name ?? `${g.name}-solid` };
+    g.add(m);
+    this.walls.push(m);
     return m;
   }
 
@@ -178,7 +195,11 @@ export class KeilimBuilder extends BaseBuilder {
     const wedge = new THREE.Mesh(new THREE.ExtrudeGeometry(tri, { depth: width * A, bevelEnabled: false }), this.mat.stone);
     wedge.position.z = (-width / 2) * A;
     wedge.name = 'kevesh-body';
+    // In the floor collider too: a probe that starts inside the wedge meets its underside
+    // (a back face) and the controller treats the ramp's flanks as solid.
+    wedge.userData = { isFloor: true, name: 'kevesh-body' };
     g.add(wedge);
+    this.floors.push(wedge);
 
     g.userData.footX = e.position.x + xFoot;
     g.userData.topX = e.position.x + xTop;
@@ -280,6 +301,9 @@ export class KeilimBuilder extends BaseBuilder {
     wheel.rotation.y = Math.PI / 2;
     wheel.name = 'muchni';
     g.add(wheel);
+    // The laver and the muchni post are solid
+    this.solid(g, { w: 2 * r + 0.1, h: 0.12 + h, d: 2 * r + 0.1, name: 'kiyor-solid' });
+    this.solid(g, { x: r * 1.7, w: 0.16, h: h * 1.2, d: 0.16, name: 'muchni-solid' });
     g.traverse((m) => {
       if (m.isMesh && m !== water) m.castShadow = true;
     });
@@ -358,6 +382,10 @@ export class KeilimBuilder extends BaseBuilder {
       steps.push({ position: [0, top / 2, zc], scale: [1.5 * A, top, 0.5 * A] });
     }
     g.add(instance(this.box(1, 1, 1, (this.mat.stoneFine ?? this.mat.stonePolished)), (this.mat.stoneFine ?? this.mat.stonePolished), steps, { name: 'menorah-stone' }));
+    // Solid: the menorah's spread (its arms lie north-south) and the stone before it
+    const spread = e.geometry.w * A; // 0.75
+    this.solid(g, { w: spread, h: H, d: spread, name: 'menorah-solid' });
+    this.solid(g, { z: (1 + 0.75) * A, w: 1.5 * A, h: 1.5 * A, d: 1.5 * A, name: 'menorah-stone-solid' }); // treads z 0.5 .. 1.25 m
     g.traverse((m) => {
       if (m.isMesh && m.material !== this.flame) m.castShadow = true;
     });
@@ -418,6 +446,7 @@ export class KeilimBuilder extends BaseBuilder {
     g.add(
       instancePositions(new THREE.SphereGeometry(0.03, 8, 6), this.levonah, stackZ.map((z) => [0, bowlY + 0.03, z]), { name: 'shulchan-levonah' })
     );
+    this.solid(g, { w: w + 0.16, h: h + stackH, d: d + 0.08, name: 'shulchan-solid' });
     g.traverse((m) => {
       if (m.isMesh) m.castShadow = true;
     });
@@ -437,7 +466,9 @@ export class KeilimBuilder extends BaseBuilder {
     const h = e.geometry.h * A; // 1
     const body = new THREE.Mesh(this.box(w, h, w, gold), gold);
     body.position.y = h / 2;
+    body.userData = { isWall: true, name: 'mizbeach-hazahav' };
     g.add(body);
+    this.walls.push(body);
     const rim = new THREE.Mesh(this.box(w + 0.06, 0.04, w + 0.06, this.mat.goldEng), this.mat.goldEng);
     rim.position.y = h + 0.02;
     g.add(rim);

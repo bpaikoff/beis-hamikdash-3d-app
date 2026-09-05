@@ -199,6 +199,31 @@ describe('court builders', () => {
     expect(walk([[0, 165], [0, 155]]).last).toBeCloseTo(cheil, 1); // opposite the Ezras Nashim gate
   });
 
+  it('closes the court walls where a room or an opening meets them (PW2 perimeter walk)', () => {
+    const { wallBoxes } = built;
+    const solidAt = (x, y, z) => {
+      const [wx, wy, wz] = toWorld({ x, y, z });
+      return wallBoxes.some((b) => b.containsPoint(new THREE.Vector3(wx, wy, wz)));
+    };
+    // The east wall over the Klei Shir doors (below the Ezras Yisrael floor) is the court's face at floor level.
+    for (const x of [20, -20]) {
+      expect(solidAt(x, 1, 3), `klei shir lintel x ${x}`).toBe(true);
+      expect(solidAt(x, -3, 3), `klei shir door x ${x}`).toBe(false);
+    }
+    // The Beis Avtinas storey's interior is clear of the north wall, which stands under its floor with the Korban gate in it.
+    for (const z of [-64, -58, -52]) expect(solidAt(70, 23.5, z), `storey interior z ${z}`).toBe(false);
+    for (const z of [-64.5, -51.5]) expect(solidAt(70, 10, z), `wall under the storey z ${z}`).toBe(true);
+    expect(solidAt(70.5, 10, -58), 'korban gate leaves').toBe(true);
+    expect(solidAt(69, 10, -58), 'korban gate reveal').toBe(false);
+    // Balustrades between the stair tower's flights, open at the landing that joins each pair.
+    expect(solidAt(66, 5, -44.75)).toBe(true);
+    expect(solidAt(70, 5, -46.5)).toBe(true);
+    expect(solidAt(66, 5, -48.25)).toBe(true);
+    expect(solidAt(71.25, 5, -44.75), 'landing 0').toBe(false);
+    expect(solidAt(63.75, 5, -46.5), 'landing 1').toBe(false);
+    expect(solidAt(67.5, 5, -43.9), 'flight 0').toBe(false);
+  });
+
   it('has no two floor slabs sharing a top surface', () => {
     const boxes = built.floors.filter((f) => f.userData?.isFloor && !f.userData.isStep).map((f) => ({ f, b: new THREE.Box3().setFromObject(f) }));
     const clashes = [];

@@ -145,7 +145,10 @@ export class AzaraBuilder extends CourtBuilder {
       const c = this.entry(id);
       openings.push({ at: c.position.x, w: c.geometry.w, h: c.geometry.h, floor: c.position.y });
     }
-    for (const s of [1, -1]) openings.push({ at: s * klei.position.x, w: 4, h: klei.geometry.h, floor: klei.position.y, frame: this.mat.cedar, name: 'lishkos_klei_shir' });
+    // The Klei Shir doors lie wholly below the Ezras Yisrael floor, so the wall over them is
+    // the court's east face at floor level and must collide (a plain lintel let the player
+    // walk through the wall at x +-20 and drop 7.5 amos into the chamber).
+    for (const s of [1, -1]) openings.push({ at: s * klei.position.x, w: 4, h: klei.geometry.h, floor: klei.position.y, frame: this.mat.cedar, name: 'lishkos_klei_shir', solidAbove: true });
     this.group('azaras_yisrael', () => {
       this.wallRunA({ along: 'x', across: [0, WALL_T], from: -X_OUT, to: X_OUT, y1: GROUND, y2: EAST_WALL_TOP, mat: this.mat.stone, openings });
     }, { part: 'east wall' });
@@ -197,20 +200,41 @@ export class AzaraBuilder extends CourtBuilder {
     };
   }
 
-  /** North wall: Nitzotz (= Yechonya), Korban, Beis HaMoked (= HaShir) per Middot 1:5 / 2:6, Shaar HaNashim, the hall and the Avtinas stair tower straddling it. */
+  /** The Beis Avtinas storey's extents (it straddles the north wall over the Korban gate), {@link buildBeisAvtinas}. */
+  get avtinasStorey() {
+    const e = this.entry('beis_avtinas');
+    const { w, d, h } = e.geometry;
+    return { x1: e.position.x - w / 2, x2: e.position.x + w / 2, z1: e.position.z - d / 2, z2: e.position.z + d / 2, floor: e.position.y, h };
+  }
+
+  /**
+   * North wall: Nitzotz (= Yechonya), Korban, Beis HaMoked (= HaShir) per Middot 1:5 / 2:6,
+   * Shaar HaNashim, the hall and the Avtinas stair tower straddling it. The Avtinas storey
+   * straddles the wall too, so its z range is cut from the run and the wall under its
+   * floor is built separately with the Korban gate in it (the storey's floor slab is the
+   * gate's lintel); above the floor the storey's own walls carry the wall line.
+   */
   buildNorthWall() {
     const { z1, z2 } = this.hall;
     const tower = this.avtinasTower;
+    const storey = this.avtinasStorey;
     this.group('azaras_kohanim', () => {
       this.wallRunA({
         along: 'z', across: [X_IN, X_OUT], from: WALL_T, to: Z_WEST - WALL_T, y1: GROUND, y2: WALL_TOP, mat: this.mat.stone,
         openings: [
           this.gateOpening('nitzotz_gate', 'z', { labels: ['shaar_yechonya'] }),
-          this.gateOpening('korban_gate', 'z'),
           this.gateOpening('shaar_hanashim', 'z'),
           { at: (z1 + z2) / 2, w: z2 - z1, cut: true },
           { at: (tower.z1 + tower.z2) / 2, w: tower.z2 - tower.z1, cut: true },
+          { at: (storey.z1 + storey.z2) / 2, w: storey.z2 - storey.z1, cut: true },
         ],
+      });
+      // Under the storey, up to the underside of its floor slab; the tower's own wall
+      // closes z -51 .. -50 (buildBeisAvtinas), so the run stops at the tower.
+      const under = storey.floor - SLAB;
+      this.wallRunA({
+        along: 'z', across: [X_IN, X_OUT], from: storey.z1, to: Math.min(tower.z1, storey.z2), y1: GROUND, y2: under, mat: this.mat.stone,
+        openings: [this.gateOpening('korban_gate', 'z', { frameTop: under })],
       });
     }, { part: 'north wall' });
   }
@@ -340,6 +364,12 @@ export class AzaraBuilder extends CourtBuilder {
       this.blockA(mad.x1, mad.x1 + 0.5, mel.z1, mad.z2, pY, pY + pH, this.mat.stone, 'terrace parapet');
       this.blockA(mad.x1, mad.x2, mad.z2 - 0.5, mad.z2, pY, pY + pH, this.mat.stone, 'terrace parapet');
       this.blockA(mad.x1, mad.x2, mel.z1, mel.z1 + 0.5, pY, pY + pH, this.mat.stone, 'terrace parapet');
+      // Round the stair well too (its court side, its east end and the amah between it and
+      // the court wall), open only at the flight's top end: without it a step sideways off
+      // the terrace dropped 11 amos onto the flight.
+      this.blockA(wellX[0] - 0.5, wellX[0], wellZ[1], wellZ[0] + 0.5, pY, pY + pH, this.mat.stone, 'well parapet');
+      this.blockA(wellX[1], mad.x2, wellZ[1], wellZ[0] + 0.5, pY, pY + pH, this.mat.stone, 'well parapet');
+      this.blockA(wellX[0] - 0.5, mad.x2, wellZ[0], wellZ[0] + 0.5, pY, pY + pH, this.mat.stone, 'well parapet');
     }, { part: 'roof' });
     this.group('lishkas_haparvah', () => {
       // The mikveh on the roof (Middot 5:3, Yoma 3:3): a 4 x 4 tank rising 2 above the terrace (solid rim).
@@ -508,6 +538,15 @@ export class AzaraBuilder extends CourtBuilder {
         const zc = k < 3 ? zb - band : zb;
         if (up) this.blockA(to, ix2, zc, za, bottom, y, this.mat.stonePolished, 'beis_avtinas landing');
         else this.blockA(ix1, from, zc, za, bottom, y, this.mat.stonePolished, 'beis_avtinas landing');
+      }
+      // A thin wall between each pair of flights, stopping an amah short of the landing
+      // that joins them, so a walker on an upper flight cannot step off its side onto a
+      // lower one (a 2 to 10-amah drop inside the tower).
+      const bt = 0.25;
+      for (let k = 1; k < 4; k++) {
+        const zc = iz2 - k * band;
+        const [xa, xb] = (k - 1) % 2 === 0 ? [ix1, to - 1] : [from + 1, ix2];
+        this.wallA(xa, xb, zc - bt / 2, zc + bt / 2, yCourt, floor + h, this.mat.stonePolished);
       }
     }, { part: 'stair' });
     // Mikveh on the south wall top over the Water Gate (Yoma 31a).

@@ -184,7 +184,9 @@ export class CourtBuilder extends BaseBuilder {
    * the gate furniture in a group tagged with that id; `frame` is a material for a
    * merged jamb + lintel frame; `doors` is 'open' (leaves folded against the reveals),
    * 'closed' (a collidable leaf across the opening) or undefined; `threshold` adds a
-   * walkable slab through the wall at `floor`.
+   * walkable slab through the wall at `floor`. `solidAbove` makes the wall over the
+   * opening collide too (an opening below a court floor, whose lintel is that floor's
+   * wall face); `frameTop` caps the frame's lintel (see gateA).
    */
   wallRunA({ along, across: [a1, a2], from, to, y1, y2, mat, openings = [] }) {
     const lo = Math.min(from, to);
@@ -204,7 +206,7 @@ export class CourtBuilder extends BaseBuilder {
         const floor = o.floor ?? y1;
         const top = floor + o.h;
         if (floor - SLAB > y1) seg(o.lo, o.hi, y1, floor - SLAB);
-        if (y2 > top) seg(o.lo, o.hi, top, y2, false);
+        if (y2 > top) seg(o.lo, o.hi, top, y2, Boolean(o.solidAbove));
         const build = () => this.gateA({ along, across: [a1, a2], ...o, floor });
         if (o.entry) this.group(o.entry, build, o.labels ? { altEntryIds: o.labels } : undefined);
         else build();
@@ -214,16 +216,21 @@ export class CourtBuilder extends BaseBuilder {
     seg(cursor, hi, y1, y2);
   }
 
-  /** Gate furniture inside an opening: merged frame, doors, threshold slab. */
-  gateA({ along, across: [a1, a2], at, w, floor, h, frame, doors, doorMat, threshold, thresholdMat, name }) {
+  /**
+   * Gate furniture inside an opening: merged frame, doors, threshold slab. `frameTop`
+   * (amos) caps the frame's lintel, for a gate under a storey whose floor slab is the
+   * lintel: the jambs still rise to the opening's top, the lintel is cut or dropped.
+   */
+  gateA({ along, across: [a1, a2], at, w, floor, h, frame, frameTop = Infinity, doors, doorMat, threshold, thresholdMat, name }) {
     const mid = (a1 + a2) / 2;
     const rect = (s, e, c1, c2) => (along === 'x' ? [s, e, c1, c2] : [c1, c2, s, e]);
     if (frame) {
       const parts = [
         this.frameBox(...rect(at - w / 2 - FRAME_T, at - w / 2, mid - FRAME_T / 2, mid + FRAME_T / 2), floor, floor + h, frame),
         this.frameBox(...rect(at + w / 2, at + w / 2 + FRAME_T, mid - FRAME_T / 2, mid + FRAME_T / 2), floor, floor + h, frame),
-        this.frameBox(...rect(at - w / 2 - FRAME_T, at + w / 2 + FRAME_T, mid - FRAME_T / 2, mid + FRAME_T / 2), floor + h, floor + h + FRAME_T, frame),
       ];
+      const lintelTop = Math.min(floor + h + FRAME_T, frameTop);
+      if (lintelTop > floor + h + 1e-6) parts.push(this.frameBox(...rect(at - w / 2 - FRAME_T, at + w / 2 + FRAME_T, mid - FRAME_T / 2, mid + FRAME_T / 2), floor + h, lintelTop, frame));
       const geo = BufferGeometryUtils.mergeGeometries(parts, false);
       for (const p of parts) p.dispose();
       const m = new THREE.Mesh(geo, frame);

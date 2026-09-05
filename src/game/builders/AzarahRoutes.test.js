@@ -23,11 +23,11 @@ const SAMPLE_FRAMES = 6; // ~100 ms, like walk.mjs
 let player;
 let camera;
 let floors;
+let walls;
 
 beforeAll(() => {
   const scene = new THREE.Scene();
   const tb = new TempleBuilder(scene, { get: () => null });
-  let walls;
   ({ floors, walls } = tb.build());
   scene.updateMatrixWorld(true);
   const all = areas.map(worldBounds);
@@ -209,6 +209,23 @@ describe('Ezras Kohanim floor over the whole Temple', () => {
     expect(under(38, -11.7)).toBeCloseTo(levelWorldY('duchan') - 0.01 * AMAH, 2);
     expect(under(-62, -7)).toBeLessThan(K); // the frontage steps
     expect(under(-62, -4)).toBeCloseTo(levelWorldY('azaras_yisrael'), 2);
+  });
+
+  it('fences the terrace stair well and keeps the muchni clear of the Ulam steps (PW2 perimeter walk)', () => {
+    const under = (x, z, from) => player.getFloorHeight(...xz(x, z), from);
+    const roof = K + 11 * AMAH;
+    const parapet = roof + LIP + 1.5 * AMAH; // LIP is in metres here
+    // Parapet along the well's court side, its east end and the amah between it and the wall; the flight's top end stays open.
+    for (const [x, z] of [[61.25, -95], [61.25, -106], [67, -100], [64, -93.25]]) expect(under(x, z, roof + 3), `${x},${z}`).toBeCloseTo(parapet, 2);
+    expect(under(64, -107.5, roof + 3)).toBeCloseTo(roof, 2);
+    expect(under(60, -95, roof + 3)).toBeCloseTo(roof, 2);
+    // The muchni post stands on the kiyor's south side, outside the Ulam steps' x range (x -20 .. 20).
+    const box = new THREE.Box3();
+    const post = walls.find((w) => w.userData?.name === 'muchni-solid');
+    box.setFromObject(post);
+    const [kx] = xz(-22, -65);
+    expect(box.max.x).toBeLessThan(kx);
+    expect(box.max.x).toBeLessThan(xz(-20, -65)[0]);
   });
 
   it('floors Palhedrin at the Cheil level and lands its stair and the Avtinas stair at the levels of their doors', () => {

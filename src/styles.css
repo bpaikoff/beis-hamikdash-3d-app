@@ -1274,6 +1274,7 @@ canvas {
 
 .period-toggle {
   display: flex;
+  flex-wrap: wrap; /* four time pills fold onto two rows on a phone */
   justify-content: center;
   gap: 10px;
   border: none;
@@ -1307,6 +1308,10 @@ canvas {
 .period-toggle label [lang='he'] {
   font-size: 1.15rem;
   text-align: center;
+}
+
+.period-toggle label span {
+  white-space: nowrap; /* "בין הערביים" stays on one line; the row wraps instead */
 }
 
 .period-toggle label [lang='en'] {

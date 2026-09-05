@@ -169,12 +169,12 @@ export const routes = {
 
   // The kiyor and the Heichal vessels are solid: go around each, hugging it.
   keilim: [
-    // The kiyor stands 2 amos south of the Ulam steps with the muchni post on its north
-    // side, so it is passed on the south: slide round it and back.
+    // The kiyor stands 2 amos south of the Ulam steps; the muchni post is on its south
+    // side (1.3 m out), so it is passed on the south wide of the post: slide round and back.
     at('kiyor', { dz: 3, level: K }),
-    at('kiyor', { dx: -1.5, dz: -3, level: K }), // brushes the laver's south side
-    at('kiyor', { dx: -3, dz: 0, level: K }),
-    at('kiyor', { dx: -1.5, dz: 3, level: K }), // and back
+    at('kiyor', { dx: -2.4, dz: -3, level: K }), // clear of the muchni post
+    at('kiyor', { dx: -3.4, dz: 0, level: K }),
+    at('kiyor', { dx: -2.4, dz: 3, level: K }), // and back
     at('maalos_ulam', { dx: -11, dz: 5.4, level: K }),
     at('maalos_ulam', { dz: 5.2, level: K }), // the first tread
     at('maalos_ulam', { dz: -7, level: U }),

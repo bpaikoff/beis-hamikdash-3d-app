@@ -519,28 +519,27 @@ Object.assign(routes, {
     h(-35 - HUG, -92 - HUG, K), // the south ta'im wall
     hc(-50 - HUG, -92 - HUG, K),
     hc(-50 - HUG, -76 + HUG, K), // the south wing's end wall
-    h(-25.6, -76 + HUG, K), // the Ulam front to the kiyor (x -22, its solid to -20.4, the muchni on its south)
-    h(-25.6, -62.4, K),
+    h(-27.6, -76 + HUG, K), // the Ulam front to the kiyor (x -24, its solid x -25.6 .. -22.4, the muchni post on its south at x -26.5)
+    h(-27.6, -62.4, K), // past the post's south side
     h(-20 - HUG, -62.4, K),
     h(-20 - HUG, -54.6, K), // the flight's south end
     p(-44, -54.5, K),
   ]),
 
-  // (d) The altar zone: a loop round the kiyor and its muchni (its north side stands
-  // against the flight), the yesod's west face along the first Ulam tread, the yesod's
+  // (d) The altar zone: a loop round the kiyor and its muchni (the body x -25.6 .. -22.4,
+  // z -66.6 .. -63.4, the post on its south at x -26.5; an amah of court between it and
+  // the flight's south end at x -20), the yesod's west face along the first Ulam tread, the yesod's
   // north face, the sovev's east and south faces, the kevesh's north flank, its foot, its
   // south flank clear of the small western kevesh's shelf; then the slaughter furniture:
   // the tables' court side, between the tables and the pillars, between the pillars and
   // the wall, through a gap between two pillars and through a gap between two tables.
   azarah_hug_altar: pushed([
-    p(-21.5, -62.4, K),
-    h(-25.6, -62.4, K),
-    h(-25.6, -67.6, K),
-    h(-21.5, -67.6, K),
-    h(-25.6, -67.6, K),
-    h(-25.6, -62.4, K),
-    h(-21.5, -62.4, K),
-    h(-21.5, -54.6, K),
+    p(-21.6, -62.4, K),
+    h(-27.6, -62.4, K), // the kiyor's east side, past the post
+    h(-27.6, -67.6, K),
+    h(-21.6, -67.6, K), // its west side
+    h(-21.6, -62.4, K), // its north side, between the body and the flight's end (x -20)
+    h(-21.6, -54.6, K),
     h(16 + HUG, -54.6, K), // the yesod's west face, along the first Ulam tread
     h(16 + HUG, -22 + HUG, K), // the yesod's north face
     h(-15 - HUG, -22 + HUG, K), // the sovev's east face

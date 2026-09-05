@@ -46,7 +46,7 @@ const DWELL_SYNC = 0.1; // seconds between store writes of the countdown
  *   moked_cross  inside Beis HaMoked, in the free cross between its four chambers
  *   court_se     the strip's south end, east of the kevesh (z -30)
  *   kevesh_foot  the court south of the kevesh's foot (the ramp starts at x -46)
- *   south_lane   the court south of the Ulam steps (x +-20) and the kiyor (x -22, z -65)
+ *   south_lane   the court south of the Ulam steps (x +-20) and the kiyor (x -24, z -65)
  *   gazis_door   the court outside Lishkas HaGazis' north door (x -57.5, z -103)
  *   gazis_in     inside the Gazis, its kodesh half
  *   ulam_foot_s  the court at the south-east corner of the Ulam steps (the flight's

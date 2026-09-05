@@ -291,8 +291,8 @@ export class KeilimBuilder extends BaseBuilder {
       });
     }
     g.add(instance(spoutGeo, this.mat.copper, spouts, { name: 'kiyor-spouts' }));
-    // Muchni: a cedar wheel on a post beside the laver, on its south side (the laver
-    // stands against the south end of the Ulam steps, x -20, which would swallow it).
+    // Muchni: a cedar wheel on a post beside the laver, on its south side, away from
+    // the Ulam steps (their south end at x -20 is an amah north of the laver's body).
     const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, h * 1.2, 0.12), this.mat.cedar);
     post.position.set(-r * 1.7, h * 0.6, 0);
     g.add(post);

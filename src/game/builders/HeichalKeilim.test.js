@@ -271,8 +271,8 @@ describe('solids', () => {
   });
 
   it('the kiyor, menorah, shulchan and golden altar are solid', () => {
-    // [id, level, a free spot 2 m away]: south of the kiyor (its north side is 2 amos from
-    // the Ulam steps), east of the Heichal vessels (the menorah and shulchan stand 2.5 amos from the walls)
+    // [id, level, a free spot 2 m away]: south of the kiyor (its body is an amah from the
+    // Ulam steps on the north, the muchni post on its south at 2.55 amos), east of the Heichal vessels (the menorah and shulchan stand 2.5 amos from the walls)
     for (const [id, level, dx, dz] of [
       ['kiyor', K(), -2, 0],
       ['menorah', H(), 0, 2],

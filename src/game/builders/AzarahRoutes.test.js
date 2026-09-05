@@ -219,13 +219,17 @@ describe('Ezras Kohanim floor over the whole Temple', () => {
     for (const [x, z] of [[61.25, -95], [61.25, -106], [67, -100], [64, -93.25]]) expect(under(x, z, roof + 3), `${x},${z}`).toBeCloseTo(parapet, 2);
     expect(under(64, -107.5, roof + 3)).toBeCloseTo(roof, 2);
     expect(under(60, -95, roof + 3)).toBeCloseTo(roof, 2);
-    // The muchni post stands on the kiyor's south side, outside the Ulam steps' x range (x -20 .. 20).
+    // The muchni post stands on the kiyor's south side, outside the Ulam steps' x range (x -20 .. 20),
+    // and the kiyor's own body (3 amos) is clear of the steps' south end.
     const box = new THREE.Box3();
     const post = walls.find((w) => w.userData?.name === 'muchni-solid');
     box.setFromObject(post);
-    const [kx] = xz(-22, -65);
+    const [kx] = xz(byId.kiyor.position.x, byId.kiyor.position.z);
     expect(box.max.x).toBeLessThan(kx);
     expect(box.max.x).toBeLessThan(xz(-20, -65)[0]);
+    const body = walls.find((w) => w.userData?.name === 'kiyor-solid');
+    box.setFromObject(body);
+    expect(box.max.x).toBeLessThan(xz(-20 - 1, -65)[0]);
   });
 
   it('floors Palhedrin at the Cheil level and lands its stair and the Avtinas stair at the levels of their doors', () => {

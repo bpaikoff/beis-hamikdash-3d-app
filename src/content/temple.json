@@ -469,7 +469,7 @@
         {"label": "spouts", "value": 12, "unit": "count", "source": "Mishnah Yoma 3:10", "note": "Ben Katin's addition"},
         {"label": "muchni", "value": 1, "unit": "count", "source": "Mishnah Yoma 3:10", "note": "the wheel Ben Katin made to sink the laver into a cistern so its water would not be disqualified overnight"}
       ],
-      "position": {"frame": "azarah", "x": -22, "y": 2.5, "z": -65, "unit": "amah", "source": "Mishnah Middot 3:6", "note": "legacy: x -16, y 1, z -92 (pre-2026 scene coordinates converted to amos); now between the Ulam and the altar (z -54 .. -76), drawn toward the south (Middot 3:6) so that it does not stand between the altar and the Ulam entrance: south of the Ulam steps, centre z -65"},
+      "position": {"frame": "azarah", "x": -24, "y": 2.5, "z": -65, "unit": "amah", "source": "Mishnah Middot 3:6", "note": "legacy: x -16, y 1, z -92 (pre-2026 scene coordinates converted to amos); now between the Ulam and the altar (z -54 .. -76), drawn toward the south (Middot 3:6) so that it does not stand between the altar and the Ulam entrance: south of the Ulam steps, centre z -65, x -24 so that its 3-amah body (x -25.5 .. -22.5) stands an amah clear of the steps' south end at x -20 (at the earlier x -22 it touched them); the muchni is on its south side"},
       "sources": ["Exodus 30:18","Exodus 38:8","Mishnah Middot 3:6","Mishnah Yoma 3:10","Yoma 37a","Zevachim 59a"],
       "questions": [
         {"he": "למה הכיור משוך לדרום ולא באמצע?", "en": "Why was the laver set off to the south rather than centred?"},

@@ -272,6 +272,12 @@ export class TempleGame {
       entries: byId,
       worldPos,
       levelWorldY,
+      /** Areas with scene-space bounds and their floor level (metres), for the fuzz walker. */
+      areas: this.areaBounds.map(({ entry, bounds }) => {
+        let level = null;
+        try { level = levelWorldY(entry.id); } catch { /* 'outside' has no level */ }
+        return { id: entry.id, bounds, level };
+      }),
     };
     this.animate();
     // Ready once one full frame has been rendered.

@@ -12,7 +12,8 @@
     "test": "vitest",
     "screenshot": "node scripts/screenshot.mjs",
     "bake": "node scripts/bake_textures.mjs",
-    "walk": "node scripts/walk.mjs"
+    "walk": "node scripts/walk.mjs",
+    "walk:fuzz": "node scripts/walk.mjs --fuzz 40 --seed 1"
   },
   "dependencies": {
     "@hebcal/core": "^6.9.2",

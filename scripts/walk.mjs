@@ -43,6 +43,19 @@ if (args.includes('--list')) {
   process.exit(0);
 }
 const only = opt('--route');
+const fuzzN = Number(opt('--fuzz', '0'));
+const fuzzArea = opt('--area', 'all');
+const seed = Number(opt('--seed', '1'));
+const fuzzWalkS = Number(opt('--fuzz-walk', '6'));
+function mulberry32(a) {
+  return function () {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 const outDir = opt('--out', 'walk-report');
 const port = opt('--port', '4174');
 let base = opt('--base');
@@ -57,7 +70,9 @@ setTimeout(() => {
 
 let preview;
 if (!base) {
-  preview = spawn('npx', ['vite', 'preview', '--port', port, '--strictPort'], { stdio: ['ignore', 'pipe', 'inherit'] });
+  // detached: the preview server becomes its own process group so it can be killed with its
+  // children (killing only the npx wrapper left `vite preview` alive, holding stdout open).
+  preview = spawn('npx', ['vite', 'preview', '--port', port, '--strictPort'], { stdio: ['ignore', 'pipe', 'ignore'], detached: true });
   await new Promise((resolve, reject) => {
     preview.stdout.on('data', (d) => String(d).includes(port) && resolve());
     preview.on('exit', (c) => reject(new Error(`vite preview exited ${c}`)));
@@ -94,7 +109,77 @@ try {
       return { x, z, level, floor: m.floorAt(x, z) };
     }, wp);
 
-  for (const [name, waypoints] of routes) {
+  if (fuzzN > 0) {
+    // Fuzz mode: random starts inside each area at its floor level, random headings.
+    // A wall stopping the walker is fine; falling below the level while a floor exists
+    // above the feet (clipped through), or standing inside a solid, is a failure.
+    const rand = mulberry32(seed);
+    const areasInfo = (await page.evaluate(() => window.__mikdash.areas)).filter((a) => a.level != null && (fuzzArea === 'all' || a.id === fuzzArea));
+    for (const area of areasInfo) {
+      const steps = [];
+      let ok = true;
+      const b = area.bounds;
+      for (let n = 0; n < fuzzN; n++) {
+        const x = b.minX + rand() * (b.maxX - b.minX);
+        const z = b.minZ + rand() * (b.maxZ - b.minZ);
+        const floor = await page.evaluate(({ x, z }) => window.__mikdash.floorAt(x, z), { x, z });
+        if (Math.abs(floor - area.level) > 0.6) {
+          // Not on this area's floor (a room, a roof, the building footprint): note it, skip.
+          steps.push({ to: `start ${n} (${x.toFixed(1)}, ${z.toFixed(1)})`, result: 'skip', detail: `floor ${floor.toFixed(2)} vs level ${area.level.toFixed(2)}`, pos: [x, floor, z] });
+          continue;
+        }
+        await page.evaluate(({ x, y, z }) => window.__mikdash.teleport(x, y, z), { x, y: floor + 1.7, z });
+        await page.waitForTimeout(150);
+        const startInside = await page.evaluate(() => window.__mikdash.insideSolid());
+        if (startInside) {
+          steps.push({ to: `start ${n} (${x.toFixed(1)}, ${z.toFixed(1)})`, result: 'skip', detail: 'start inside a solid', pos: [x, floor, z] });
+          continue;
+        }
+        let result = 'ok';
+        let detail = '';
+        let pos = [x, floor, z];
+        for (let leg = 0; leg < 4 && result === 'ok'; leg++) {
+          const heading = rand() * Math.PI * 2;
+          await page.evaluate(({ h }) => {
+            const c = window.__mikdash.camera.position;
+            window.__mikdash.lookAt(c.x - Math.sin(h) * 10, c.z - Math.cos(h) * 10);
+          }, { h: heading });
+          await page.keyboard.down('KeyW');
+          const t0 = Date.now();
+          while (Date.now() - t0 < fuzzWalkS * 1000) {
+            await page.waitForTimeout(SAMPLE_MS);
+            const s = await page.evaluate(() => {
+              const m = window.__mikdash;
+              const c = m.camera.position;
+              return { x: c.x, y: c.y, z: c.z, inside: m.insideSolid(), top: m.floorAt(c.x, c.z) };
+            });
+            const feet = s.y - 1.7;
+            pos = [s.x, feet, s.z].map((v) => Number(v.toFixed(2)));
+            if (s.inside) { result = 'inside'; detail = `inside a solid at (${pos.join(', ')})`; break; }
+            if (s.top - feet > 1.0 && feet < area.level - 1.0) { result = 'fell'; detail = `under a floor: feet ${feet.toFixed(2)}, surface above at ${s.top.toFixed(2)}`; break; }
+            if (feet < -1) { result = 'fell'; detail = `below the ground plane at (${pos.join(', ')})`; break; }
+          }
+          await page.keyboard.up('KeyW');
+        }
+        const step = { to: `start ${n} (${x.toFixed(1)}, ${z.toFixed(1)})`, result, detail, pos };
+        if (result !== 'ok') {
+          ok = false;
+          const file = `${outDir}/fuzz-${area.id}-${n}-${result}.png`;
+          await page.evaluate(() => window.__mikdash.renderOnce());
+          await page.waitForTimeout(200);
+          await page.screenshot({ path: file, timeout: 60000 }).catch(() => {});
+          step.screenshot = file;
+          console.log(`fuzz ${area.id.padEnd(18)} ${step.to.padEnd(30)} ${result.padEnd(8)} ${detail}`);
+        }
+        steps.push(step);
+      }
+      const skipped = steps.filter((s) => s.result === 'skip').length;
+      console.log(`fuzz ${area.id.padEnd(18)} ${fuzzN} starts, ${skipped} skipped, ${steps.filter((s) => s.result !== 'ok' && s.result !== 'skip').length} failing`);
+      report.routes[`fuzz:${area.id}`] = { ok, steps };
+    }
+  }
+
+  for (const [name, waypoints] of fuzzN > 0 ? [] : routes) {
     const steps = [];
     let ok = true;
     const start = await resolve(waypoints[0]);
@@ -162,9 +247,9 @@ try {
   }
 } finally {
   await Promise.race([browser.close().catch(() => {}), new Promise((r) => setTimeout(r, 10000))]);
-  preview?.kill('SIGKILL');
+  if (preview) { try { process.kill(-preview.pid, 'SIGKILL'); } catch { preview.kill('SIGKILL'); } }
 }
 writeFileSync(`${outDir}/report.json`, JSON.stringify(report, null, 1));
-const bad = Object.values(report.routes).flatMap((r) => r.steps.filter((s) => s.result !== 'ok'));
+const bad = Object.values(report.routes).flatMap((r) => r.steps.filter((s) => s.result !== 'ok' && s.result !== 'skip'));
 console.log(`\n${bad.length} failing step(s); report in ${outDir}/report.json`);
 process.exit(bad.length ? 1 : 0);

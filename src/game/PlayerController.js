@@ -58,6 +58,17 @@ export class PlayerController {
         w.updateWorldMatrix(true, false);
         return new THREE.Box3().setFromObject(w);
       });
+    // Thick walkable masses (altar tiers, platforms, solid steps) also block from the side:
+    // a downward floor ray cannot see a block you are walking into, so without this the
+    // player clips inside it. The collision sphere sits at head height, so anything lower
+    // than ~1.4 m above the feet (stairs, slabs, the Duchan) stays walkable.
+    const _box = new THREE.Box3();
+    for (const f of floors) {
+      if (!f.geometry || f.userData?.isRamp) continue;
+      f.updateWorldMatrix(true, false);
+      _box.setFromObject(f);
+      if (_box.max.y - _box.min.y > 0.6) this.wallBoxes.push(_box.clone());
+    }
     this.bounds = opts.bounds ?? { minX: -100, maxX: 100, minZ: -95, maxZ: 120 };
     this.euler = new THREE.Euler(0, 0, 0, 'YXZ');
     this.moveF = false;
@@ -143,7 +154,7 @@ export class PlayerController {
       if (_move[axis] === 0) continue;
       const next = cam.position.clone();
       next[axis] += _move[axis];
-      const nextFloorY = this.getFloorHeight(next.x, next.z, feetY + CONFIG.STEP_HEIGHT + 1);
+      const nextFloorY = this.getFloorHeight(next.x, next.z, feetY + CONFIG.PLAYER_HEIGHT + 0.3);
       const rise = nextFloorY - currentFloorY;
       if (rise > CONFIG.STEP_HEIGHT && !this.isJumping) continue;
       if (this.collides(next)) continue;
@@ -152,7 +163,7 @@ export class PlayerController {
 
     // Vertical: gravity, landing, and stepping up onto the surface we just walked onto.
     this.verticalVelocity -= 20 * delta;
-    const floorY = this.getFloorHeight(cam.position.x, cam.position.z, feetY + CONFIG.STEP_HEIGHT + 1);
+    const floorY = this.getFloorHeight(cam.position.x, cam.position.z, feetY + CONFIG.PLAYER_HEIGHT + 0.3);
     const newFeet = feetY + this.verticalVelocity * delta;
     if (newFeet <= floorY) {
       cam.position.y = floorY + CONFIG.PLAYER_HEIGHT;

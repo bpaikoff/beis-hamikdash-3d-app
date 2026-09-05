@@ -1,0 +1,245 @@
+{
+  "id": "tamid",
+  "title": { "he": "תמיד של שחר", "en": "The Morning Tamid" },
+  "intro": {
+    "he": "סיור בעקבות סדר העבודה של תמיד של שחר, כפי שהוא שנוי במסכת תמיד: מן הלילה בבית המוקד, דרך הפייסות בלשכת הגזית, תרומת הדשן וסידור המערכה, השחיטה בטבעות, עבודת ההיכל, ברכת הכהנים על מעלות האולם ועד שיר של יום על הדוכן. בכל תחנה מקור, תיאור ושאלה להמשך עיון.",
+    "en": "A walk through the order of the daily morning offering as Mishnah Tamid records it: from the night in Beis HaMoked, through the lotteries in Lishkas HaGazis, the clearing of the ashes and the laying of the fire, the slaughter at the rings, the service inside the Heichal, the priestly blessing on the Ulam steps and the Levites' song on the Duchan. Each stop gives the sources, a description and a question to take further."
+  },
+  "sources": [
+    "Mishnah Tamid 1:1", "Mishnah Tamid 1:2", "Mishnah Tamid 1:3", "Mishnah Tamid 1:4",
+    "Mishnah Tamid 2:1", "Mishnah Tamid 2:2", "Mishnah Tamid 2:3", "Mishnah Tamid 2:4", "Mishnah Tamid 2:5",
+    "Mishnah Tamid 3:1", "Mishnah Tamid 3:2", "Mishnah Tamid 3:3", "Mishnah Tamid 3:4", "Mishnah Tamid 3:6", "Mishnah Tamid 3:7", "Mishnah Tamid 3:8", "Mishnah Tamid 3:9",
+    "Mishnah Tamid 4:1", "Mishnah Tamid 4:2", "Mishnah Tamid 4:3",
+    "Mishnah Tamid 5:1", "Mishnah Tamid 5:2", "Mishnah Tamid 5:3",
+    "Mishnah Tamid 6:1", "Mishnah Tamid 6:2", "Mishnah Tamid 6:3",
+    "Mishnah Tamid 7:1", "Mishnah Tamid 7:2", "Mishnah Tamid 7:3", "Mishnah Tamid 7:4",
+    "Mishnah Yoma 2:1", "Mishnah Yoma 2:2", "Mishnah Yoma 2:3", "Mishnah Yoma 2:4", "Mishnah Yoma 3:5", "Mishnah Yoma 3:10", "Mishnah Yoma 4:6",
+    "Mishnah Middot 1:1", "Mishnah Middot 1:6", "Mishnah Middot 1:8", "Mishnah Middot 1:9", "Mishnah Middot 2:6", "Mishnah Middot 3:5",
+    "Mishnah Arakhin 2:5", "Mishnah Arakhin 2:6", "Mishnah Sotah 7:6", "Mishnah Zevachim 5:4",
+    "Yoma 17a", "Yoma 25a", "Yoma 26a", "Tamid 31b",
+    "Ezekiel 44:2", "Leviticus 1:11", "Leviticus 6:6", "Psalms 24", "Psalms 92"
+  ],
+  "stops": [
+    {
+      "id": "beis_hamoked_watch",
+      "at": "beis_hamoked",
+      "camera": { "x": 64, "y": 2.5, "z": -14 },
+      "look": { "x": 67.5, "z": -24 },
+      "dwell": 12,
+      "title": { "he": "לילה בבית המוקד", "en": "Night in Beis HaMoked" },
+      "text": {
+        "he": "עבודת היום מתחילה בלילה שלפניו. כהני בית האב של אותו יום ישנים כאן, בבית המוקד: זקני בית האב על רובדי האבן שסביב האולם, ופרחי הכהונה על הרצפה, איש וכסותו, ומפתחות העזרה מונחים בבית אחד תחת טבלה של שיש. בבגדי הקודש לא ישנו, אלא פושטים ומקפלים ומניחים תחת ראשיהם. זה גם אחד משלושת המקומות שבהם שמרו הכהנים בלילה, בעוד הלויים שומרים בעשרים ואחד מקום סביב הר הבית.",
+        "en": "The day's service begins the night before. The kohanim of the serving beis av sleep here in Beis HaMoked: the elders on the stone ledges around the hall, the young ones on the floor each in his cloak, and the keys of the Azarah beneath a marble slab. They do not sleep in the priestly garments but take them off, fold them and put them under their heads. This was also one of the three places where the kohanim kept the night watch, while the Levites guarded twenty-one posts around the Temple Mount."
+      },
+      "sources": ["Mishnah Tamid 1:1", "Mishnah Middot 1:1", "Mishnah Middot 1:8", "Mishnah Middot 1:9"],
+      "questions": [
+        { "he": "מדוע פשטו הכהנים את בגדי הכהונה לפני השינה?", "en": "Why did the kohanim take off the priestly garments before sleeping?" },
+        { "he": "לשם מה שמרו הלויים בלילה, אם השערים היו נעולים?", "en": "What was the Levites' night watch for, if the gates were locked?" }
+      ]
+    },
+    {
+      "id": "memuneh_and_mikveh",
+      "at": "beis_hatevilah_descent",
+      "camera": { "x": 68, "y": 2.5, "z": -19 },
+      "look": "beis_hatevilah_descent",
+      "dwell": 10,
+      "title": { "he": "הממונה דופק והטבילה", "en": "The Memuneh Knocks; the Immersion" },
+      "text": {
+        "he": "לפנות בוקר בא הממונה על הפייסות ודופק על הדלת, והכהנים פותחים לו. מי שצריך לטבול יורד במסיבה ההולכת תחת הבירה, ונרות דולקים מכאן ומכאן, עד שהוא מגיע לבית הטבילה; מדורה הייתה שם להתנגב אצלה. גם כהן שאירע לו קרי בלילה ירד בדרך זו, טבל, נסתפג, וישב עם אחיו הכהנים עד שנפתחו השערים ויצא.",
+        "en": "Before dawn the memuneh, the officer in charge of the lotteries, comes and knocks, and the kohanim open for him. Anyone who needs to immerse goes down the winding passage under the building, with lamps burning on either side, to the mikveh below; a fire burns there to dry off by. A kohen who had a seminal emission in the night took this passage too, immersed, dried himself, and sat with his brothers until the gates were opened, and then left."
+      },
+      "sources": ["Mishnah Tamid 1:2", "Mishnah Tamid 1:1", "Mishnah Middot 1:9"],
+      "questions": [
+        { "he": "מדוע טבל כל כהן לפני העבודה, אף שכבר היה טהור?", "en": "Why did every kohen immerse before the service, even if he was already pure?" },
+        { "he": "מה ההבדל בין טבילה במקווה לקידוש ידיים ורגליים מן הכיור?", "en": "What is the difference between immersing in a mikveh and washing hands and feet from the kiyor?" }
+      ]
+    },
+    {
+      "id": "first_payis",
+      "at": "lishkas_hagazis",
+      "camera": { "x": -61, "y": 2.5, "z": -103 },
+      "look": { "x": -74, "z": -103 },
+      "dwell": 13,
+      "title": { "he": "הפייס הראשון בלשכת הגזית", "en": "The First Lottery in Lishkas HaGazis" },
+      "text": {
+        "he": "מי שטבלו ולבשו בגדי כהונה באים ללשכת הגזית, מקום מושב הסנהדרין, שחציה בקודש וחציה בחול; הפייס נערך בצידה המזרחי. הממונה אומר: ״מי שטבל יבוא ויפיס״, הכהנים עומדים בעיגול ומוציאים אצבעות, נוקבים מספר, והממונה נוטל מצנפת מראשו של אחד מהם ומונה ממנו והלאה. בתחילה זכה בתרומת הדשן מי שקדם לרוץ בכבש; משדחף כהן אחד את חברו ונשברה רגלו, תיקנו בית דין שלא יתרמו אלא בפייס. מבית המוקד נכנסו הכהנים לעזרה דרך הפשפש, נחלקו לשתי כיתות ואבוקות בידיהן, ובדקו את הכלים עד שנפגשו אצל עושי חביתין: ״שלום, הכל שלום״.",
+        "en": "Those who have immersed and put on the priestly garments come to Lishkas HaGazis, the seat of the Sanhedrin, half of which stands inside the holy court and half outside it; the lottery is held in its eastern half. The memuneh calls, 'Whoever has immersed, come and draw lots'; the kohanim stand in a circle and hold out fingers, a number is named, and the memuneh takes the mitre from one head and counts round from him. Originally the first task, clearing the ashes, went to whoever ran up the kevesh first; after one kohen pushed another off the ramp and broke his leg, the court instituted this lottery. From Beis HaMoked the kohanim enter the court through the wicket, split into two groups with torches, and check the vessels until they meet at the chamber of the chavitin-makers: 'All is well.'"
+      },
+      "sources": ["Mishnah Tamid 1:2", "Mishnah Tamid 1:3", "Mishnah Yoma 2:2", "Yoma 25a"],
+      "questions": [
+        { "he": "מדוע נערך הפייס דווקא בלשכת הגזית?", "en": "Why was the lottery held in Lishkas HaGazis of all places?" },
+        { "he": "מדוע לא בטחו בית דין במרוץ בכבש, והעדיפו גורל?", "en": "Why did the court replace the race up the kevesh with a lottery?" }
+      ]
+    },
+    {
+      "id": "terumas_hadeshen",
+      "at": "mizbeach",
+      "camera": { "x": -36, "y": 2.5, "z": -24 },
+      "look": "mizbeach",
+      "dwell": 13,
+      "title": { "he": "תרומת הדשן", "en": "Terumas HaDeshen: the First Ashes" },
+      "text": {
+        "he": "הכהן שזכה עולה לבדו בחשכה. אין איש נכנס עמו ואין נר בידו, אלא הוא מהלך לאור המערכה, ואחיו הכהנים אינם רואים אותו עד שהם שומעים את קול המוכני, גלגל העץ שעשה בן קטין לכיור. הוא מקדש ידיו ורגליו, נוטל את מחתת הכסף, עולה לראש המזבח, מפנה את הגחלים אילך ואילך וחותה מן המאוכלות הפנימיות. יורד, הולך כעשר אמות במזרחו של הכבש, וצובר את הגחלים על הרצפה, שלושה טפחים מן הכבש, במקום שנותנים מוראת העוף ודישון המזבח הפנימי והמנורה. כשרואים אחיו שירד, הם רצים ומקדשים ידיהם ורגליהם, נוטלים את המגרפות ואת הצינורות ועולים לראש המזבח להעלות את האפר על גבי התפוח.",
+        "en": "The kohen who won goes up alone in the dark. No one goes with him and he carries no lamp: he walks by the light of the altar fire, and his brothers know he has gone only when they hear the wooden wheel of the kiyor that Ben Katin made. He washes his hands and feet, takes the silver pan, climbs to the top of the altar, rakes the coals aside and scoops up a panful of the consumed inner ones. He comes down, walks about ten amos along the east side of the kevesh, and heaps the coals on the floor three handbreadths from the ramp, where the crops of the bird-offerings and the ashes of the inner altar and the menorah were also put. Seeing him down, his brothers run to wash, take the shovels and forks, and climb to rake the ashes onto the heap in the middle of the altar, the tapuach."
+      },
+      "sources": ["Mishnah Tamid 1:4", "Mishnah Tamid 2:1", "Mishnah Tamid 2:2", "Mishnah Yoma 3:10"],
+      "questions": [
+        { "he": "מדוע פותחת עבודת היום בהרמת הדשן ולא בהקרבה?", "en": "Why does the day's service open with removing ashes rather than with an offering?" },
+        { "he": "מדוע עשה בן קטין מוכני להוריד את הכיור לבור בלילה?", "en": "Why did Ben Katin make a wheel to lower the kiyor into a pit overnight?" }
+      ]
+    },
+    {
+      "id": "maaracha",
+      "at": "mizbeach",
+      "camera": { "x": -20, "y": 10.3, "z": -38 },
+      "look": { "x": 0, "y": 12, "z": -38 },
+      "dwell": 12,
+      "title": { "he": "סידור המערכה", "en": "Arranging the Ma'aracha" },
+      "text": {
+        "he": "מן הכבש אתה רואה את ראש המזבח. אחרי שהעלו את אפר הלילה על גבי התפוח, ערימת הדשן שבאמצע המזבח, מעלים הכהנים גזירי עצים – כל העצים כשרים חוץ משל זית ושל גפן – ומסדרים את המערכה הגדולה במזרח, וחזיתה מזרחה, וראשי הגזירים הפנימיים נוגעים בתפוח, וריווח ביניהם להצית את האליתא. מערכה שנייה של עצי תאנה יפים מסדרים כנגד הקרן המערבית־דרומית, משוכה מן הקרן ארבע אמות לצפון, באומד חמש סאים גחלים, וממנה יחתו את הגחלים לקטורת. ומערכה נוספת לקיום האש, שלא תכבה לעולם.",
+        "en": "Standing on the kevesh you look onto the altar's top. Once the night's ashes have been raked onto the tapuach, the heap in the middle of the altar, the kohanim bring up logs, any wood but olive and vine, and lay the great fire on the east side with its face to the east, the ends of the inner logs touching the tapuach and a gap between them for the kindling. A second, smaller fire of fine fig wood is laid opposite the south-west corner, drawn four amos to the north, about five se'ah of coals, from which the coals for the ketores will be taken. A further fire keeps the flame alive, for it must never go out."
+      },
+      "sources": ["Mishnah Tamid 2:3", "Mishnah Tamid 2:4", "Mishnah Tamid 2:5", "Mishnah Yoma 4:6"],
+      "questions": [
+        { "he": "מדוע עצי זית וגפן פסולים למערכה?", "en": "Why are olive and vine wood unfit for the altar fire?" },
+        { "he": "מדוע צריכה הקטורת מערכה משלה ואין נוטלים לה גחלים מן המערכה הגדולה?", "en": "Why does the ketores need its own fire rather than coals from the great pile?" }
+      ]
+    },
+    {
+      "id": "lamb_by_torchlight",
+      "at": "lishkas_telaei_korban",
+      "camera": { "x": 66, "y": 2.5, "z": -21 },
+      "look": "lishkas_telaei_korban",
+      "dwell": 13,
+      "title": { "he": "השה לאור האבוקות", "en": "The Lamb by Torchlight" },
+      "text": {
+        "he": "בלשכת הגזית עורך הממונה את הפייס השני, שלוש עשרה עבודות בבת אחת: מי שוחט, מי זורק את הדם, מי מדשן את המזבח הפנימי ואת המנורה, ומי מעלה כל אבר ואבר. אחר כך הוא שולח צופה לגג: ״צא וראה אם הגיע זמן השחיטה״; משהאיר המזרח ״עד שבחברון״, הוא עונה: ״ברקאי״. רק אז: ״צאו והביאו טלה מלשכת הטלאים״ – הלשכה הזו שבפינת בית המוקד, שאין בה פחות משישה טלאים מבוקרים. מלשכת הכלים מוציאים תשעים ושלושה כלי כסף וזהב, משקים את התמיד בכוס של זהב, ומבקרים אותו שוב לאור האבוקות, אף על פי שכבר ביקרוהו מבערב.",
+        "en": "In Lishkas HaGazis the memuneh holds the second lottery, thirteen tasks at once: who slaughters, who throws the blood, who clears the inner altar and the menorah, and who carries each limb up. Then he sends a watcher up to the roof: 'Go and see whether the time for slaughter has come'; when the east is lit 'as far as Hebron', the answer comes: 'Barkai'. Only then: 'Go and bring a lamb from the chamber of lambs' — this corner chamber of Beis HaMoked, where no fewer than six inspected lambs were always kept. From the chamber of vessels they take out ninety-three vessels of silver and gold, give the lamb to drink from a golden cup, and check it once more by torchlight, though it was examined the evening before."
+      },
+      "sources": ["Mishnah Tamid 3:2", "Mishnah Tamid 3:3", "Mishnah Tamid 3:4", "Mishnah Middot 1:6"],
+      "questions": [
+        { "he": "מדוע ביקרו את הטלה שוב לאור האבוקות, אם כבר נבדק מבערב?", "en": "Why was the lamb inspected again by torchlight if it had been checked the day before?" },
+        { "he": "מדוע המתינו ל״ברקאי״ ולא שחטו עם עלות השחר?", "en": "Why did they wait for 'Barkai' rather than slaughter at the first light?" }
+      ]
+    },
+    {
+      "id": "heichal_opened",
+      "at": "pesach_haheichal",
+      "offset": { "dx": 0, "dz": 4.5 },
+      "look": "pesach_haheichal",
+      "dwell": 12,
+      "title": { "he": "פתיחת שער ההיכל", "en": "Opening the Heichal" },
+      "text": {
+        "he": "בעוד הטלה מובא, מקדימים שני כהנים וארבעה כלים בידם: הטני והכוז לדישון המזבח הפנימי והמנורה, ושני המפתחות. אחד מהם בא לפשפש הצפוני. שני פשפשים היו לשער הגדול, אחד בצפון ואחד בדרום; שבדרום לא נכנס בו אדם מעולם, ועליו נאמר ביחזקאל: ״השער הזה סגור יהיה, לא ייפתח״. הוא פותח את הפשפש הצפוני, נכנס לתא ומן התא להיכל, מהלך עד שהוא מגיע לשער הגדול, מעביר את הנגר ואת הפותחות ופותחו מבפנים. בעזרה אין השוחט שוחט עד שהוא שומע את קול השער הגדול הנפתח – קול שנשמע, אמרו, עד יריחו.",
+        "en": "While the lamb is being brought, two kohanim go ahead with four vessels: the basket and the jug for the inner altar and the menorah, and the two keys. One of them comes to the northern wicket. The great gate had two wickets, north and south; through the southern no man ever entered, and of it Yechezkel said, 'This gate shall remain shut; it shall not be opened.' He opens the northern wicket, passes into the side chamber and from there into the Heichal, walks until he reaches the great gate, slides back the bolt and the locks, and opens it from inside. In the court the slaughterer does not begin until he hears the sound of the great gate opening — a sound, they said, that carried to Jericho."
+      },
+      "sources": ["Mishnah Tamid 3:6", "Mishnah Tamid 3:7", "Mishnah Tamid 3:8", "Ezekiel 44:2"],
+      "questions": [
+        { "he": "מדוע נפתח שער ההיכל רק מבפנים?", "en": "Why could the Heichal gate be opened only from inside?" },
+        { "he": "מדוע תלויה שחיטת התמיד בפתיחת שער ההיכל?", "en": "Why is the slaughter of the tamid tied to the opening of the Heichal gate?" }
+      ]
+    },
+    {
+      "id": "shechita_and_blood",
+      "at": "slaughter_rings",
+      "camera": { "x": 36, "y": 2.5, "z": -22 },
+      "look": "slaughter_rings",
+      "dwell": 13,
+      "title": { "he": "השחיטה בטבעות וזריקת הדם", "en": "The Slaughter at the Rings; the Blood" },
+      "text": {
+        "he": "אין כופתים את הטלה אלא מעקדים אותו, יד ורגל, כעקידת יצחק. מי שזכו באברים אוחזים בו, ראשו לדרום ופניו למערב, והשוחט עומד במזרח ופניו למערב. תמיד של שחר נשחט על קרן צפונית־מערבית של המזבח, על טבעת שנייה, כנגד השמש, שכן העולה טעונה שחיטה בצפון. המקבל את הדם בא לקרן מזרחית־צפונית ונותן מזרחה־צפונה, הולך לקרן מערבית־דרומית ונותן מערבה־דרומה – שתי מתנות שהן ארבע – ואת שיירי הדם הוא שופך על היסוד הדרומי.",
+        "en": "The lamb is not bound; a foreleg and a hind leg are tied together, hand and foot, in the manner of the binding of Yitzchak. Those who won the limbs hold it, its head to the south and its face to the west, and the slaughterer stands to the east facing west. The morning tamid is slaughtered at the north-west corner of the altar, on the second ring, facing the sun, for the olah must be slaughtered on the north side. The kohen who receives the blood comes to the north-east corner and throws it toward the east and the north, then walks to the south-west corner and throws toward the west and the south — two gifts that count as four — and what is left he pours out on the southern base of the altar."
+      },
+      "sources": ["Mishnah Tamid 4:1", "Mishnah Zevachim 5:4", "Leviticus 1:11", "Tamid 31b"],
+      "questions": [
+        { "he": "מדוע נשחט תמיד של שחר בצפון־מערב ותמיד של בין הערביים בצפון־מזרח?", "en": "Why is the morning tamid slaughtered at the north-west and the afternoon one at the north-east?" },
+        { "he": "מדוע נזרק הדם רק על שתי קרנות ולא על ארבע?", "en": "Why is the blood thrown at only two corners rather than four?" }
+      ]
+    },
+    {
+      "id": "limbs_on_kevesh",
+      "at": "kevesh",
+      "camera": { "x": -52, "y": 2.5, "z": -52 },
+      "look": { "x": -38, "z": -44 },
+      "dwell": 12,
+      "title": { "he": "ניתוח האברים והנחתם על הכבש", "en": "Dismembering; the Limbs on the Kevesh" },
+      "text": {
+        "he": "אצל השולחנות והננסים שבצפון תולים את הטלה באונקלי, מפשיטים ומנתחים אותו כסדר השנוי במשנה: הראש ורגל אחורית, שתי הידיים, העוקץ והרגל השנייה, החזה והגרה, שתי הדפנות והקרביים, שמדיחים אותם על שולחנות השיש; כל כהן נוטל את חלקו, ואחריהם הסולת, חביתי כהן גדול והיין לנסכים – תשעה כהנים בסך הכל. שישה מהם נושאים את האברים על פני העזרה ומניחים אותם על חצי הכבש ולמטה, במערבו, ומולחים אותם. אחר כך יורדים כולם ללשכת הגזית לקרוא את שמע.",
+        "en": "By the tables and the low pillars in the north the lamb is hung on a hook, flayed and cut up in the order the Mishnah lists: the head and a hind leg, the two forelegs, the tail and the other hind leg, the breast and the neck, the two flanks and the innards, which are rinsed on the marble tables. Each kohen takes his part, and after them come the fine flour, the chavitin of the Kohen Gadol and the wine for the libation — nine kohanim in all. Six of them carry the limbs across the court and lay them on the lower half of the kevesh, on its western side, and salt them. Then all of them go down to Lishkas HaGazis to recite the Shema."
+      },
+      "sources": ["Mishnah Tamid 4:2", "Mishnah Tamid 4:3", "Mishnah Yoma 2:3", "Mishnah Middot 3:5"],
+      "questions": [
+        { "he": "מדוע מניחים את האברים על הכבש ומולחים אותם לפני ההקטרה?", "en": "Why are the limbs laid on the kevesh and salted before they go up to the fire?" },
+        { "he": "מדוע מקריב הכהן הגדול מנחת חביתין בכל יום?", "en": "Why does the Kohen Gadol bring a meal-offering of chavitin every day?" }
+      ]
+    },
+    {
+      "id": "shema_in_gazis",
+      "at": "lishkas_hagazis",
+      "camera": { "x": -63, "y": 2.5, "z": -110 },
+      "look": { "x": -74, "z": -100 },
+      "dwell": 12,
+      "title": { "he": "קריאת שמע ופייס הקטורת", "en": "The Shema and the Ketores Lottery" },
+      "text": {
+        "he": "בלשכת הגזית אומר להם הממונה: ״ברכו ברכה אחת״, והם מברכים, קוראים עשרת הדיברות, שמע, והיה אם שמוע, ויאמר, ומברכים את העם שלוש ברכות: אמת ויציב, עבודה וברכת כהנים; ובשבת מוסיפים ברכה אחת למשמר היוצא. אחר כך הפייס השלישי: ״חדשים לקטורת בואו והפיסו״ – אין זוכה בקטורת אלא מי שלא הקטיר מעולם, מפני שהיא מעשרת. הפייס הרביעי קובע מי מעלה את האברים מן הכבש למזבח, ומי שלא זכה נמסר לחזנים, שפושטים ממנו את בגדי הכהונה ומניחים לו מכנסיים בלבד.",
+        "en": "In Lishkas HaGazis the memuneh says, 'Recite one blessing'; they recite a blessing, then the Ten Commandments, Shema, Vehaya im shamoa and Vayomer, and bless the people with three blessings: Emes veyatziv, the Avodah and the priestly blessing; on Shabbos they add a blessing for the outgoing watch. Then the third lottery: 'Newcomers to the ketores, come and draw' — only a kohen who has never offered the incense may win it, because it brings wealth. The fourth lottery decides who carries the limbs from the kevesh up to the altar, and those who did not win are handed to the attendants, who take back the priestly garments and leave them only the breeches."
+      },
+      "sources": ["Mishnah Tamid 5:1", "Mishnah Tamid 5:2", "Mishnah Tamid 5:3", "Yoma 26a"],
+      "questions": [
+        { "he": "מדוע קראו הכהנים את עשרת הדיברות עם קריאת שמע, ומדוע בטל הדבר?", "en": "Why did the kohanim recite the Ten Commandments with the Shema, and why did that practice later stop?" },
+        { "he": "מדוע לא הקטיר כהן קטורת אלא פעם אחת בחייו?", "en": "Why could a kohen offer the ketores only once in his life?" }
+      ]
+    },
+    {
+      "id": "menorah_and_ketores",
+      "at": "mizbeach_hazahav",
+      "offset": { "dx": 0, "dz": 5 },
+      "look": "mizbeach_hazahav",
+      "dwell": 14,
+      "title": { "he": "עבודת ההיכל: המנורה והקטורת", "en": "In the Heichal: the Menorah and the Ketores" },
+      "text": {
+        "he": "בהיכל מוצא הזוכה בדישון המנורה את שני הנרות המזרחיים דולקים: מדשן את השאר ומניח את שניהם, ואחר כך מדשן את המזרחי ומניח את המערבי דולק, שממנו מדליקים את המנורה בין הערביים; ואם מצאו שכבה, מדשנו ומדליקו ממזבח העולה. הזוכה בדישון המזבח הפנימי נוטל את הטני, משתחווה ויוצא. אחר כך הקטורת: כהן אחד צובר גחלים מן המערכה השנייה על מזבח הזהב ומרדדן בשולי המחתה; הזוכה בקטורת נוטל את הבזך מתוך הכף, ואינו מקטיר עד שהממונה אומר לו: ״הקטר״. פורשים העם מבין האולם ולמזבח, והוא מקטיר – בשחר בין הדם לאברים – משתחווה ויוצא.",
+        "en": "Inside the Heichal the kohen who won the menorah finds the two eastern lamps still burning: he cleans the others and leaves those two, and later cleans the eastern one and leaves the western lamp lit, from which the menorah is kindled in the afternoon; if he finds it out, he cleans it and relights it from the fire of the outer altar. The kohen who won the inner altar takes up the basket of ashes, bows and goes out. Then the incense: one kohen heaps coals from the second fire on the golden altar and spreads them with the rim of the pan; the one who won the ketores takes the dish from its spoon, and does not begin until the memuneh tells him, 'Offer!' The people withdraw from between the Ulam and the altar; he burns the incense — in the morning between the blood and the limbs — bows, and goes out."
+      },
+      "sources": ["Mishnah Tamid 3:9", "Mishnah Tamid 6:1", "Mishnah Tamid 6:3", "Mishnah Yoma 3:5"],
+      "questions": [
+        { "he": "מדוע מקטירים את הקטורת בין זריקת הדם להקטרת האברים?", "en": "Why is the ketores offered between the throwing of the blood and the burning of the limbs?" },
+        { "he": "מהו ״נר מערבי״, ומדוע הניחוהו דולק?", "en": "What is the 'western lamp', and why was it left burning?" }
+      ]
+    },
+    {
+      "id": "blessing_and_limbs",
+      "at": "maalos_ulam",
+      "camera": { "x": 28, "y": 2.5, "z": -57 },
+      "look": "maalos_ulam",
+      "dwell": 13,
+      "title": { "he": "ברכת כהנים על מעלות האולם והקטרת האברים", "en": "The Blessing on the Ulam Steps; the Limbs on the Fire" },
+      "text": {
+        "he": "הכהנים ששימשו בפנים יוצאים ועומדים על מעלות האולם, הראשונים לדרום אחיהם הכהנים וחמישה כלים בידם, ומברכים את העם ברכה אחת – במקדש אומרים את שלושת הפסוקים כברכה אחת, ואת השם ככתבו. אחר כך מעלים את האברים מן הכבש למזבח. כשכהן גדול רוצה להקטיר, הוא עולה בכבש והסגן בימינו; הכהנים מושיטים לו את האברים, הוא סומך עליהם וזורקם לאש, ואת השאר מניחים כדרכם. משהביאו לו יין לנסך, הניף הסגן בסודר, הקיש בן ארזא בצלצל, ופתחו הלויים בשיר.",
+        "en": "The kohanim who served inside come out and stand on the steps of the Ulam, the first of them to the south of their brothers, the five vessels in their hands, and together they bless the people with one blessing — in the Temple the three verses are said as a single blessing, and the Name is pronounced as it is written. Then the limbs are carried from the kevesh up to the altar. When the Kohen Gadol wishes to offer, he goes up the kevesh with the segan at his right; the kohanim hand him the limbs, he leans his hands on them and throws them onto the fire, and the rest are laid on in the usual way. When the wine for the libation is brought to him, the segan waves the cloth, Ben Arza strikes the cymbal, and the Levites break into song."
+      },
+      "sources": ["Mishnah Tamid 7:1", "Mishnah Tamid 7:2", "Mishnah Tamid 7:3", "Mishnah Sotah 7:6"],
+      "questions": [
+        { "he": "מדוע נאמרת ברכת כהנים במקדש כברכה אחת ובגבולין כשלוש ברכות?", "en": "Why is the priestly blessing said as one blessing in the Temple but as three outside it?" },
+        { "he": "מדוע ממתינים האברים על הכבש עד לאחר הקטורת?", "en": "Why do the limbs wait on the kevesh until after the ketores?" }
+      ]
+    },
+    {
+      "id": "shir_shel_yom",
+      "at": "duchan",
+      "offset": { "dx": 0, "dz": 3.75 },
+      "look": "duchan",
+      "dwell": 14,
+      "title": { "he": "שיר של יום על הדוכן", "en": "The Levites' Song on the Duchan" },
+      "text": {
+        "he": "הלויים – ולעולם אין פוחתים משנים עשר – עומדים על הדוכן, הבימה שבין עזרת ישראל לעזרת הכהנים ובה שלוש מעלות של חצי אמה, ואומרים את שיר של יום בכינורות ובנבלים: בראשון ״לה׳ הארץ ומלואה״, בשני ״גדול ה׳ ומהולל מאוד״, בשלישי ״אלוהים ניצב בעדת אל״, ברביעי ״אל נקמות ה׳״, בחמישי ״הרנינו לאלוהים עוזנו״, בשישי ״ה׳ מלך גאות לבש״, ובשבת ״מזמור שיר ליום השבת״. השיר נאמר בשלושה פרקים; על כל פרק תקיעה, ועל כל תקיעה השתחוויה של העם שבעזרה. זהו סדר התמיד לעבודת בית אלוהינו.",
+        "en": "The Levites — never fewer than twelve — stand on the Duchan, the platform of three half-amah steps between the court of Israel and the court of the kohanim, and sing the day's psalm to harps and lyres: on Sunday 'The earth is Hashem's' (Psalm 24), on Monday 'Great is Hashem' (48), on Tuesday 'God stands in the divine assembly' (82), on Wednesday 'God of vengeance' (94), on Thursday 'Sing aloud to God our strength' (81), on Friday 'Hashem reigns, He is clothed in majesty' (93), and on Shabbos the psalm for the Sabbath day (92). The song is sung in three sections; at each break two kohanim sound the trumpets and the people in the court prostrate themselves. This is the order of the daily offering in the service of the house of our God."
+      },
+      "sources": ["Mishnah Tamid 7:3", "Mishnah Tamid 7:4", "Mishnah Middot 2:6", "Mishnah Arakhin 2:6"],
+      "questions": [
+        { "he": "מדוע נקבע לכל יום בשבוע מזמור משלו?", "en": "Why does each day of the week have its own psalm?" },
+        { "he": "האם אמרו הלויים שירה רק על היין, ומדוע?", "en": "Did the Levites sing only over the wine libation, and why?" }
+      ]
+    }
+  ]
+}

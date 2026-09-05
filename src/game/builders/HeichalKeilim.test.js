@@ -6,11 +6,12 @@ import { KeilimBuilder } from './KeilimBuilder.js';
 import { byId, worldPos, levelWorldY } from '../../content/index.js';
 import { AMAH } from '../../content/units.js';
 import { CONFIG } from '../../config.js';
+import { PlayerController } from '../PlayerController.js';
 
 /** Map-like texture stub: no textures headless, every material is built without maps (null keeps three quiet). */
 const stubTex = { get: () => null };
 
-let scene, floors, walls, groups;
+let scene, floors, walls, groups, player;
 
 /** Height of the highest walkable surface under world (x, z), like PlayerController.getFloorHeight. */
 function floorY(x, z) {
@@ -34,6 +35,7 @@ beforeAll(() => {
   new HeichalBuilder(...args).build();
   new KeilimBuilder(...args).build();
   scene.updateMatrixWorld(true);
+  player = new PlayerController(new THREE.PerspectiveCamera(), floors, walls, {});
   groups = {};
   for (const c of scene.children) if (c.userData?.entryId && !groups[c.userData.entryId]) groups[c.userData.entryId] = c;
 });
@@ -216,5 +218,82 @@ describe('entry groups', () => {
       if (c.isMesh && c.visible) draws++;
     });
     expect(draws).toBeLessThan(150);
+  });
+});
+
+/** The controller's view of a point: blocked when the step-height probe starts inside a solid or a wall box holds the feet. */
+function blockedAt(x, feetY, z) {
+  const p = player.probe(x, z, feetY + CONFIG.STEP_HEIGHT + 0.05);
+  if (p.inside) return true;
+  if (p.y - feetY > CONFIG.STEP_HEIGHT) return true;
+  return player.collides(new THREE.Vector3(x, feetY + CONFIG.PLAYER_HEIGHT, z));
+}
+
+describe('solids', () => {
+  const K = () => levelWorldY('azaras_kohanim');
+  const H = () => levelWorldY('heichal');
+
+  it('the altar\'s four sides and the kevesh flanks cannot be walked into from the court', () => {
+    const [ax, , az] = worldPos(byId.mizbeach);
+    const half = 16 * AMAH;
+    // just inside each face of the sovev tier (x/z +-15), at court level
+    for (const [x, z] of [
+      [ax - half + 0.6, az],
+      [ax + half - 0.6, az],
+      [ax, az - half + 0.6],
+      [ax, az + half - 0.6],
+      [ax - half + 0.6, az + half - 0.6], // the yesod-less south-east corner, inside the sovev
+    ]) {
+      expect(blockedAt(x, K(), z), `${x},${z}`).toBe(true);
+    }
+    // the kevesh: inside its body under the slab, from either flank and from the foot end
+    const [kx, , kz] = worldPos(byId.kevesh);
+    expect(blockedAt(kx, K(), kz - 3.9)).toBe(true); // 0.1 m inside the west flank, where the ramp is 4 amos high
+    expect(blockedAt(kx, K(), kz + 3.9)).toBe(true); // east flank
+    expect(blockedAt(kx + 5, K(), kz)).toBe(true); // near the top, 8 amos high
+    // but the foot of the ramp is a step onto the slab
+    expect(blockedAt(kx - 7.4, K(), kz)).toBe(false);
+    // and beside the altar on the court there is nothing in the way
+    expect(blockedAt(ax - half - 1, K(), az + half + 1)).toBe(false);
+  });
+
+  it('the south-east corner of the altar has no yesod: the court floor is the only surface', () => {
+    const [ax, , az] = worldPos(byId.mizbeach);
+    const half = 16 * AMAH;
+    // the yesod band would be x -16 .. -15 / z 15 .. 16; the point sits in it
+    const p = player.probe(ax - half + 0.25, az + half - 0.25, K() + 5);
+    expect(p.inside).toBe(false);
+    expect(p.y).toBeLessThan(K() + 0.01); // no court floor is built here by these two builders: y 0 or below the level
+  });
+
+  it('the kiyor, menorah, shulchan and golden altar are solid', () => {
+    // [id, level, a free spot 2 m away]: south of the kiyor (its north side is 2 amos from
+    // the Ulam steps), east of the Heichal vessels (the menorah and shulchan stand 2.5 amos from the walls)
+    for (const [id, level, dx, dz] of [
+      ['kiyor', K(), -2, 0],
+      ['menorah', H(), 0, 2],
+      ['shulchan', H(), 0, 2],
+      ['mizbeach_hazahav', H(), 0, 2],
+    ]) {
+      const [x, , z] = worldPos(byId[id]);
+      expect(blockedAt(x, level, z), id).toBe(true);
+      expect(blockedAt(x + dx, level, z + dz), `${id} beside`).toBe(false);
+    }
+  });
+
+  it('the parochos do not block the way into the Kodesh HaKodashim', () => {
+    const [x, , z] = worldPos(byId.paroches);
+    for (const dz of [0.2, 0, -0.2, -0.5, -0.8]) expect(blockedAt(x, H(), z + dz), `dz ${dz}`).toBe(false);
+  });
+
+  it('the Ulam is 100 wide overall (Middot 4:7) with its end walls inside x +-50', () => {
+    const [x, , z] = worldPos(byId.ulam);
+    const U = levelWorldY('ulam');
+    expect(blockedAt(x + 44 * AMAH, U, z)).toBe(false);
+    expect(blockedAt(x + 47 * AMAH, U, z)).toBe(true); // inside the end wall
+    expect(blockedAt(x + 52 * AMAH, U, z)).toBe(false); // beyond it: nothing of the Ulam
+    // the court strip north of the wing behind the Ulam is at the Kohanim level, not inside the foundation
+    const p = player.probe(x + 45 * AMAH, z - 12 * AMAH, K() + CONFIG.STEP_HEIGHT + 0.05);
+    expect(p.inside).toBe(false);
   });
 });

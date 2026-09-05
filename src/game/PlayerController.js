@@ -7,11 +7,14 @@ THREE.Mesh.prototype.raycast = acceleratedRaycast;
 
 const _origin = new THREE.Vector3();
 const _down = new THREE.Vector3(0, -1, 0);
+const _upRay = new THREE.Vector3(0, 1, 0);
 const _forward = new THREE.Vector3();
 const _right = new THREE.Vector3();
 const _move = new THREE.Vector3();
-const _sphere = new THREE.Sphere();
+const _body = new THREE.Box3();
 const UP = new THREE.Vector3(0, 1, 0);
+/** Hits closer together than this along a probe are treated as the same surface (metres). */
+const COPLANAR = 1e-3;
 
 /**
  * Merge every walkable mesh into one static collision mesh with a BVH, so the three
@@ -76,8 +79,10 @@ export class PlayerController {
     this.verticalVelocity = 0;
     this.isJumping = false;
     this.debugMode = false; // ghost: free flight, no collisions
+    this.onGround = false;
     this.raycaster = new THREE.Raycaster();
-    this.raycaster.firstHitOnly = true;
+    // All hits along the ray, nearest first: insideSolid() needs the coplanar ones.
+    this.raycaster.firstHitOnly = false;
   }
 
   toggleDebug(callback) {
@@ -94,9 +99,9 @@ export class PlayerController {
 
   /**
    * Cast straight down from (x, fromY, z). Returns the first surface hit and whether the
-   * probe started inside a solid (the first hit is a back face, i.e. the solid's underside).
-   * Probing from just above step height catches walking into a block the player cannot
-   * climb; probing from above head height finds the floor while ignoring balconies overhead.
+   * probe started inside a solid (see insideSolid). Probing from just above step height
+   * catches walking into a block the player cannot climb; probing from above head height
+   * finds the floor while ignoring balconies overhead.
    */
   probe(x, z, fromY) {
     _origin.set(x, fromY, z);
@@ -104,14 +109,43 @@ export class PlayerController {
     this.raycaster.far = fromY + 100;
     const hits = this.raycaster.intersectObjects(this.floors, false);
     if (!hits.length) return { y: 0, inside: false };
-    if (this.collider) {
-      const h = hits[0];
-      const n = h.face?.normal;
-      return { y: h.point.y, inside: !!n && n.y < 0 };
-    }
+    if (this.collider) return { y: hits[0].point.y, inside: this.insideSolid(x, fromY, z) };
     let highest = -Infinity;
     for (const hit of hits) if (hit.point.y > highest && hit.point.y < fromY) highest = hit.point.y;
     return { y: highest > -Infinity ? highest : 0, inside: false };
+  }
+
+  /**
+   * Is the point (x, y, z) inside a walkable mass? A ray is cast upward through every
+   * face above the point. Every mass is a closed body, so along the ray each face is an
+   * entry (its normal faces down, toward us) or an exit (normal up); from a free point
+   * entries and exits pair up, while from inside a body we leave it without having
+   * entered, and the running count of bodies we are in goes negative. The whole ray is
+   * walked because bodies overlap (the kevesh slab lies over its wedge). Hits within
+   * COPLANAR of each other are one event with its exits counted first (a tier standing
+   * on another shares a plane with it). Looking up rather than down keeps the answer
+   * right for a body whose base is sunk below the floor it stands on.
+   */
+  insideSolid(x, y, z) {
+    if (!this.collider) return false;
+    _origin.set(x, y, z);
+    this.raycaster.set(_origin, _upRay);
+    this.raycaster.far = 400;
+    const hits = this.raycaster.intersectObjects(this.floors, false);
+    let depth = 0;
+    for (let i = 0; i < hits.length; ) {
+      const limit = hits[i].distance + COPLANAR;
+      let exits = 0;
+      let entries = 0;
+      for (; i < hits.length && hits[i].distance <= limit; i++) {
+        const n = hits[i].face?.normal;
+        if (n && n.y > 0) exits++;
+        else entries++;
+      }
+      if (depth < exits) return true;
+      depth += entries - exits;
+    }
+    return false;
   }
 
   /** Height of the highest walkable surface under (x, z), or 0 if there is none. */
@@ -119,16 +153,28 @@ export class PlayerController {
     return this.probe(x, z, fromY).y;
   }
 
-  /** Floor under the feet, ignoring surfaces overhead but not fooled by standing inside a slab. */
+  /**
+   * Floor under the feet. Probed from just above step height so a slab overhead (the
+   * kevesh over the sovev ledge, a balcony) is not taken for the ground; if that probe
+   * starts inside a solid (the feet are embedded, e.g. after a teleport) the top of the
+   * solid is found from above the head instead.
+   */
   floorUnder(x, z, feetY) {
-    let p = this.probe(x, z, feetY + CONFIG.PLAYER_HEIGHT + 0.3);
-    if (p.inside) p = this.probe(x, z, feetY + CONFIG.STEP_HEIGHT + 0.05);
+    let p = this.probe(x, z, feetY + CONFIG.STEP_HEIGHT + 0.05);
+    if (p.inside) p = this.probe(x, z, feetY + CONFIG.PLAYER_HEIGHT + 0.3);
     return p;
   }
 
+  /**
+   * Does the player's body at head position `pos` overlap a wall box? The body is a
+   * PLAYER_RADIUS-wide column from just above the feet to the head, so a knee-high
+   * vessel blocks as well as a wall.
+   */
   collides(pos) {
-    _sphere.set(pos, CONFIG.PLAYER_RADIUS);
-    for (const box of this.wallBoxes) if (box.intersectsSphere(_sphere)) return true;
+    const r = CONFIG.PLAYER_RADIUS;
+    _body.min.set(pos.x - r, pos.y - CONFIG.PLAYER_HEIGHT + 0.1, pos.z - r);
+    _body.max.set(pos.x + r, pos.y, pos.z + r);
+    for (const box of this.wallBoxes) if (box.intersectsBox(_body)) return true;
     return false;
   }
 
@@ -175,15 +221,21 @@ export class PlayerController {
     }
 
     // Vertical: gravity, landing, and stepping up onto the surface we just walked onto.
+    // While grounded, a floor within a step below the feet is snapped to (walking down
+    // stairs or a ramp stays glued to the surface instead of bouncing); a longer drop
+    // falls under gravity.
     this.verticalVelocity -= 20 * delta;
     const floorY = this.floorUnder(cam.position.x, cam.position.z, feetY).y;
     const newFeet = feetY + this.verticalVelocity * delta;
-    if (newFeet <= floorY) {
+    const stepDown = this.onGround && !this.isJumping && feetY - floorY <= CONFIG.STEP_HEIGHT;
+    if (newFeet <= floorY || stepDown) {
       cam.position.y = floorY + CONFIG.PLAYER_HEIGHT;
       this.verticalVelocity = 0;
       this.isJumping = false;
+      this.onGround = true;
     } else {
       cam.position.y = newFeet + CONFIG.PLAYER_HEIGHT;
+      this.onGround = false;
     }
     this.groundY = floorY;
 

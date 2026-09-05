@@ -182,8 +182,12 @@ describe('entry groups', () => {
     expect(byName('taim-cells').count).toBe(byId.taim.dimensions.find((d) => d.label === 'count').value);
     expect(byName('keranos').count).toBe(4);
     expect(byName('kiyor-spouts').count).toBe(12);
-    expect(byName('menorah-flames').count).toBe(7);
-    expect(byName('menorah-flames').material.isMeshBasicMaterial).toBe(true);
+    let wicks = 0;
+    scene.traverse((c) => {
+      if (c.name === 'menorah-flame') wicks++;
+    });
+    expect(wicks).toBe(7); // anchors for ParticleSystem.createCandle
+    expect(byName('golden-altar-coals').isMesh).toBe(true);
     let lights = 0;
     scene.traverse((c) => {
       if (c.isLight) lights++;

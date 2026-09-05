@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { mulberry32 } from './random.js';
+import { Flame, Embers, Smoke, flicker } from './Flame.js';
 
 /**
  * Soft radial sprite shared by every particle system: white centre fading to transparent,
@@ -23,135 +23,240 @@ export function makeParticleTexture(size = 64) {
 }
 
 // ============================================================================
-// PARTICLE SYSTEM - fire and smoke as textured, size-attenuated points
+// PARTICLE SYSTEM - the fires of the Mikdash: the altar's ma'aracha (three layered
+// shader flames, embers, smoke and a flickering physical light), the seven lamps of
+// the Menorah and the coals on the golden altar. See Flame.js for the shaders.
 // ============================================================================
 export class ParticleSystem {
   constructor(scene) {
     this.scene = scene;
-    this.systems = [];
-    this.rand = mulberry32(5); // same initial scatter on every load (screenshots)
-    this.sprite = makeParticleTexture();
+    this.flames = []; // everything with update(delta, camera) and dispose()
+    this.lights = []; // { light, baseIntensity, base: Vector3, rate, jitter }
+    this.time = 0;
+    this.sprite = typeof document !== 'undefined' ? makeParticleTexture() : null;
   }
 
+  /** Track a flame/ember/smoke object under `parent` at a local offset. */
+  attach(parent, obj, x = 0, y = 0, z = 0) {
+    obj.position.set(x, y, z);
+    parent.add(obj);
+    this.flames.push(obj);
+    return obj;
+  }
+
+  /**
+   * A large wood fire: three layered flames (wide base, medium body, small hot core),
+   * sparks, smoke and a physical point light. `size` is the fuel bed's width in metres;
+   * the flames stand about 1.5 x size tall.
+   */
   createFire(x, y, z, size = 1) {
-    const count = 160; // many small, dim sprites read as flame; few large bright ones read as confetti
-    const geo = new THREE.BufferGeometry();
-    const pos = new Float32Array(count * 3);
-    const col = new Float32Array(count * 3);
-    const vel = [];
-
-    for (let i = 0; i < count; i++) {
-      pos[i * 3] = (this.rand() - 0.5) * size * 0.8;
-      pos[i * 3 + 1] = this.rand() * size * 1.6;
-      pos[i * 3 + 2] = (this.rand() - 0.5) * size * 0.8;
-      const t = pos[i * 3 + 1] / (size * 1.6);
-      // Bright yellow-white core low down, fading to deep orange-red near the top.
-      col[i * 3] = 1;
-      col[i * 3 + 1] = 0.75 - t * 0.55;
-      col[i * 3 + 2] = 0.25 - t * 0.25;
-      vel.push(new THREE.Vector3((this.rand() - 0.5) * 0.5, 1 + this.rand() * 2, (this.rand() - 0.5) * 0.5));
-    }
-
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-
-    const mat = new THREE.PointsMaterial({
-      map: this.sprite,
-      size: 0.75,
-      sizeAttenuation: true,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.45,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    });
-    const pts = new THREE.Points(geo, mat);
-    pts.position.set(x, y, z);
-    pts.userData = { vel, size };
-    pts.name = 'fire';
-    this.scene.add(pts);
-    this.systems.push({ type: 'fire', mesh: pts });
-
+    const g = new THREE.Group();
+    g.name = 'fire';
+    g.position.set(x, y, z);
+    this.scene.add(g);
+    const height = size * 1.5;
+    // Grow the cluster beyond 25 m so it still reads as one flame from the Nicanor gate.
+    const distanceScale = { start: 25, rate: 0.02, max: 2.5 };
+    const normal = THREE.NormalBlending; // the body is opaque-ish; only the core adds up and blooms
+    this.attach(
+      g,
+      new Flame({
+        size,
+        height,
+        intensity: 0.9,
+        temperature: 0.3,
+        quads: 8,
+        scroll: 0.9,
+        seed: 11,
+        distanceScale,
+        blending: normal,
+      })
+    );
+    this.attach(
+      g,
+      new Flame({
+        size: size * 0.65,
+        height: height * 0.75,
+        intensity: 1.0,
+        temperature: 0.5,
+        quads: 7,
+        scroll: 1.1,
+        seed: 12,
+        distanceScale,
+        blending: normal,
+      })
+    );
+    this.attach(
+      g,
+      new Flame({
+        size: size * 0.35,
+        height: height * 0.5,
+        intensity: 1.3,
+        temperature: 0.85,
+        quads: 6,
+        scroll: 1.4,
+        seed: 13,
+        distanceScale,
+        fadeDistance: 40,
+      })
+    );
+    this.attach(
+      g,
+      new Embers({
+        count: 60,
+        height: height * 1.4,
+        spread: size * 0.3,
+        size: size * 0.04,
+        life: 2.5,
+        intensity: 1,
+        seed: 14,
+      }),
+      0,
+      height * 0.2,
+      0
+    );
+    this.attach(
+      g,
+      new Smoke(this.sprite, {
+        count: 28,
+        rise: height * 3,
+        spread: size * 0.4,
+        drift: [0.12, 0, 0.06],
+        size: size * 0.5,
+        grow: 2.5,
+        life: 7,
+        opacity: 0.32,
+        seed: 15,
+      }),
+      0,
+      height * 0.75,
+      0
+    );
     // Physical units (candela, inverse-square decay): the old intensity 2 lit nothing.
     const baseIntensity = 400;
     const light = new THREE.PointLight(0xff6622, baseIntensity, 0, 2);
     light.position.set(x, y + size, z);
     this.scene.add(light);
-    this.systems.push({ type: 'fireLight', mesh: light, baseIntensity });
-    return pts;
-  }
-
-  createSmoke(x, y, z, size = 0.5) {
-    const count = 25;
-    const geo = new THREE.BufferGeometry();
-    const pos = new Float32Array(count * 3);
-    const vel = [];
-    for (let i = 0; i < count; i++) {
-      pos[i * 3] = (this.rand() - 0.5) * size;
-      pos[i * 3 + 1] = this.rand() * size * 3;
-      pos[i * 3 + 2] = (this.rand() - 0.5) * size;
-      vel.push(new THREE.Vector3((this.rand() - 0.5) * 0.2, 0.5 + this.rand() * 0.5, (this.rand() - 0.5) * 0.2));
-    }
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    const mat = new THREE.PointsMaterial({
-      map: this.sprite,
-      size: 2,
-      sizeAttenuation: true,
-      color: 0x8a8a8a,
-      transparent: true,
-      opacity: 0.3,
-      blending: THREE.NormalBlending,
-      depthWrite: false,
+    this.lights.push({
+      light,
+      baseIntensity,
+      base: light.position.clone(),
+      rate: 1,
+      jitter: size * 0.06,
     });
-    const pts = new THREE.Points(geo, mat);
-    pts.position.set(x, y, z);
-    pts.userData = { vel, size };
-    pts.name = 'smoke';
-    this.scene.add(pts);
-    this.systems.push({ type: 'smoke', mesh: pts });
-    return pts;
+    return g;
   }
 
-  update(delta) {
-    const rand = Math.random; // per-frame jitter need not be reproducible
-    for (const s of this.systems) {
-      if (s.type === 'fire') {
-        const pos = s.mesh.geometry.attributes.position.array;
-        const col = s.mesh.geometry.attributes.color.array;
-        const { vel, size } = s.mesh.userData;
-        for (let i = 0; i < vel.length; i++) {
-          pos[i * 3] += vel[i].x * delta;
-          pos[i * 3 + 1] += vel[i].y * delta;
-          pos[i * 3 + 2] += vel[i].z * delta;
-          if (pos[i * 3 + 1] > size * 3) { pos[i * 3] = (rand() - 0.5) * size; pos[i * 3 + 1] = 0; pos[i * 3 + 2] = (rand() - 0.5) * size; }
-          const t = pos[i * 3 + 1] / (size * 3);
-          col[i * 3] = 1; col[i * 3 + 1] = Math.max(0, 0.5 - t * 0.5); col[i * 3 + 2] = 0;
-        }
-        s.mesh.geometry.attributes.position.needsUpdate = true;
-        s.mesh.geometry.attributes.color.needsUpdate = true;
-      } else if (s.type === 'fireLight') {
-        s.mesh.intensity = s.baseIntensity * (1 + Math.sin(Date.now() * 0.01) * 0.25);
-      } else if (s.type === 'smoke') {
-        const pos = s.mesh.geometry.attributes.position.array;
-        const { vel, size } = s.mesh.userData;
-        for (let i = 0; i < vel.length; i++) {
-          pos[i * 3] += vel[i].x * delta + (rand() - 0.5) * 0.1;
-          pos[i * 3 + 1] += vel[i].y * delta;
-          pos[i * 3 + 2] += vel[i].z * delta + (rand() - 0.5) * 0.1;
-          if (pos[i * 3 + 1] > size * 6) { pos[i * 3] = (rand() - 0.5) * size; pos[i * 3 + 1] = 0; pos[i * 3 + 2] = (rand() - 0.5) * size; }
-        }
-        s.mesh.geometry.attributes.position.needsUpdate = true;
+  /** A free-standing smoke column (soft grey sprites rising and fading). */
+  createSmoke(x, y, z, size = 0.5) {
+    const smoke = new Smoke(this.sprite, {
+      count: 20,
+      rise: size * 12,
+      spread: size * 0.3,
+      drift: [0.05, 0, 0.02],
+      size: size * 0.8,
+      grow: 2.5,
+      life: 8,
+      opacity: 0.3,
+      seed: 21,
+    });
+    return this.attach(this.scene, smoke, x, y, z);
+  }
+
+  /**
+   * A lamp flame (the Menorah): one tiny hot flame hung on `anchor` (an Object3D the
+   * builder placed at the wick) so it toggles with the vessel's period group.
+   * `light` > 0 adds a small flickering point light (candela).
+   */
+  createCandle(anchor, o = {}) {
+    const { size = 0.035, height = 0.11, light = 0 } = o;
+    const flame = new Flame({
+      size,
+      height,
+      intensity: 1.3,
+      temperature: 0.6,
+      quads: 4,
+      scroll: 2.5,
+      seed: 31 + this.flames.length,
+      distanceScale: { start: 6, rate: 0.05, max: 2.5 },
+    });
+    this.attach(anchor, flame);
+    if (light > 0) {
+      const pl = new THREE.PointLight(0xffc266, light, 0, 2);
+      pl.position.y = height;
+      anchor.add(pl);
+      this.lights.push({
+        light: pl,
+        baseIntensity: light,
+        base: pl.position.clone(),
+        rate: 3,
+        jitter: 0,
+      });
+    }
+    return flame;
+  }
+
+  /**
+   * Glowing coals with a thin incense column (the golden altar): a low, dull flame
+   * shimmering over the coal bed and a narrow smoke column rising straight up.
+   */
+  createCoals(anchor, o = {}) {
+    const { size = 0.28, height = 0.16 } = o;
+    const glow = new Flame({
+      size,
+      height,
+      intensity: 0.7,
+      temperature: 0.12,
+      quads: 5,
+      scroll: 1.8,
+      seed: 41,
+      distanceScale: { start: 6, rate: 0.05, max: 2 },
+    });
+    this.attach(anchor, glow, 0, 0.01, 0);
+    const smoke = new Smoke(this.sprite, {
+      count: 22,
+      rise: 4,
+      spread: 0.04,
+      drift: [0.01, 0, 0.005],
+      size: 0.14,
+      grow: 2,
+      life: 9,
+      opacity: 0.28,
+      color: 0x8a8a90,
+      seed: 42,
+    });
+    this.attach(anchor, smoke, 0, height * 0.6, 0);
+    return glow;
+  }
+
+  update(delta, camera) {
+    this.time += delta;
+    for (const f of this.flames) f.update(delta, camera);
+    for (const l of this.lights) {
+      const t = this.time * l.rate;
+      l.light.intensity = l.baseIntensity * flicker(t, 0.25);
+      if (l.jitter) {
+        l.light.position.x = l.base.x + noiseOffset(t + 13.7) * l.jitter;
+        l.light.position.z = l.base.z + noiseOffset(t + 29.1) * l.jitter;
       }
     }
   }
 
   dispose() {
-    for (const s of this.systems) {
-      this.scene.remove(s.mesh);
-      s.mesh.geometry?.dispose();
-      s.mesh.material?.dispose();
+    for (const f of this.flames) f.dispose();
+    this.flames = [];
+    for (const l of this.lights) {
+      l.light.removeFromParent();
+      l.light.dispose();
     }
-    this.systems = [];
-    this.sprite.dispose();
+    this.lights = [];
+    for (const g of [...this.scene.children]) if (g.name === 'fire') this.scene.remove(g);
+    this.sprite?.dispose();
+    this.sprite = null;
   }
+}
+
+/** -1..1 wander for the light position (the flame's centre of brightness moves). */
+function noiseOffset(t) {
+  return flicker(t, 1) - 1;
 }

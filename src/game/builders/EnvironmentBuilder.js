@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { CONFIG } from '../../config.js';
 import { BaseBuilder, TILE_METRES } from './BaseBuilder.js';
 import { mulberry32 } from '../random.js';
+import { Daylight } from '../Daylight.js';
 
 // ============================================================================
 // ENVIRONMENT BUILDER - Sky, ground, and distant scenery
@@ -31,43 +32,11 @@ export class EnvironmentBuilder extends BaseBuilder {
   }
 
   buildSky() {
-    // Kept inside the far plane and re-centred on the camera every frame (TempleGame),
-    // so no part of it is ever clipped when the player stands far from the origin.
-    const skyGeo = new THREE.SphereGeometry(CONFIG.RENDER_DISTANCE * 0.9, 32, 32);
-    const skyMat = new THREE.ShaderMaterial({
-      uniforms: {
-        topColor: { value: new THREE.Color(0x4A90C8) },
-        bottomColor: { value: new THREE.Color(0xD4E4F4) },
-        sunPos: { value: new THREE.Vector3(0.5, 0.3, 0.5).normalize() }
-      },
-      vertexShader: `
-        varying vec3 vPos;
-        void main() {
-          vPos = (modelMatrix * vec4(position, 1.0)).xyz;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 topColor, bottomColor, sunPos;
-        varying vec3 vPos;
-        void main() {
-          vec3 dir = normalize(vPos);
-          float h = dir.y * 0.5 + 0.5;
-          vec3 sky = mix(bottomColor, topColor, pow(h, 0.6));
-          float sun = max(0.0, dot(dir, sunPos));
-          sky += vec3(1.0, 0.98, 0.9) * pow(sun, 32.0) * 0.5 + pow(sun, 4.0) * 0.2;
-          gl_FragColor = vec4(sky, 1.0);
-        }
-      `,
-      side: THREE.BackSide,
-      depthWrite: false,
-      fog: false
-    });
-    const sky = new THREE.Mesh(skyGeo, skyMat);
-    sky.name = 'sky';
-    sky.frustumCulled = false;
-    sky.renderOrder = -1;
-    this.scene.add(sky);
+    // three's Preetham dome (Daylight.createSky), kept inside the far plane and re-centred
+    // on the camera every frame (TempleGame), so no part of it is ever clipped when the
+    // player stands far from the origin. The sun, the fog colour and the lights that follow
+    // it are set by Daylight.set(timeOfDay) once the lights exist.
+    this.scene.add(Daylight.createSky());
     this.scene.fog = new THREE.Fog(0xd8e2ec, 140, CONFIG.RENDER_DISTANCE * 0.88);
   }
 
@@ -81,6 +50,7 @@ export class EnvironmentBuilder extends BaseBuilder {
       const m = new THREE.Mesh(new THREE.ConeGeometry(30 + rand() * 20, height, 6), hillMat);
       m.position.set(Math.cos(angle) * dist, height / 2 - 5, Math.sin(angle) * dist);
       m.rotation.y = rand() * Math.PI;
+      m.userData.noCull = true; // scenery, not detail
       this.scene.add(m);
     }
   }

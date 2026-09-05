@@ -423,6 +423,7 @@ export class HeichalBuilder extends BaseBuilder {
     }
     const mesh = this.blocksInstanced(g, cells, this.mat.stonePolished, { name: 'taim-cells' });
     g.userData.count = mesh.count;
+    mesh.userData.lodDistance = 120; // inside the side buildings: unseen from farther (game/lod.js)
 
     // Roofs of the lower side buildings
     const xIn = byId.heichal.bounds.maxX + SECTION.wallT; // 16

@@ -5,6 +5,8 @@ import { TempleBuilder } from './TempleBuilder.js';
 import { PlayerController } from './PlayerController.js';
 import { CharacterSystem } from './CharacterSystem.js';
 import { ParticleSystem } from './ParticleSystem.js';
+import { Daylight } from './Daylight.js';
+import { DistanceCuller } from './lod.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -94,6 +96,7 @@ export class TempleGame {
       this.refreshHotspots();
       this.applyPeriod(period);
     });
+    this.unsubTime = store.subscribe((s) => s.timeOfDay, (t) => this.daylight?.set(t));
     this.ready = this.init().catch((e) => {
       console.error(e);
       store.setState({ loading: null, error: e.message });
@@ -157,12 +160,15 @@ export class TempleGame {
 
     // Baked textures stream in from /textures/*.webp while the geometry builds; the
     // canvas generators only run for files that are missing (or with ?bake=0).
-    this.tex.onProgress((n, total) => this.store.setState({ loading: `Loading textures ${n}/${total}...` }));
+    this.tex.onProgress((n, total) => this.store.setState({ loading: `Loading textures ${n}/${total}...` })); // counts PBR maps and models too
     await this.setLoading(this.tex.baked ? 'Loading textures...' : 'Generating textures...');
     const builder = new TempleBuilder(this.scene, this.tex);
     await this.setLoading('Building the Beis HaMikdash...');
     const { floors, walls } = builder.build();
     this.sky = this.scene.getObjectByName('sky');
+    // The sun, the sky dome, the hemisphere light and the fog follow store.timeOfDay.
+    this.daylight = new Daylight(this.scene, { exposure: r.toneMappingExposure });
+    this.daylight.set(this.store.getState().timeOfDay);
     const all = this.areaBounds.map((a) => a.bounds);
     const bounds = {
       minX: Math.min(...all.map((b) => b.minX)),
@@ -204,7 +210,7 @@ export class TempleGame {
     for (let i = 0; i < 12; i++) this.characters.createDove(ex + (rand() - 0.5) * 60, nashimY + 12 + rand() * 10, ez + (rand() - 0.5) * 60);
 
     if (this.tex.total > this.tex.loaded) {
-      await this.setLoading(`Loading textures ${this.tex.loaded}/${this.tex.total}...`);
+      await this.setLoading(`Loading textures ${this.tex.progress().join('/')}...`);
       await this.tex.whenLoaded();
     }
     if (this.disposed) return;
@@ -239,6 +245,8 @@ export class TempleGame {
     this.hotspotLabels = new Hotspots(this.camera, this.container, this.store); // HUD: in-scene labels
     if (isTouchDevice()) this.touch = new TouchControls(this.container, this.player); // HUD: joystick + drag-look
     const q = new URLSearchParams(window.location.search);
+    // Distance culling of small meshes and far instances (game/lod.js); `?lod=0` draws everything.
+    if (q.get('lod') !== '0') this.culler = new DistanceCuller().collect(this.scene);
     // `?tour=tamid[&stop=N]` (N 1-based): stand at the stop before the first frame.
     if (q.get('tour') && byTourId[q.get('tour')]) this.startTour(q.get('tour'), (Number(q.get('stop')) || 1) - 1);
     this.store.setState({ loading: null });
@@ -252,6 +260,14 @@ export class TempleGame {
       camera: this.camera,
       game: this,
       postfx: Boolean(this.composer),
+      /** Distance culler (null with ?lod=0): `.hidden` meshes this frame, `.instanced[i].mesh.count`. */
+      get culler() {
+        return this.game.culler ?? null;
+      },
+      /** The sun/sky rig: `.time`, `.set('dusk')` (or write store.timeOfDay). */
+      get daylight() {
+        return this.game.daylight;
+      },
       get player() {
         return this.game.player;
       },
@@ -442,6 +458,7 @@ export class TempleGame {
     this.particles.update(delta, this.camera);
     this.checkLocation();
     if (this.sky) this.sky.position.copy(this.camera.position);
+    this.culler?.update(this.camera, this.container.clientHeight || 720);
     this.frameCount = (this.frameCount ?? 0) + 1;
     if (this.frameCount % 6 === 1) this.renderer.shadowMap.needsUpdate = true;
     const c = this.camera.position;
@@ -470,6 +487,7 @@ export class TempleGame {
     this.disposed = true;
     cancelAnimationFrame(this.raf);
     this.unsubPeriod?.();
+    this.unsubTime?.();
     this.resizeObserver?.disconnect();
     for (const off of this.listeners) off();
     this.listeners = [];

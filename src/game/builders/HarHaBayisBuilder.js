@@ -99,7 +99,9 @@ export class HarHaBayisBuilder extends CourtBuilder {
     runZ((b.maxX + x2) / 2, WALL_TOP);
     runX((z1 + b.minZ) / 2, WALL_TOP);
     runX((b.maxZ + z2) / 2, EAST_WALL_TOP);
-    this.scene.add(instance(geo, this.mat.stone, items, { name: 'merlons' }));
+    const merlons = instance(geo, this.mat.stone, items, { name: 'merlons' });
+    merlons.userData.lodDistance = 220; // a 2-amah merlon is a few pixels beyond this (game/lod.js)
+    this.scene.add(merlons);
   }
 
   /** Extents of the Soreg ring (10 amos outside the court walls). */
@@ -158,7 +160,9 @@ export class HarHaBayisBuilder extends CourtBuilder {
       run('z', r.x2, r.z1, r.z2, gapsNorth);
       run('x', r.z1, r.x1, r.x2, gapsWest);
       run('x', r.z2, r.x1, r.x2, gapsEast);
-      this.scene.add(instance(this.box(0.2 * AMAH, h * AMAH, 0.2 * AMAH, this.mat.cedar), this.mat.cedar, posts, { name: 'soreg posts', castShadow: false }));
+      const postMesh = instance(this.box(0.2 * AMAH, h * AMAH, 0.2 * AMAH, this.mat.cedar), this.mat.cedar, posts, { name: 'soreg posts', castShadow: false });
+      postMesh.userData.lodDistance = 160; // the rails carry the line; the posts are detail (game/lod.js)
+      this.scene.add(postMesh);
     });
   }
 

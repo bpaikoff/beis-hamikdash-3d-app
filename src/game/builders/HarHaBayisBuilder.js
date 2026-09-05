@@ -19,6 +19,9 @@ const MERLON_PITCH = 4;
 const POST_PITCH = 1;
 /** The Cheil pavement is 2 cm proud of the mount so the two slabs never z-fight. */
 const CHEIL_LIP = 0.04;
+/** Cheek walls beside the twelve steps: thickness and height over the top tread, amos. */
+const CHEEK_T = 0.5;
+const CHEEK_H = 1.2;
 
 export class HarHaBayisBuilder extends CourtBuilder {
   build() {
@@ -168,6 +171,10 @@ export class HarHaBayisBuilder extends CourtBuilder {
     const half = e.geometry.w / 2;
     this.group('cheil_steps', () => {
       this.flightA({ axis: 'z', span: [-half, half], from: zBottom, to: zTop, yBase: this.y, bottom: this.y - SLAB, steps, rise: e.geometry.h / steps, mat: this.mat.marbleW, name: 'cheil_steps' });
+      // Cheek walls: the flight is twice the gate's width, so beside the gate its top
+      // treads stand 6 amos over the Cheil with nothing at their ends. A solid mass from
+      // the Cheil to CHEEK_H over the threshold blocks from every tread (not given in Middot).
+      for (const s of [-1, 1]) this.blockA(s * half, s * (half + CHEEK_T), zTop, zBottom, this.y - SLAB, this.y + e.geometry.h + CHEEK_H, this.mat.marbleW, 'cheil_steps cheek');
     });
   }
 }

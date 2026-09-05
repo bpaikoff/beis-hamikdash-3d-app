@@ -1999,13 +1999,14 @@ canvas {
 }
 
 .tour-btn-exit {
-  margin-left: auto;
+  margin-inline-start: auto;
   font-size: 0.85rem;
   color: var(--muted);
 }
 
 .tour-status {
   margin: 0 6px;
+  text-align: start;
   font-size: 0.85rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;

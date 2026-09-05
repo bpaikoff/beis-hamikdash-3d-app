@@ -204,7 +204,8 @@ export function TourCard() {
         )}
       </div>
 
-      <div className="tour-controls" dir="ltr">
+      {/* The row follows the card's direction: in Hebrew "previous" sits on the right and points right. */}
+      <div className="tour-controls" dir={dir}>
         <button type="button" className="tour-btn" aria-label={t.prev} title={t.prev} onClick={() => ctl.prev()} disabled={index <= 0}>
           {lang === 'he' ? '›' : '‹'}
         </button>

@@ -151,6 +151,34 @@ describe('court builders', () => {
     walk([[0, -5], [12, -5], [12, 3]], 0.25, levelWorldY('azaras_yisrael') + 2); // Lishkas Pinchas HaMalbish beside Nicanor
   });
 
+  it('passes through the five gates of the mount and the Soreg opening opposite every gate', () => {
+    // No ground plane here, so each passage starts on the threshold at the wall's outer face.
+    const hb = levelWorldY('har_habayis');
+    for (const [id, path] of [
+      ['shaar_shushan', [[0, 283.5], [0, 278], [0, 265]]],
+      ['shaar_tadi', [[203, -20], [197.5, -20], [185, -20]]],
+      ['shaar_kiponus', [[0, -227.5], [0, -222], [0, -210]]],
+      ['chuldah_gate_west', [[-308, -30], [-302.5, -30], [-290, -30]]],
+      ['chuldah_gate_east', [[-308, 90], [-302.5, 90], [-290, 90]]],
+    ]) {
+      const { first, last } = walk(path);
+      expect(first, id).toBeCloseTo(hb, 1);
+      expect(last, id).toBeCloseTo(hb, 1);
+    }
+    const cheil = levelWorldY('cheil');
+    for (const id of ['water_gate', 'bechoros_gate', 'delek_gate', 'shaar_elyon', 'nitzotz_gate', 'korban_gate', 'shaar_hanashim']) {
+      const g = byId[id];
+      const s = Math.sign(g.position.x);
+      const { last } = walk([[s * 90, g.position.z], [s * 78.5, g.position.z]]);
+      expect(last, id).toBeCloseTo(cheil, 1);
+    }
+    for (const id of ['shaar_maaravi_north', 'shaar_maaravi_south']) {
+      const { last } = walk([[byId[id].position.x, -210], [byId[id].position.x, -198]]);
+      expect(last, id).toBeCloseTo(cheil, 1);
+    }
+    expect(walk([[0, 165], [0, 155]]).last).toBeCloseTo(cheil, 1); // opposite the Ezras Nashim gate
+  });
+
   it('has no two floor slabs sharing a top surface', () => {
     const boxes = built.floors.filter((f) => f.userData?.isFloor && !f.userData.isStep).map((f) => ({ f, b: new THREE.Box3().setFromObject(f) }));
     const clashes = [];

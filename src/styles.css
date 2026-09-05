@@ -1314,6 +1314,11 @@ canvas {
   display: none;
 }
 
+/* The panel runs to the bottom edge; the key hint would sit under it. */
+.ask-open .controls-hint {
+  display: none;
+}
+
 @media (min-width: 1800px) {
   .ask-open .hotspot-card {
     display: block;
@@ -1733,6 +1738,7 @@ canvas {
     border-radius: 18px 18px 0 0;
     padding-top: 10px;
     animation: sheetIn 0.3s ease;
+    z-index: 1; /* above the location panel, which shares the bottom edge */
   }
 
   .ask-scroll {

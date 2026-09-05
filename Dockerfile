@@ -6,6 +6,12 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
+# Build-time configuration for the "Ask the poskim" panel (docs/ask.md). Railway passes
+# service variables as build args; without the passcode the panel only links to tzadek.ai.
+ARG VITE_TZADEK_GUEST_PASSCODE
+ARG VITE_TZADEK_BASE
+ENV VITE_TZADEK_GUEST_PASSCODE=$VITE_TZADEK_GUEST_PASSCODE \
+    VITE_TZADEK_BASE=$VITE_TZADEK_BASE
 RUN npm run build
 
 # Stage 2: serve dist/ with nginx. Railway injects $PORT; the entrypoint

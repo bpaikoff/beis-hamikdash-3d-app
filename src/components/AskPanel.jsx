@@ -17,7 +17,8 @@ const UI = {
     send: 'Ask',
     retry: 'Try again',
     errorTitle: 'The poskim could not answer',
-    poweredBy: 'Answers stream from tzadek.ai and are AI-generated; consult a rav for practical halacha.',
+    poweredBy:
+      'Answers stream from tzadek.ai and are AI-generated; consult a rav for practical halacha.',
     unavailable: {
       nopasscode: 'Live answers are not enabled in this build. Ask on tzadek.ai instead.',
       auth: 'The visitor passcode was not accepted. Ask on tzadek.ai instead.',
@@ -29,8 +30,22 @@ const UI = {
       http: 'tzadek.ai could not answer right now. Ask there directly instead.',
       unsupported: 'This browser cannot stream answers. Ask on tzadek.ai instead.',
     },
-    psak: { permitted: 'Permitted', forbidden: 'Forbidden', dispute: 'Dispute', depends: 'Depends' },
-    consensusLevel: { unanimous: 'Unanimous', strong: 'Strong', majority: 'Majority', moderate: 'Moderate', split: 'Split', weak: 'Weak', dispute: 'Dispute', none: 'No consensus' },
+    psak: {
+      permitted: 'Permitted',
+      forbidden: 'Forbidden',
+      dispute: 'Dispute',
+      depends: 'Depends',
+    },
+    consensusLevel: {
+      unanimous: 'Unanimous',
+      strong: 'Strong',
+      majority: 'Majority',
+      moderate: 'Moderate',
+      split: 'Split',
+      weak: 'Weak',
+      dispute: 'Dispute',
+      none: 'No consensus',
+    },
   },
   he: {
     title: 'שאל את הפוסקים',
@@ -58,7 +73,16 @@ const UI = {
       unsupported: 'הדפדפן אינו תומך בהזרמת תשובות. שאלו באתר tzadek.ai.',
     },
     psak: { permitted: 'מותר', forbidden: 'אסור', dispute: 'מחלוקת', depends: 'תלוי' },
-    consensusLevel: { unanimous: 'פה אחד', strong: 'חזקה', majority: 'רוב', moderate: 'בינונית', split: 'חלוקה', weak: 'חלשה', dispute: 'מחלוקת', none: 'אין הסכמה' },
+    consensusLevel: {
+      unanimous: 'פה אחד',
+      strong: 'חזקה',
+      majority: 'רוב',
+      moderate: 'בינונית',
+      split: 'חלוקה',
+      weak: 'חלשה',
+      dispute: 'מחלוקת',
+      none: 'אין הסכמה',
+    },
   },
 };
 
@@ -105,7 +129,9 @@ function reducer(state, a) {
     case 'rabbi_chunk':
       return updateRabbi(state, a.rabbiKey, (r) => (r.done ? r : { ...r, text: r.text + a.text }));
     case 'sources':
-      return updateRabbi(state, a.rabbiKey, (r) => (r.done ? r : { ...r, sources: (a.refs ?? []).map((ref) => ({ ref })) }));
+      return updateRabbi(state, a.rabbiKey, (r) =>
+        r.done ? r : { ...r, sources: (a.refs ?? []).map((ref) => ({ ref })) }
+      );
     case 'rabbi_complete': {
       const answer = typeof a.answer === 'string' && a.answer ? a.answer : null;
       return updateRabbi(state, a.rabbiKey, (r) => {
@@ -121,19 +147,46 @@ function reducer(state, a) {
       });
     }
     case 'synthesis_start':
-      return { ...state, status: 'streaming', synthesis: { consensus: a.consensus ?? null, type: a.synthesisType ?? null, text: '', done: false } };
+      return {
+        ...state,
+        status: 'streaming',
+        synthesis: {
+          consensus: a.consensus ?? null,
+          type: a.synthesisType ?? null,
+          text: '',
+          done: false,
+        },
+      };
     case 'synthesis_chunk':
-      return state.synthesis && !state.synthesis.done ? { ...state, synthesis: { ...state.synthesis, text: state.synthesis.text + a.text } } : state;
+      return state.synthesis && !state.synthesis.done
+        ? { ...state, synthesis: { ...state.synthesis, text: state.synthesis.text + a.text } }
+        : state;
     case 'synthesis_complete': {
-      const text = typeof a.synthesis === 'string' && a.synthesis ? a.synthesis : state.synthesis?.text ?? '';
+      const text =
+        typeof a.synthesis === 'string' && a.synthesis
+          ? a.synthesis
+          : (state.synthesis?.text ?? '');
       const psak = parsePsak(text);
-      return { ...state, synthesis: { ...(state.synthesis ?? {}), text: psak ? psak.body : text, psak, type: a.synthesisType ?? state.synthesis?.type ?? null, done: true } };
+      return {
+        ...state,
+        synthesis: {
+          ...(state.synthesis ?? {}),
+          text: psak ? psak.body : text,
+          psak,
+          type: a.synthesisType ?? state.synthesis?.type ?? null,
+          done: true,
+        },
+      };
     }
     case 'complete':
       return {
         ...state,
         status: 'complete',
-        rabbis: state.rabbis.map((r) => (r.done ? r : { ...r, done: true, psak: parsePsak(r.text), text: parsePsak(r.text)?.body ?? r.text })),
+        rabbis: state.rabbis.map((r) =>
+          r.done
+            ? r
+            : { ...r, done: true, psak: parsePsak(r.text), text: parsePsak(r.text)?.body ?? r.text }
+        ),
         synthesis: state.synthesis ? { ...state.synthesis, done: true } : null,
       };
     case 'error':
@@ -148,11 +201,14 @@ const hideTrailingPsak = (text) => text.replace(/\n[ \t]*\**(?:Psak|פסק)\**[^
 
 /** Paragraphs, single line breaks and **bold**; nothing else from the answer's markdown. */
 function Rich({ text }) {
-  const paras = String(text ?? '').split(/\n{2,}/).filter((p) => p.trim());
+  const paras = String(text ?? '')
+    .split(/\n{2,}/)
+    .filter((p) => p.trim());
   return paras.map((p, i) => (
     <p key={i}>
       {p.split(/(\*\*[^*]+\*\*)/).map((seg, j) => {
-        if (seg.startsWith('**') && seg.endsWith('**')) return <strong key={j}>{seg.slice(2, -2)}</strong>;
+        if (seg.startsWith('**') && seg.endsWith('**'))
+          return <strong key={j}>{seg.slice(2, -2)}</strong>;
         return seg.split('\n').map((line, k, arr) => (
           <span key={`${j}-${k}`}>
             {line}
@@ -191,10 +247,18 @@ function Sources({ sources, lang, t }) {
       <span className="ask-sources-label">{t.sources}</span>
       {sources.map((s, i) => {
         const href = sourceUrl(s);
-        const label = lang === 'he' && s.heRef ? s.heRef : s.ref ?? s.work ?? '';
+        const label = lang === 'he' && s.heRef ? s.heRef : (s.ref ?? s.work ?? '');
         if (!href) return null;
         return (
-          <a className="source-chip" key={`${s.ref ?? i}-${i}`} href={href} target="_blank" rel="noopener noreferrer" lang={lang === 'he' && s.heRef ? 'he' : 'en'} title={s.work ?? s.ref}>
+          <a
+            className="source-chip"
+            key={`${s.ref ?? i}-${i}`}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            lang={lang === 'he' && s.heRef ? 'he' : 'en'}
+            title={s.work ?? s.ref}
+          >
             {label}
           </a>
         );
@@ -204,20 +268,36 @@ function Sources({ sources, lang, t }) {
 }
 
 function RabbiCard({ r, lang, t }) {
-  const name = lang === 'he' ? r.name ?? r.nameEn : r.nameEn ?? r.name;
+  const name = lang === 'he' ? (r.name ?? r.nameEn) : (r.nameEn ?? r.name);
   const shown = r.done ? r.text : hideTrailingPsak(r.text);
   const rtl = lang === 'he' || isHebrew(shown);
   return (
     <article className={`ask-rabbi${r.done ? ' done' : ''}`}>
       <header className="ask-rabbi-head">
-        <span className="ask-rabbi-emoji" aria-hidden="true">{r.emoji ?? '📜'}</span>
+        <span className="ask-rabbi-emoji" aria-hidden="true">
+          {r.emoji ?? '📜'}
+        </span>
         <div className="ask-rabbi-titles">
-          <div className="ask-rabbi-name" lang={lang === 'he' && r.name ? 'he' : 'en'} dir={lang === 'he' && r.name ? 'rtl' : 'ltr'}>{name ?? r.key}</div>
-          {r.era && <div className="ask-rabbi-era" lang="en" dir="ltr">{r.era}</div>}
+          <div
+            className="ask-rabbi-name"
+            lang={lang === 'he' && r.name ? 'he' : 'en'}
+            dir={lang === 'he' && r.name ? 'rtl' : 'ltr'}
+          >
+            {name ?? r.key}
+          </div>
+          {r.era && (
+            <div className="ask-rabbi-era" lang="en" dir="ltr">
+              {r.era}
+            </div>
+          )}
         </div>
         <PsakPill psak={r.psak} t={t} />
       </header>
-      <div className={`ask-text${r.done ? '' : ' streaming'}`} lang={rtl ? 'he' : 'en'} dir={rtl ? 'rtl' : 'ltr'}>
+      <div
+        className={`ask-text${r.done ? '' : ' streaming'}`}
+        lang={rtl ? 'he' : 'en'}
+        dir={rtl ? 'rtl' : 'ltr'}
+      >
         {shown ? <Rich text={shown} /> : <Skeleton lines={3} />}
       </div>
       <Sources sources={r.sources} lang={lang} t={t} />
@@ -228,13 +308,15 @@ function RabbiCard({ r, lang, t }) {
 function SynthesisBlock({ s, lang, t }) {
   if (!s) return null;
   const level = s.consensus?.level ? String(s.consensus.level).toLowerCase() : null;
-  const tone = level ? CONSENSUS_TONE[level] ?? 'mid' : null;
+  const tone = level ? (CONSENSUS_TONE[level] ?? 'mid') : null;
   const shown = s.done ? s.text : hideTrailingPsak(s.text);
   const rtl = lang === 'he' || isHebrew(shown);
   return (
     <section className="ask-synthesis">
       <header className="ask-rabbi-head">
-        <span className="ask-rabbi-emoji" aria-hidden="true">⚖️</span>
+        <span className="ask-rabbi-emoji" aria-hidden="true">
+          ⚖️
+        </span>
         <div className="ask-rabbi-titles">
           <div className="ask-rabbi-name">{t.synthesis}</div>
         </div>
@@ -245,7 +327,11 @@ function SynthesisBlock({ s, lang, t }) {
         )}
         <PsakPill psak={s.psak} t={t} />
       </header>
-      <div className={`ask-text${s.done ? '' : ' streaming'}`} lang={rtl ? 'he' : 'en'} dir={rtl ? 'rtl' : 'ltr'}>
+      <div
+        className={`ask-text${s.done ? '' : ' streaming'}`}
+        lang={rtl ? 'he' : 'en'}
+        dir={rtl ? 'rtl' : 'ltr'}
+      >
         {shown ? <Rich text={shown} /> : <Skeleton lines={2} />}
       </div>
     </section>
@@ -264,7 +350,11 @@ export function AskPanel() {
   const question = useStore((s) => s.askQuestion);
   const seq = useStore((s) => s.askSeq);
   const lang = useStore((s) => s.lang);
-  const [state, dispatch] = useReducer(reducer, undefined, initialState);
+  const [state, dispatch] = useReducer(reducer, undefined, () =>
+    isAskAvailable()
+      ? initialState()
+      : { ...initialState(), status: 'unavailable', unavailable: { unavailable: 'nopasscode' } }
+  );
   const [draft, setDraft] = useState('');
   const panelRef = useRef(null);
   const scrollRef = useRef(null);
@@ -332,7 +422,10 @@ export function AskPanel() {
     return () => {
       document.removeEventListener('keydown', onKey, true);
       panel?.removeEventListener('click', swallowClick);
-      const target = prev && prev.isConnected && prev !== document.body && !panel?.contains(prev) ? prev : canvasHost;
+      const target =
+        prev && prev.isConnected && prev !== document.body && !panel?.contains(prev)
+          ? prev
+          : canvasHost;
       if (target && typeof target.focus === 'function') target.focus({ preventScroll: true });
     };
   }, [open]);
@@ -364,8 +457,15 @@ export function AskPanel() {
 
   const dir = lang === 'he' ? 'rtl' : 'ltr';
   const qRtl = lang === 'he' || isHebrew(question);
-  const busy = state.status === 'loading' || state.status === 'streaming';
-  const unavailableMsg = state.unavailable ? t.unavailable[state.unavailable.unavailable] ?? t.unavailable.http : null;
+  const busy =
+    state.status === 'idle' || state.status === 'loading' || state.status === 'streaming';
+  const unavailableMsg = state.unavailable
+    ? (t.unavailable[state.unavailable.unavailable] ?? t.unavailable.http)
+    : null;
+  // Another question cannot help when the build has no passcode or the browser cannot stream.
+  const hideForm =
+    state.status === 'unavailable' &&
+    ['nopasscode', 'unsupported'].includes(state.unavailable?.unavailable);
 
   return (
     <aside
@@ -380,8 +480,16 @@ export function AskPanel() {
       dir={dir}
     >
       <div className="card-toolbar" dir="ltr">
-        <span className="ask-title" id="ask-panel-title" lang={lang} dir={dir}>{t.title}</span>
-        <button type="button" className="card-close" aria-label={t.close} title={t.close} onClick={closeAsk}>
+        <span className="ask-title" id="ask-panel-title" lang={lang} dir={dir}>
+          {t.title}
+        </span>
+        <button
+          type="button"
+          className="card-close"
+          aria-label={t.close}
+          title={t.close}
+          onClick={closeAsk}
+        >
           ×
         </button>
       </div>
@@ -395,9 +503,16 @@ export function AskPanel() {
           <div className="ask-notice ask-unavailable" role="status">
             <p>{unavailableMsg}</p>
             {state.unavailable?.message && state.unavailable.unavailable !== 'nopasscode' && (
-              <p className="ask-notice-detail" lang="en" dir="ltr">{state.unavailable.message}</p>
+              <p className="ask-notice-detail" lang="en" dir="ltr">
+                {state.unavailable.message}
+              </p>
             )}
-            <a className="ask-continue" href={tzadekUrl(question)} target="_blank" rel="noopener noreferrer">
+            <a
+              className="ask-continue"
+              href={tzadekUrl(question)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {t.continueOn} <span aria-hidden="true">↗</span>
             </a>
           </div>
@@ -405,18 +520,31 @@ export function AskPanel() {
 
         {state.status === 'error' && (
           <div className="ask-notice ask-error" role="alert">
-            <p><strong>{t.errorTitle}</strong></p>
-            {state.error && <p className="ask-notice-detail" lang="en" dir="ltr">{state.error}</p>}
+            <p>
+              <strong>{t.errorTitle}</strong>
+            </p>
+            {state.error && (
+              <p className="ask-notice-detail" lang="en" dir="ltr">
+                {state.error}
+              </p>
+            )}
             <div className="ask-notice-actions">
-              <button type="button" className="ask-retry" onClick={() => openAsk(question)}>{t.retry}</button>
-              <a className="ask-continue" href={tzadekUrl(question)} target="_blank" rel="noopener noreferrer">
+              <button type="button" className="ask-retry" onClick={() => openAsk(question)}>
+                {t.retry}
+              </button>
+              <a
+                className="ask-continue"
+                href={tzadekUrl(question)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {t.continueOn} <span aria-hidden="true">↗</span>
               </a>
             </div>
           </div>
         )}
 
-        {state.status === 'loading' && (
+        {(state.status === 'loading' || state.status === 'idle') && (
           <div className="ask-loading" role="status">
             <div className="ask-consulting">{t.consulting}</div>
             {[0, 1, 2].map((i) => (
@@ -431,39 +559,50 @@ export function AskPanel() {
           <RabbiCard r={r} lang={lang} t={t} key={r.key} />
         ))}
 
-        {(state.status === 'streaming' || state.status === 'complete' || state.status === 'error') && (
-          <SynthesisBlock s={state.synthesis} lang={lang} t={t} />
-        )}
+        {(state.status === 'streaming' ||
+          state.status === 'complete' ||
+          state.status === 'error') && <SynthesisBlock s={state.synthesis} lang={lang} t={t} />}
 
         {state.status !== 'unavailable' && state.status !== 'error' && (
           <div className="ask-footer-links">
-            <a className="ask-continue" href={tzadekUrl(question)} target="_blank" rel="noopener noreferrer">
+            <a
+              className="ask-continue"
+              href={tzadekUrl(question)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {t.continueOn} <span aria-hidden="true">↗</span>
             </a>
           </div>
         )}
       </div>
 
-      <form className="ask-form" onSubmit={submit}>
-        <label className="ask-form-label" htmlFor="ask-input">{t.askAnother}</label>
-        <div className="ask-form-row">
-          <input
-            id="ask-input"
-            type="text"
-            className="ask-input"
-            value={draft}
-            placeholder={t.placeholder}
-            autoComplete="off"
-            maxLength={500}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={swallow}
-            onKeyUp={swallow}
-            dir={isHebrew(draft) ? 'rtl' : dir}
-          />
-          <button type="submit" className="ask-send" disabled={!draft.trim()}>{t.send}</button>
-        </div>
-        <p className="ask-powered">{t.poweredBy}</p>
-      </form>
+      {!hideForm && (
+        <form className="ask-form" onSubmit={submit}>
+          <label className="ask-form-label" htmlFor="ask-input">
+            {t.askAnother}
+          </label>
+          <div className="ask-form-row">
+            <input
+              id="ask-input"
+              type="text"
+              className="ask-input"
+              value={draft}
+              placeholder={t.placeholder}
+              autoComplete="off"
+              maxLength={500}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={swallow}
+              onKeyUp={swallow}
+              dir={isHebrew(draft) ? 'rtl' : dir}
+            />
+            <button type="submit" className="ask-send" disabled={!draft.trim()}>
+              {t.send}
+            </button>
+          </div>
+          <p className="ask-powered">{t.poweredBy}</p>
+        </form>
+      )}
     </aside>
   );
 }

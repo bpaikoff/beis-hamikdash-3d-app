@@ -21,7 +21,7 @@
       "name": {"he": "מחוץ לחומות", "en": "Outside the Walls"},
       "desc": {"he": "הדרך העולה אל הר הבית מדרום. משם עולים במדרגות אל שערי חולדה ונכנסים אל הר הבית, ומי שרואה את המקדש מברך ומשתחווה.", "en": "The approach to the Temple Mount from the south. From here pilgrims climbed the steps to the Chuldah Gates and entered Har HaBayis."},
       "period": ["bayis_sheni"],
-      "bounds": {"minX": -420, "maxX": -302.5, "minZ": -222, "maxZ": 278},
+      "bounds": {"minX": -420, "maxX": 237.5, "minZ": -262, "maxZ": 318},
       "position": {"frame": "azarah", "x": -340, "y": -19.5, "z": 30, "unit": "amah", "source": "Mishnah Middot 1:3", "note": "legacy: x 0, y -10, z 194 (pre-2026 scene coordinates converted to amos); now south of the Har HaBayis south wall, where the Chuldah Gates open (Middot 1:3); the ground outside is set 6 amos below the mount (not given in Middot)"},
       "sources": ["Mishnah Middot 1:3","Mishnah Berakhot 9:5"],
       "questions": [

@@ -12,10 +12,61 @@ const CH = { level: 'cheil' };
 
 // Walks are straight lines, so every leg between gates keeps outside the Soreg
 // (x +-83.5, z -203 .. 157). The player is clamped to the union of the area bounds
-// (TempleGame), i.e. the plaza interior, so each gate is walked from its opening at the
-// wall's inner face; the passage through the wall itself is covered by the walk() test in
-// src/game/builders/CourtBuilders.test.js.
+// (TempleGame); `outside` is a ring 40 amos beyond the outer wall, so every gate can be
+// walked through (see outer_gates_through).
 export const routes = {
+  // Through each outer gate of the mount to the ground outside and back (Middot 1:3).
+  // Shushan (east, z 278), Tadi (north, x 197.5), Kiponus (west, z -222), Chuldah (south).
+  outer_gates_through: [
+    amos(0, 265, HB),
+    at('shaar_shushan', HB),
+    amos(0, 292, HB), // outside the east wall
+    amos(20, 292, HB),
+    amos(20, 300, HB),
+    amos(0, 292, HB),
+    at('shaar_shushan', HB),
+    amos(0, 265, HB),
+    amos(185, 265, HB), // round the Soreg (x 83.5, z 157) over the plaza
+    amos(185, -20, HB),
+    at('shaar_tadi', HB),
+    amos(212, -20, HB), // outside the north wall
+    amos(212, 10, HB),
+    amos(212, -20, HB),
+    at('shaar_tadi', HB),
+    amos(185, -20, HB),
+    amos(100, -210, HB), // round the Soreg's north-west corner (83.5, -203)
+    amos(0, -210, HB),
+    at('shaar_kiponus', HB),
+    amos(0, -236, HB), // outside the west wall
+    amos(-30, -236, HB),
+    amos(0, -236, HB),
+    at('shaar_kiponus', HB),
+    amos(0, -210, HB),
+  ],
+  // The outer faces: from the western Chuldah gate round the south-west corner, up the
+  // west face to Kiponus, on to the north-west corner, along the north face to Tadi, to
+  // the north-east corner, down the east face to Shushan, and to the south-east corner.
+  // Each convex corner is turned at a waypoint 1.5 amos past the face just left, with
+  // a tight reach, so the body clears the corner before the next leg starts.
+  outer_faces: [
+    amos(-309.3, -30, HB),
+    amos(-309.3, -229.5, HB, { reach: 0.3 }), // south-west corner, outside
+    amos(-296, -229.5, HB), // clear of the corner before closing on the west face
+    amos(-100, -228.8, HB),
+    amos(0, -228.8, HB), // Kiponus from outside
+    amos(190, -228.8, HB),
+    amos(205, -228.8, HB, { reach: 0.3 }), // north-west corner
+    amos(205, -215, HB),
+    amos(204.3, -20, HB), // Tadi from outside
+    amos(204.3, 260, HB),
+    amos(204.3, 285.5, HB, { reach: 0.3 }), // north-east corner
+    amos(190, 285.5, HB),
+    amos(0, 284.8, HB), // Shushan from outside
+    amos(-280, 284.8, HB),
+    amos(-310, 284.8, HB, { reach: 0.3 }), // south-east corner
+    amos(-310, 270, HB),
+    amos(-309.3, 90, HB), // the eastern Chuldah gate from outside
+  ],
   // The five gates of the mount (Middot 1:3): Shushan (E), Tadi (N), Kiponus (W), the two Chuldah gates (S).
   har_habayis_gates: [
     at('shaar_shushan', HB),
@@ -41,7 +92,7 @@ export const routes = {
   // The Cheil (Middot 2:3) all round the courts, entering and leaving through the Soreg
   // opening opposite every gate. The ring is interrupted where temple.json puts buildings
   // across it: Beis HaMoked (x to 82.5, z -26 .. -2) on the north, Lishkas Palhedrin
-  // (z -22 .. -38, closed door) and Lishkas HaEtz (z -102 .. -134) on the south, so those
+  // (z -22 .. -38, closed door) and Lishkas HaEtz (z -118 .. -148) on the south, so those
   // stretches are bypassed over the plaza.
   cheil: [
     amos(0, 165, HB),

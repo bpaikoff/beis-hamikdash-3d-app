@@ -117,7 +117,13 @@ Conventions:
   `kodesh_hakodashim` carry both periods (their measures are Bayis Sheni, Middot 4:6-7) so the
   Bayis Rishon items have a building to stand in.
 - `beis_hamoked` and everything in it sit at y 2.5: its Azarah gate opens onto the Ezras
-  Kohanim strip (z −11 .. −22), whose floor is at that level.
+  Kohanim strip (z −11 .. −22), whose floor is at that level. Its gate to the Cheil
+  (Middot 1:7) and the Gazis' door to the chol (Yoma 25a) are 16 amos over the Cheil, so
+  each is built as a door at the Cheil level into a vestibule under the chamber's chol
+  half, with a switchback of 32 half-amah steps in three flights up to a well with a
+  parapet in the chamber floor beside the kodesh line (`CourtBuilder.switchbackA`);
+  reconstructions, stated in `meta.disputes` and the entries' notes. The kodesh halves
+  stand on solid bases and the kodesh / chol line is inlaid in both floors.
 - Sefaria spellings: `Mishnah Middot 3:1`, `Mishnah Tamid 3:9`, `Mishnah Yoma 3:3`,
   `Yoma 51b`, `Mishneh Torah, The Chosen Temple 5:4`, `Mishnah Shekalim 6:4`, `Numbers 28:15`,
   `I Kings 7:21`, `II Chronicles 3:14`. One ref per string (no ranges).
@@ -259,6 +265,29 @@ after the first frame, `?tour=tamid&stop=5` starts at a stop (1-based); the star
   with the altar, the kevesh wedge and the Duchan) and the tour's transitions.
 
 ## Review log
+
+### 2026-09-05 — GEO-D (the Cheil stairs)
+
+The PW1 walker found Beis HaMoked's Cheil gate and Lishkas HaGazis' chol door opening
+16 amos over the Cheil with nothing to climb. Content: `meta.disputes` added (two
+reconstruction entries), `beis_hamoked` (gates dimension note, position note, geometry
+notes) and `lishkas_hagazis` (position note, geometry notes) state the vestibules and
+stairs; no position moved. Builders: `CourtBuilder.switchbackA` / `floorWithWellA` /
+`wellParapetA` (additive); `buildBeisHamoked` and `buildLishkasHagazis` build the
+vestibule under the chol half (x 67.5 .. 82.5 / x −77.5 .. −67.5, the Cheil pavement
+plus a LIP its floor, walls from the ground to the chamber floor's underside), the door
+in the outer wall (Beis HaMoked: north wall, z −16.5 .. −11.5, 5 × 8, under the hall's
+closed gateway; Gazis: south wall, z −115 .. −111, 4 × 7, replacing the closed door 16
+amos up), the three flights along z in 2-amah bands (Beis HaMoked: C x 68.5 .. 70.5, B
+71 .. 73, A 73.5 .. 75.5, foot z −13.5, landings z −16 .. −13.5 and −8 .. −5.5; Gazis:
+C x −70.5 .. −68.5, B −73 .. −71, A −76.5 .. −73.5, foot z −97, landings z −99.5 .. −97
+and −91.5 .. −89), the well in the floor over flight C with a half-amah parapet 1.5
+high on three sides, and the kodesh / chol line inlaid in the floor. The Gazis benches
+end at z −99, west of the stair head. `CHEIL_LIP` moved to `CourtBuilder`. Routes:
+`scripts/walk-routes/stairs.mjs` (`beis_hamoked_stair`, `beis_hamoked_stair_rails`,
+`gazis_stair`, `gazis_stair_rails`, walked in `AzarahRoutes.test.js`); `cheil` and
+`soreg_openings` now enter the Beis HaMoked vestibule; `azarah_beis_hamoked` passes the
+well along z −15; `azarah_gazis` rounds the well. The hug routes are unchanged.
 
 ### 2026-09-04 — content-reviewer (94 rows, 39 "fix")
 

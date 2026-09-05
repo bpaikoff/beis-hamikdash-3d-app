@@ -62,6 +62,38 @@ export class TextureFactory {
     this.total = 0; // baked files requested
     this.progressHandlers = [];
     this.waiters = [];
+    // The LoadingManager also sees everything other loaders share it with (GLB models and
+    // their embedded textures); its counts drive the progress text once it has seen a file.
+    this.managerLoaded = 0;
+    this.managerTotal = 0;
+    const { onStart, onProgress } = this.manager;
+    this.manager.onStart = (url, n, total) => {
+      this.managerLoaded = n;
+      this.managerTotal = total;
+      onStart?.(url, n, total);
+    };
+    this.manager.onProgress = (url, n, total) => {
+      this.managerLoaded = n;
+      this.managerTotal = total;
+      onProgress?.(url, n, total);
+      this.notify();
+    };
+  }
+
+  /**
+   * [loaded, total] for the progress text: every file the shared LoadingManager has been
+   * asked for (baked textures, PBR maps, models), or the baked counters when the manager
+   * has not been involved (stubbed loaders in tests).
+   */
+  progress() {
+    return this.managerTotal > 0
+      ? [Math.max(this.managerLoaded, this.loaded), Math.max(this.managerTotal, this.total)]
+      : [this.loaded, this.total];
+  }
+
+  notify() {
+    const [n, total] = this.progress();
+    for (const h of this.progressHandlers) h(n, total);
   }
 
   /**
@@ -79,7 +111,7 @@ export class TextureFactory {
     return tex;
   }
 
-  /** @param {(loaded: number, total: number) => void} fn called after each baked file. */
+  /** @param {(loaded: number, total: number) => void} fn called after each file (see progress()). */
   onProgress(fn) {
     this.progressHandlers.push(fn);
     return () => { this.progressHandlers = this.progressHandlers.filter((h) => h !== fn); };
@@ -93,7 +125,7 @@ export class TextureFactory {
 
   settle() {
     this.loaded++;
-    for (const h of this.progressHandlers) h(this.loaded, this.total);
+    this.notify();
     if (this.loaded >= this.total) {
       const w = this.waiters;
       this.waiters = [];

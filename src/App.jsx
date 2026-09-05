@@ -101,7 +101,7 @@ export default function BeisHamikdash3D() {
     <>
       <div className={`game-container${tour ? ' tour-active' : ''}`} ref={containerRef} tabIndex={-1}>
         {started && !loading && !error && (
-          <div className={`overlay${askOpen ? ' ask-open' : ''}${tour ? ' tour-active' : ''}`}>
+          <div className={`overlay${askOpen ? ' ask-open' : ''}${tour ? ' tour-active' : ''}${selected ? ' card-open' : ''}`}>
             <div className="crosshair" aria-hidden="true"><div className="crosshair-dot"></div></div>
 
             <div className="hud-top">

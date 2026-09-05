@@ -68,10 +68,20 @@ export class TouchControls {
     this.on(this.root, 'click', stop);
     this.on(this.root, 'contextmenu', (e) => e.preventDefault());
 
+    // Capture can throw InvalidStateError when the pointer is already gone by the time the
+    // handler runs (a synthetic touch, or a tap released mid-dispatch); the zone then just
+    // follows the pointer while it stays over it.
+    const capture = (el, id) => {
+      try {
+        el.setPointerCapture?.(id);
+      } catch {
+        /* not capturable */
+      }
+    };
     this.on(mz, 'pointerdown', (e) => {
       if (this.movePointer !== null) return;
       this.movePointer = e.pointerId;
-      mz.setPointerCapture?.(e.pointerId);
+      capture(mz, e.pointerId);
       const r = mz.getBoundingClientRect();
       this.joyOrigin = { x: e.clientX - r.left, y: e.clientY - r.top };
       this.joystick.style.left = `${this.joyOrigin.x}px`;
@@ -112,7 +122,7 @@ export class TouchControls {
     this.on(lz, 'pointerdown', (e) => {
       if (this.lookPointer !== null) return;
       this.lookPointer = e.pointerId;
-      lz.setPointerCapture?.(e.pointerId);
+      capture(lz, e.pointerId);
       this.lookLast = { x: e.clientX, y: e.clientY };
       e.preventDefault();
     });

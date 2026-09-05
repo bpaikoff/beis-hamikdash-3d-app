@@ -1088,6 +1088,38 @@ canvas {
     max-height: 60vh;
     max-height: 60dvh;
   }
+
+  /* The card is a bottom sheet here: the location panel would sit underneath it. */
+  .card-open .hud-bottom {
+    display: none;
+  }
+}
+
+/* Phones: thumbs own the lower half (joystick left, look right, Jump bottom-right), so the
+   location panel moves up under the date panel and the date panel shrinks to one line. */
+@media (pointer: coarse) and (max-width: 900px) {
+  .date-day,
+  .date-special {
+    display: none;
+  }
+
+  .date-panel {
+    padding: 6px 12px;
+  }
+
+  .hud-bottom {
+    top: calc(var(--hud-gap) + 44px);
+    bottom: auto;
+    align-items: flex-start;
+  }
+
+  .location-panel {
+    max-width: 52vw;
+  }
+
+  .korbanos-panel {
+    display: none;
+  }
 }
 
 /* Touch controls (TouchControls.js; only mounted on coarse pointers) -------- */
@@ -1218,7 +1250,28 @@ canvas {
   }
 }
 
-/* Period toggle on the start screen ---------------------------------------- */
+/* Period and time-of-day toggles on the start screen ------------------------ */
+.start-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 4px 28px;
+}
+
+.time-toggle label {
+  padding: 8px 12px;
+  gap: 6px;
+}
+
+.time-toggle label [lang='he'] {
+  font-size: 1rem;
+}
+
+.time-toggle label [lang='en'] {
+  font-size: 0.75rem;
+}
+
 .period-toggle {
   display: flex;
   justify-content: center;

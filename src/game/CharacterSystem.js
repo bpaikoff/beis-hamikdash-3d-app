@@ -182,7 +182,7 @@ export class CharacterSystem {
     });
 
     g.position.set(x, y, z);
-    g.userData = { type: 'dove', baseY: y, phase: Math.random() * Math.PI * 2, circleRadius: 3 + Math.random() * 5, circleSpeed: 0.3 + Math.random() * 0.3 };
+    g.userData = { type: 'dove', baseX: x, baseY: y, baseZ: z, phase: Math.random() * Math.PI * 2, circleRadius: 3 + Math.random() * 5, circleSpeed: 0.3 + Math.random() * 0.3 };
     this.scene.add(g);
     this.animals.push(g);
     return g;
@@ -203,8 +203,8 @@ export class CharacterSystem {
       const d = a.userData;
       if (d.type === 'dove') {
         const t = this.time * d.circleSpeed + d.phase;
-        a.position.x = d.baseY + Math.cos(t) * d.circleRadius;
-        a.position.z = Math.sin(t) * d.circleRadius;
+        a.position.x = d.baseX + Math.cos(t) * d.circleRadius;
+        a.position.z = d.baseZ + Math.sin(t) * d.circleRadius;
         a.position.y = d.baseY + Math.sin(t * 2) * 0.5;
         a.rotation.y = -t + Math.PI / 2;
         a.children.forEach(c => { if (c.userData.isWing) c.rotation.z = c.userData.side * (0.3 + Math.sin(this.time * 15) * 0.4); });

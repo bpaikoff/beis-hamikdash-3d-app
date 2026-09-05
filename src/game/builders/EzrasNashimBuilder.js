@@ -14,6 +14,14 @@ const X_IN = 67.5;
 const X_OUT = X_IN + WALL_T;
 /** Wall top, amos above the Azarah floor (22.5 above the court; not given in Middot). */
 const WALL_TOP = 15;
+/** Gallery parapet height, amos: taller than CONFIG.STEP_HEIGHT so the player cannot step over it. */
+const PARAPET_H = 1.2;
+/**
+ * Balustrade height over each tread of the gallery flights, amos. From a tread the
+ * segment beside the tread below tops out BALUSTRADE_H - 0.5 higher than the feet, and
+ * it must exceed a step (1 amah) so the stair cannot be climbed sideways out of.
+ */
+const BALUSTRADE_H = 2.5;
 
 export class EzrasNashimBuilder extends CourtBuilder {
   build() {
@@ -178,7 +186,7 @@ export class EzrasNashimBuilder extends CourtBuilder {
       parapets.push([s * (X_IN - depth), s * (X_IN - depth + P), zA, zB - depth + P]);
       parapets.push([s * (xA - depth), s * (X_IN - depth + P), zB - depth, zB - depth + P]);
       parapets.push([s * (xA - depth), s * (xA - depth + P), zB - depth, zE + P]);
-      parapets.push([s * (xA - depth), s * (xTop + 1), zE, zE + P]); // east run, up to the flight's top step
+      // The east run's parapet over the flight is part of the flight's balustrade (below).
     }
     runs.push({ x1: -xA, x2: xA, z1: zE, z2: b.maxZ, along: 'x' }); // east wall, over the gate
     parapets.push([-xLand, xLand, zE, zE + P]);
@@ -198,14 +206,53 @@ export class EzrasNashimBuilder extends CourtBuilder {
       }
       // Solid masses, not walls: the player's collision sphere sits at head height, so a
       // knee-high wall would never touch it; a mass taller than a step blocks the way.
-      for (const [x1, x2, z1, z2] of parapets) this.blockA(Math.min(x1, x2), Math.max(x1, x2), z1, z2, y, y + 1.2, this.mat.stonePolished, 'ezras_nashim_balcony parapet');
+      for (const [x1, x2, z1, z2] of parapets) this.blockA(Math.min(x1, x2), Math.max(x1, x2), z1, z2, y, y + PARAPET_H, this.mat.stonePolished, 'ezras_nashim_balcony parapet');
       this.scene.add(instance(this.box(depth * AMAH, 1.2 * AMAH, 1 * AMAH, this.mat.stone), this.mat.stone, corbels, { name: 'balcony corbels' }));
       // The flights: from the eastern chambers' walls toward the gate, landing beside it.
       for (const s of [-1, 1]) {
         this.flightA({ axis: 'x', span: [zE - depth, zE], from: s * xA, to: s * xTop, yBase: this.y, steps, rise, mat: this.mat.stonePolished, name: 'ezras_nashim_balcony stair' });
         this.blockA(s * xLand, s * xTop, zE - depth, zE, this.y - SLAB, y, this.mat.stonePolished, 'ezras_nashim_balcony landing');
+        this.buildFlightBalustrade(s, { xA, xTop, xLand, zE, depth, steps, rise, y, P });
       }
     });
+  }
+
+  /**
+   * Balustrades on both long sides of a flight and across the landing's edge toward the
+   * axis: without them every tread is an open drop of up to ten amos to the court on
+   * either side (the sources give no stair, so this is part of the same reconstruction).
+   * Solid from the court floor so the probe reads "inside" from the court as well as from
+   * the treads; on the court side a stepped wall BALUSTRADE_H over each tread (taller
+   * than a step even from the tread above, so it cannot be climbed), on the gate side a
+   * wall up to the parapet over the east run. The two lowest treads stay open on both
+   * sides: the flight's foot is against the chamber wall, so that is the way onto it.
+   */
+  buildFlightBalustrade(s, { xA, xTop, xLand, zE, depth, steps, rise, y, P }) {
+    const H = BALUSTRADE_H;
+    const open = 2;
+    const zIn = zE - depth; // court side of the flight
+    const base = this.y - SLAB;
+    const mat = this.mat.stonePolished;
+    const parts = [];
+    const cheek = (x1, x2, z1, z2, top) => parts.push(this.frameBox(Math.min(s * x1, s * x2), Math.max(s * x1, s * x2), z1, z2, base, top, mat));
+    for (let k = open; k < steps; k++) {
+      const a = xA - k;
+      const top = this.y + (k + 1) * rise + H;
+      cheek(a, a - 1, zIn - P, zIn, top);
+      if (a - 1 >= xA - depth) cheek(a, a - 1, zE, zE + P, top); // the treads under the gallery's corner, before the tall wall begins
+    }
+    cheek(xA - depth, xTop + 1, zE, zE + P, y + PARAPET_H); // gate side: up to the parapet, which it carries
+    cheek(xTop, xLand - P, zIn - P, zIn, y + PARAPET_H); // beside the landing
+    cheek(xLand, xLand - P, zIn - P, zE + P, y + PARAPET_H); // the landing's edge toward the axis, closing on the parapet over the gate
+    const geo = BufferGeometryUtils.mergeGeometries(parts, false);
+    for (const p of parts) p.dispose();
+    const m = new THREE.Mesh(geo, mat);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    m.userData = { isFloor: true, isStep: true, name: 'ezras_nashim_balcony balustrade' };
+    this.scene.add(m);
+    this.floors.push(m);
+    return m;
   }
 
   /** Two vaulted rooms under the Ezras Yisrael floor, opening east through the Azarah wall. */

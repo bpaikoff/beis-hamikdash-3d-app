@@ -171,6 +171,31 @@ describe('court builders', () => {
     expect(walk([[-26.5, 128], [-26.5, 135], [-22, 135]], 0.25, levelWorldY('ezras_nashim') + 3.5).last).toBeCloseTo(down.first, 2);
   });
 
+  it('guards the gallery flights, their landings and the twelve steps with masses taller than a step', () => {
+    const { floors } = built;
+    const en = levelWorldY('ezras_nashim');
+    const balcony = en + 10 * AMAH;
+    const step = (v, from) => expect(v - from, `${v} over ${from}`).toBeGreaterThan(CONFIG.STEP_HEIGHT);
+    for (const s of [1, -1]) {
+      // Beside the eleventh tread (x 17.5 .. 16.5, top 5.5 amos over the court) the court-side balustrade tops out 2.5 amos higher.
+      const tread = floorAt(floors, ...xz(s * 17.2, 135));
+      expect(tread).toBeCloseTo(en + 5.5 * AMAH, 2);
+      expect(floorAt(floors, ...xz(s * 17.2, 132.75))).toBeCloseTo(en + 8 * AMAH, 2);
+      step(floorAt(floors, ...xz(s * 17.2, 132.75)), tread);
+      step(floorAt(floors, ...xz(s * 17.2, 137.25)), tread); // gate side: the wall carrying the gallery's parapet
+      expect(floorAt(floors, ...xz(s * 17.2, 137.25))).toBeCloseTo(balcony + 1.2 * AMAH, 2);
+      step(floorAt(floors, ...xz(s * 5.5, 132.75)), balcony); // the landing's court edge
+      step(floorAt(floors, ...xz(s * 3.25, 135)), balcony); // the landing's edge toward the axis
+      expect(floorAt(floors, ...xz(s * 26.5, 132.75), en + 3.5)).toBeCloseTo(en, 2); // the two lowest treads stay open to the court (cast from under the gallery)
+      expect(walk([[s * 26.8, 128], [s * 26.8, 135]], 0.25, en + 3.5).last).toBeCloseTo(en + 0.5 * AMAH, 2); // onto the first tread
+      // The twelve steps' cheek walls, 1.2 amos over the gate threshold, from the Cheil up.
+      const hb = levelWorldY('har_habayis');
+      expect(floorAt(floors, ...xz(s * 10.25, 150))).toBeCloseTo(hb + 7.2 * AMAH, 2);
+      step(floorAt(floors, ...xz(s * 10.25, 147.25)), floorAt(floors, ...xz(s * 9.5, 147.25)));
+      expect(floorAt(floors, ...xz(s * 10.75, 150))).toBeCloseTo(hb, 1); // the Cheil beside them
+    }
+  });
+
   it('passes through the five gates of the mount and the Soreg opening opposite every gate', () => {
     // No ground plane here, so each passage starts on the threshold at the wall's outer face.
     const hb = levelWorldY('har_habayis');

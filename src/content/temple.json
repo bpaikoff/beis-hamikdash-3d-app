@@ -110,7 +110,7 @@
         {"label": "Azarah width", "value": 135, "unit": "amah", "source": "Mishnah Middot 5:1", "note": "north to south"},
         {"label": "rise above the Ezras Yisrael", "value": 2.5, "unit": "amah", "source": "Mishnah Middot 2:6", "note": "Rabbi Eliezer ben Yaakov: a one-amah step plus three half-amah steps on the Duchan"}
       ],
-      "position": {"frame": "azarah", "x": 0, "y": 2.5, "z": -43.5, "unit": "amah", "source": "Mishnah Middot 5:1", "note": "legacy: x 0, y 1, z -73 (pre-2026 scene coordinates converted to amos); now z -11 .. -22 is the 11-amah Kohanim strip (Middot 2:6); the whole court west of the Duchan, 2.5 amos above the Ezras Yisrael, is z -11 .. -187 (Middot 5:1); hotspot at the centre of the open court between the Duchan and the Ulam steps"},
+      "position": {"frame": "azarah", "x": 25, "y": 2.5, "z": -60, "unit": "amah", "source": "Mishnah Middot 5:1", "note": "legacy: x 0, y 1, z -73 (pre-2026 scene coordinates converted to amos); now z -11 .. -22 is the 11-amah Kohanim strip (Middot 2:6); the whole court west of the Duchan, 2.5 amos above the Ezras Yisrael, is z -11 .. -187 (Middot 5:1); hotspot at x 25, z -60 on the open floor north-west of the altar, between the Ulam steps (x +-20) and the north wall: the court's centre (x 0, z -43.5, the earlier hotspot) is inside the altar, x -16 .. 16, z -22 .. -54"},
       "sources": ["Mishnah Middot 5:1","Mishnah Middot 2:6","Mishnah Kelim 1:8","Leviticus 6:6"],
       "questions": [
         {"he": "מה ההבדל בקדושה בין עזרת ישראל לעזרת כהנים?", "en": "How does the sanctity of the Kohanim's court differ from the Israelites' court?"},
@@ -1199,7 +1199,7 @@
         {"label": "height above the floor", "value": 10, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "reconstruction: the Mishnah gives no height"},
         {"label": "depth", "value": 4, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "reconstruction: not given"}
       ],
-      "position": {"frame": "azarah", "x": 0, "y": 2.5, "z": 137, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "a gallery along the inside of the Ezras Nashim walls (Middot 2:5), hotspot on the east wall above the gate; height and depth are not given in the sources"},
+      "position": {"frame": "azarah", "x": 0, "y": 2.5, "z": 139, "unit": "amah", "source": "Mishnah Middot 2:5", "note": "a gallery along the inside of the Ezras Nashim walls (Middot 2:5), hotspot on the gallery floor over the east gate (the run is z 137 .. 141, its parapet on the inner edge); height and depth are not given in the sources"},
       "sources": ["Mishnah Middot 2:5","Sukkah 51b","Mishnah Sukkah 5:2","Mishneh Torah, The Chosen Temple 5:9"],
       "questions": [
         {"he": "מדוע נבנתה הגזוזטרא?", "en": "Why was the balcony built?"},
@@ -1219,14 +1219,14 @@
       "dimensions": [
         {"label": "headroom", "value": 7.5, "unit": "amah", "source": "Mishnah Middot 2:6", "note": "the difference between the two floors; the Mishnah gives no size or number"}
       ],
-      "position": {"frame": "azarah", "x": 30, "y": -7.5, "z": 3, "unit": "amah", "source": "Mishnah Middot 2:6", "note": "under the Ezras Yisrael (z 0 .. -11), opening east into the Ezras Nashim through the Azarah east wall; hotspot north of the fifteen steps at the wall"},
+      "position": {"frame": "azarah", "x": 20, "y": -7.5, "z": 3, "unit": "amah", "source": "Mishnah Middot 2:6", "note": "under the Ezras Yisrael (z 0 .. -11), opening east into the Ezras Nashim through the Azarah east wall; hotspot in the northern door, on the open court between the fifteen steps (outer radius 12.5) and the corner chamber (x 27.5); earlier x +-30, where the doors opened inside the corner chambers"},
       "sources": ["Mishnah Middot 2:6","Mishnah Sukkah 5:4","Mishnah Arakhin 2:6"],
       "questions": [
         {"he": "אילו כלי שיר ניגנו הלוויים במקדש?", "en": "Which instruments did the Levites play in the Temple?"},
         {"he": "כמה כינורות ונבלים היו במקדש לכל הפחות?", "en": "How many harps and lyres were there at least?"}
       ],
       "icon": "🎻",
-      "geometry": {"kind": "room", "w": 10, "d": 10, "h": 6, "notes": "vaulted rooms under the Ezras Yisrael floor with doors in the Azarah east wall facing the Ezras Nashim, north and south of the steps; count and size are a reconstruction (two rooms of 10 x 10 at x +-30)."}
+      "geometry": {"kind": "room", "w": 10, "d": 10, "h": 6, "notes": "vaulted rooms under the Ezras Yisrael floor with doors in the Azarah east wall facing the Ezras Nashim, north and south of the steps; count and size are a reconstruction (two rooms of 10 x 10 at x +-20, so the 4-amah doors open on the court between the steps' outer radius, 12.5, and the corner chambers, x +-27.5)."}
     },
     {
       "id": "lishkas_pinchas_hamalbish",
@@ -1451,13 +1451,14 @@
       "dimensions": [
         {"label": "mesibah to the Parvah roof", "value": 1, "unit": "count", "source": "Mishnah Middot 5:3"}
       ],
-      "position": {"frame": "azarah", "x": 59.5, "y": 2.5, "z": -96, "unit": "amah", "source": "Mishnah Middot 5:3", "note": "one of the three northern chambers (Middot 5:3), placed nearest the slaughtering area west of Shaar HaNitzotz: x 52 .. 67.5, z -88 .. -104; order along the wall is not given"},
+      "position": {"frame": "azarah", "x": 59.5, "y": 2.5, "z": -100, "unit": "amah", "source": "Mishnah Middot 5:3", "note": "one of the three northern chambers (Middot 5:3), placed nearest the slaughtering area west of Shaar HaNitzotz: x 51.5 .. 67.5, z -92 .. -108; order along the wall is not given, and the 12-amah shift west (earlier z -88 .. -104) keeps the strip beside the Ulam's north wing open, see disputes"},
       "sources": ["Mishnah Middot 5:3","Mishnah Tamid 4:2","Mishnah Shekalim 6:4","Mishneh Torah, The Chosen Temple 5:17"],
       "disputes": [
         {
           "issue": "north or south",
           "views": ["north with Melach and Parvah (Mishnah Middot 5:3 as printed)","south (the Bavli's text, Yoma 19a, and the Rambam, Beis HaBechirah 5:17)"]
-        }
+        },
+        {"issue": "position along the north wall", "views": ["z -88 .. -136, starting at the line of the Ulam's north wing (an earlier reconstruction)","z -92 .. -140, 12 amos further west, so the strip beside the Ulam's north wing (x 50 .. 67.5, z -76 .. -92) stays open between Shaar HaNitzotz and the chambers — as built here; Middot 5:3 gives the three chambers no positions along the wall"]}
       ],
       "questions": [
         {"he": "מדוע הודחו הקרביים לפני ההקטרה?", "en": "Why were the innards rinsed before being burned?"},
@@ -1477,13 +1478,14 @@
         {"label": "mikveh on the roof", "value": 1, "unit": "count", "source": "Mishnah Yoma 3:3", "note": "used for all of the Kohen Gadol's immersions on Yom Kippur except the first"},
         {"label": "roof height", "value": 10, "unit": "amah", "source": "Mishnah Middot 5:3", "note": "reconstruction: height not given"}
       ],
-      "position": {"frame": "azarah", "x": 59.5, "y": 2.5, "z": -112, "unit": "amah", "source": "Mishnah Middot 5:3", "note": "northern chamber (Middot 5:3) between Madichin and Melach: x 52 .. 67.5, z -104 .. -120; the immersion bath is on its roof, y 12.5"},
+      "position": {"frame": "azarah", "x": 59.5, "y": 2.5, "z": -116, "unit": "amah", "source": "Mishnah Middot 5:3", "note": "northern chamber (Middot 5:3) between Madichin and Melach: x 51.5 .. 67.5, z -108 .. -124 (12 amos west of the earlier z -104 .. -120, see disputes); the immersion bath is on its roof, y 12.5"},
       "sources": ["Mishnah Middot 5:3","Mishnah Yoma 3:3","Mishnah Yoma 3:6","Yoma 35a","Mishneh Torah, The Chosen Temple 5:17"],
       "disputes": [
         {
           "issue": "the name Parvah",
           "views": ["after Parvah the magus who built it (Yoma 35a)","from the salting of hides (parvah) done there"]
-        }
+        },
+        {"issue": "position along the north wall", "views": ["z -88 .. -136, starting at the line of the Ulam's north wing (an earlier reconstruction)","z -92 .. -140, 12 amos further west, so the strip beside the Ulam's north wing (x 50 .. 67.5, z -76 .. -92) stays open between Shaar HaNitzotz and the chambers — as built here; Middot 5:3 gives the three chambers no positions along the wall"]}
       ],
       "questions": [
         {"he": "כמה טבילות טבל הכהן הגדול ביום הכיפורים והיכן?", "en": "How many times did the Kohen Gadol immerse on Yom Kippur, and where?"},
@@ -1501,8 +1503,11 @@
       "name": {"he": "לשכת המלח", "en": "Salt Chamber"},
       "desc": {"he": "הלשכה הצפונית שבה נותנים מלח לקרבן, שנאמר על כל קרבנך תקריב מלח. משם לקחו מלח למליחת האברים על הכבש ולעורות בבית הפרוה.", "en": "The northern chamber where salt for the offerings was stored, as the Torah commands that every offering be salted. Salt was taken from here for the limbs salted on the ramp and for the hides in Beis HaParvah."},
       "dimensions": [],
-      "position": {"frame": "azarah", "x": 59.5, "y": 2.5, "z": -128, "unit": "amah", "source": "Mishnah Middot 5:3", "note": "northern chamber (Middot 5:3), westernmost of the three: x 52 .. 67.5, z -120 .. -136"},
+      "position": {"frame": "azarah", "x": 59.5, "y": 2.5, "z": -132, "unit": "amah", "source": "Mishnah Middot 5:3", "note": "northern chamber (Middot 5:3), westernmost of the three: x 51.5 .. 67.5, z -124 .. -140 (12 amos west of the earlier z -120 .. -136, see disputes)"},
       "sources": ["Mishnah Middot 5:3","Leviticus 2:13","Menachot 21b","Mishneh Torah, The Chosen Temple 5:17"],
+      "disputes": [
+        {"issue": "position along the north wall", "views": ["z -88 .. -136, starting at the line of the Ulam's north wing (an earlier reconstruction)","z -92 .. -140, 12 amos further west, so the strip beside the Ulam's north wing (x 50 .. 67.5, z -76 .. -92) stays open between Shaar HaNitzotz and the chambers — as built here; Middot 5:3 gives the three chambers no positions along the wall"]}
+      ],
       "questions": [
         {"he": "מדוע מולחים כל קרבן?", "en": "Why is every offering salted?"},
         {"he": "היכן מלחו את אברי הקרבן?", "en": "Where were the limbs of the offering salted?"}
@@ -1544,7 +1549,7 @@
       "name": {"he": "לשכת העץ", "en": "Chamber of Wood"},
       "desc": {"he": "לשכה בדרום העזרה שרבי אליעזר בן יעקב שכח למה שימשה. אבא שאול אומר: לשכת כהן גדול הייתה, אחורי לשכת הגולה ולשכת הגזית, וגג שלושתן שווה.", "en": "A southern chamber whose use Rabbi Eliezer ben Yaakov admitted he had forgotten. Abba Shaul says it was the Kohen Gadol's chamber, standing behind the Golah and Gazis chambers with the roofs of all three at one level."},
       "dimensions": [],
-      "position": {"frame": "azarah", "x": -78.5, "y": 2.5, "z": -118, "unit": "amah", "source": "Mishnah Middot 5:4", "note": "southern chamber (Middot 5:4), \"behind the two of them\" (Abba Shaul): outside the south wall in the Cheil, behind Gazis and Golah, x -73.5 .. -83.5 (the Cheil's width, up to the Soreg, Middot 2:3), z -102 .. -134"},
+      "position": {"frame": "azarah", "x": -75.5, "y": 2.5, "z": -133, "unit": "amah", "source": "Mishnah Middot 5:4", "note": "southern chamber (Middot 5:4), \"behind the two of them\" (Abba Shaul): the next room west of Lishkas HaGazis in the x band of its chol half and the Cheil, x -67.5 .. -83.5 (the wall's thickness and the Cheil up to the Soreg, Middot 2:3), z -118 .. -148, so it stands beyond the Gazis and outside (behind) the Golah, entered from the Gazis' chol half; a reconstruction, earlier placed beside the Gazis at x -73.5 .. -83.5, z -102 .. -134"},
       "sources": ["Mishnah Middot 5:4","Mishnah Yoma 1:1","Mishneh Torah, The Chosen Temple 5:17"],
       "disputes": [
         {
@@ -1556,7 +1561,7 @@
         {"he": "מדוע שכח רבי אליעזר בן יעקב את שימוש הלשכה?", "en": "Why had Rabbi Eliezer ben Yaakov forgotten the chamber's use?"},
         {"he": "האם לשכת העץ היא לשכת פלהדרין?", "en": "Is the Chamber of Wood the same as Lishkas Palhedrin?"}
       ],
-      "geometry": {"kind": "room", "w": 10, "d": 32, "h": 10, "notes": "room outside the south wall behind Gazis and Golah, roof level with theirs; size not given. Its placement in the Cheil strip is a reconstruction."}
+      "geometry": {"kind": "room", "w": 16, "d": 30, "h": 10, "notes": "room in the south wall's thickness and the Cheil, x -67.5 .. -83.5, z -118 .. -148, west of Lishkas HaGazis and behind Lishkas HaGolah, roof level with theirs (Abba Shaul); its door is in its east wall, from the Gazis' chol half; size not given, placement a reconstruction."}
     },
     {
       "type": "chamber",
@@ -1570,7 +1575,7 @@
       "dimensions": [
         {"label": "days of seclusion", "value": 7, "unit": "count", "source": "Mishnah Yoma 1:1"}
       ],
-      "position": {"frame": "azarah", "x": -78.5, "y": 2.5, "z": -30, "unit": "amah", "source": "Yoma 19a", "note": "outside the south wall in the Cheil beside Shaar HaMayim: x -73.5 .. -83.5 (inside the Soreg), z -22 .. -38. Yoma 19a concludes that Palhedrin was the southern of the Kohen Gadol's two chambers, reasoning from his route to the first immersion on the roof of the Water Gate 'beside his chamber' (Yoma 31a), so the chamber belongs next to that gate; its size and exact spot along the wall are a reconstruction. Earlier placed beside Lishkas HaEtz at z -150 after Abba Shaul (Middot 5:4), see disputes"},
+      "position": {"frame": "azarah", "x": -78.5, "y": -13.5, "z": -29, "unit": "amah", "source": "Yoma 19a", "note": "outside the south wall in the Cheil beside Shaar HaMayim: x -73.5 .. -83.5 (inside the Soreg), z -21 .. -37, floor at the Cheil level (y -13.5, earlier 2.5) with its door to the Cheil and, by an internal stair, a second door into the Water Gate passage at the court level (Yoma 19a; a reconstruction). Yoma 19a concludes that Palhedrin was the southern of the Kohen Gadol's two chambers, reasoning from his route to the first immersion on the roof of the Water Gate 'beside his chamber' (Yoma 31a), so the chamber belongs next to that gate; its size and exact spot along the wall are a reconstruction. Earlier placed beside Lishkas HaEtz at z -150 after Abba Shaul (Middot 5:4), see disputes"},
       "sources": ["Mishnah Yoma 1:1","Yoma 8b","Yoma 10a","Yoma 19a","Mishneh Torah, The Chosen Temple 5:17","Yoma 31a"],
       "disputes": [
         {
@@ -1583,7 +1588,7 @@
         {"he": "מה פירוש השם פלהדרין?", "en": "What does the name Palhedrin mean?"},
         {"he": "האם לשכות המקדש חייבות במזוזה?", "en": "Did the Temple chambers need a mezuzah?"}
       ],
-      "geometry": {"kind": "room", "w": 10, "d": 16, "h": 10, "notes": "room outside the south wall beside the Water Gate, x -73.5 .. -83.5 (the Cheil's width, up to the Soreg), z -22 .. -38, with its door to the Cheil on the east; size a reconstruction, see disputes."}
+      "geometry": {"kind": "room", "w": 10, "d": 16, "h": 22, "notes": "room outside the south wall beside the Water Gate, x -73.5 .. -83.5 (the Cheil's width, up to the Soreg), z -21 .. -37, floor at the Cheil level with its door to the Cheil in its east wall; inside, two flights of sixteen half-amah steps climb the 16 amos to a landing at the court level whose door opens into the Water Gate passage, so the Kohen Gadol could reach the gate's roof from his chamber (Yoma 19a, 31a). Height 22 gives the landing headroom; size and stair are a reconstruction, see disputes."}
     },
     {
       "type": "chamber",
@@ -1603,7 +1608,7 @@
         {"he": "מהי חפינת הקטורת ומדוע היא קשה?", "en": "What is the handful of incense, and why was it difficult?"},
         {"he": "היכן טבל הכהן הגדול את טבילתו הראשונה ביום הכיפורים?", "en": "Where did the Kohen Gadol make his first immersion on Yom Kippur?"}
       ],
-      "geometry": {"kind": "room", "w": 12, "d": 16, "h": 8, "notes": "upper storey straddling the north wall over korban_gate, floor at y 22.5; size not given. The Kohen Gadol's first Yom Kippur immersion was on the roof of the Water Gate in the south (Yoma 31a), not here."}
+      "geometry": {"kind": "room", "w": 12, "d": 16, "h": 8, "stair": "internal, from the court beside the Korban gate", "notes": "upper storey straddling the north wall over korban_gate, floor at y 22.5; size not given. Reached by an internal stair tower beside the gate's east jamb (x 61.5 .. 73.5, z -52 .. -42): four flights of ten half-amah steps, 20 amos in all, with a door from the court on its east side and a door into the storey at the top (a reconstruction; the sources give no stair). The Kohen Gadol's first Yom Kippur immersion was on the roof of the Water Gate in the south (Yoma 31a), not here."}
     },
     {
       "id": "kevesh_katan_east",

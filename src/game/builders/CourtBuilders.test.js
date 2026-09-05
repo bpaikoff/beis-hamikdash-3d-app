@@ -152,7 +152,7 @@ describe('court builders', () => {
     const en = levelWorldY('ezras_nashim') + 2;
     walk([[-20, 26], [-30, 26], [-40, 26]], 0.25, en); // chamber_oils
     walk([[20, 121], [30, 121], [40, 121]], 0.25, en); // chamber_wood
-    walk([[30, 12], [30, 3], [30, -5]], 0.25, en); // Lishkos Klei Shir under the Ezras Yisrael
+    walk([[20, 12], [20, 3], [20, -5]], 0.25, en); // Lishkos Klei Shir under the Ezras Yisrael, from the open court
     walk([[0, -5], [12, -5], [12, 3]], 0.25, levelWorldY('azaras_yisrael') + 2); // Lishkas Pinchas HaMalbish beside Nicanor
   });
 

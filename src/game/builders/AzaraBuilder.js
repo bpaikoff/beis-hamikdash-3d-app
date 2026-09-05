@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CourtBuilder, GROUND, LIP, SLAB, WALL_T } from './CourtBuilder.js';
+import { CourtBuilder, GROUND, LIP, ROOM_WALL_T, SLAB, WALL_T } from './CourtBuilder.js';
 import { instance } from '../instanced.js';
 import { AMAH } from '../../content/units.js';
 
@@ -22,6 +22,13 @@ const EAST_WALL_TOP = 25;
 const STEPS_Z = -54;
 /** A 1-amah rise is exactly CONFIG.STEP_HEIGHT; the Duchan platform sits 5 mm lower so the float compare never blocks the step. */
 const NUDGE = 0.01;
+/** The Duchan flight stops this far short of the south wall and of the Beis HaMoked's face (reconstruction). */
+const DUCHAN_END = 12;
+/** Beside the flight's ends, the steps down from the gate frontages to the Ezras Yisrael: five half-amah rises over three amos. */
+const FRONTAGE_STEPS = 5;
+const FRONTAGE_RUN = 3;
+/** Jamb thickness of a gate frame (CourtBuilder.gateA), amos. */
+const FRAME_T = 1;
 
 export class AzaraBuilder extends CourtBuilder {
   build() {
@@ -60,21 +67,41 @@ export class AzaraBuilder extends CourtBuilder {
     });
   }
 
-  /** One-amah step to the Duchan platform, then three half-amah steps to the Ezras Kohanim (Middot 2:6). */
+  /**
+   * One-amah step to the Duchan platform, then three half-amah steps to the Ezras
+   * Kohanim (Middot 2:6). The flight stops 12 amos short of the south wall and of the
+   * Beis HaMoked's face, so the Water Gate (z -21 .. -11) and the hall's gate
+   * (z -19 .. -9), whose thresholds are at the Ezras Kohanim level, open onto flat
+   * court: beside the flight the Kohanim floor runs east to each gateway's east edge,
+   * and five half-amah steps drop from there to the Ezras Yisrael. Middot gives the
+   * Duchan no width (the Tanna Kama has only beam-heads), so the ends are a reconstruction.
+   */
   buildDuchan() {
     const e = this.entry('duchan');
     const a = this.entry('azaras_yisrael').bounds;
     const z0 = e.position.z + e.geometry.d / 2; // -11
     const z1 = e.position.z - e.geometry.d / 2; // -14
     const platformDepth = 1.5;
-    const x2 = this.hall.x1;
+    const x1 = a.minX + DUCHAN_END; // -55.5
+    const x2 = this.hall.x1 - DUCHAN_END; // 40.5
     this.group('duchan', () => {
-      this.blockA(a.minX, x2, z0, z0 - platformDepth, this.yYisrael - SLAB, this.yDuchan - NUDGE, this.mat.marbleW, 'duchan');
+      this.blockA(x1, x2, z0, z0 - platformDepth, this.yYisrael - SLAB, this.yDuchan - NUDGE, this.mat.marbleW, 'duchan');
       this.flightA({
-        axis: 'z', span: [a.minX, x2], from: z0 - platformDepth, to: z1, yBase: this.yDuchan, bottom: this.yYisrael - SLAB,
+        axis: 'z', span: [x1, x2], from: z0 - platformDepth, to: z1, yBase: this.yDuchan, bottom: this.yYisrael - SLAB,
         steps: 3, rise: (this.yKohanim - this.yDuchan) / 3, mat: this.mat.marbleW, name: 'duchan steps',
       });
     });
+    // The gate frontages beside the flight's ends, level with the gateways, and their steps down.
+    for (const [xa, xb, gate] of [[a.minX, x1, this.entry('water_gate')], [x2, this.hall.x1, this.entry('beis_hamoked_gate')]]) {
+      const zFront = gate.position.z + gate.geometry.w / 2; // the gateway's east edge
+      this.group('azaras_kohanim', () => {
+        this.blockA(xa, xb, z1, zFront, this.yYisrael - SLAB, this.yKohanim, this.mat.stonePolished, `${gate.id} frontage`);
+        this.flightA({
+          axis: 'z', span: [xa, xb], from: zFront + FRONTAGE_RUN, to: zFront, yBase: this.yYisrael, bottom: this.yYisrael - SLAB,
+          steps: FRONTAGE_STEPS, rise: (this.yKohanim - this.yYisrael) / FRONTAGE_STEPS, mat: this.mat.marbleW, name: `${gate.id} frontage steps`,
+        });
+      }, { part: `${gate.id} frontage` });
+    }
   }
 
   /**
@@ -124,9 +151,22 @@ export class AzaraBuilder extends CourtBuilder {
     }, { part: 'east wall' });
   }
 
-  /** South wall: Mayim, Bechoros, Delek (Middot 1:4), Shaar HaElyon of the 13-gate count, Lishkas HaGazis straddling it. */
+  /**
+   * The Palhedrin's upper door opens into a bay of the Water Gate passage: an opening
+   * through the wall at the court level just west of the gate's south reveal (Yoma 19a;
+   * reconstruction), {@link buildSouthernLishkos}.
+   */
+  get palhedrinBay() {
+    const wg = this.entry('water_gate');
+    const z2 = wg.position.z - wg.geometry.w / 2; // -21, the gate's south edge
+    return { z1: z2 - 4, z2, w: 3, h: 7 };
+  }
+
+  /** South wall: Mayim, Bechoros, Delek (Middot 1:4), Shaar HaElyon of the 13-gate count, Lishkas HaGazis and HaEtz straddling it. */
   buildSouthWall() {
     const gz = this.entry('lishkas_hagazis');
+    const etz = this.entry('lishkas_haetz');
+    const bay = this.palhedrinBay;
     this.group('azaras_kohanim', () => {
       this.wallRunA({
         along: 'z', across: [-X_OUT, -X_IN], from: WALL_T, to: Z_WEST - WALL_T, y1: GROUND, y2: WALL_TOP, mat: this.mat.stone,
@@ -135,15 +175,32 @@ export class AzaraBuilder extends CourtBuilder {
           this.gateOpening('bechoros_gate', 'z'),
           this.gateOpening('delek_gate', 'z'),
           this.gateOpening('shaar_elyon', 'z'),
+          { at: (bay.z1 + bay.z2) / 2, w: bay.z2 - bay.z1, h: bay.h, floor: this.yKohanim, threshold: true, entry: 'lishkas_palhedrin', name: 'lishkas_palhedrin passage' },
           { at: gz.position.z, w: gz.geometry.d, cut: true },
+          { at: etz.position.z, w: etz.geometry.d, cut: true },
         ],
       });
     }, { part: 'south wall' });
   }
 
-  /** North wall: Nitzotz (= Yechonya), Korban, Beis HaMoked (= HaShir) per Middot 1:5 / 2:6, Shaar HaNashim, the hall straddling it. */
+  /**
+   * The Beis Avtinas stair tower stands east of the storey, against its east wall
+   * (which it shares), up to the Shaar HaNashim's west jamb, in the storey's own x band
+   * (6 amos into the court and the wall's thickness), {@link buildBeisAvtinas}.
+   */
+  get avtinasTower() {
+    const e = this.entry('beis_avtinas');
+    const nashim = this.entry('shaar_hanashim');
+    return {
+      x1: e.position.x - e.geometry.w / 2, x2: X_OUT,
+      z1: e.position.z + e.geometry.d / 2 - ROOM_WALL_T, z2: nashim.position.z - nashim.geometry.w / 2 - FRAME_T,
+    };
+  }
+
+  /** North wall: Nitzotz (= Yechonya), Korban, Beis HaMoked (= HaShir) per Middot 1:5 / 2:6, Shaar HaNashim, the hall and the Avtinas stair tower straddling it. */
   buildNorthWall() {
     const { z1, z2 } = this.hall;
+    const tower = this.avtinasTower;
     this.group('azaras_kohanim', () => {
       this.wallRunA({
         along: 'z', across: [X_IN, X_OUT], from: WALL_T, to: Z_WEST - WALL_T, y1: GROUND, y2: WALL_TOP, mat: this.mat.stone,
@@ -152,6 +209,7 @@ export class AzaraBuilder extends CourtBuilder {
           this.gateOpening('korban_gate', 'z'),
           this.gateOpening('shaar_hanashim', 'z'),
           { at: (z1 + z2) / 2, w: z2 - z1, cut: true },
+          { at: (tower.z1 + tower.z2) / 2, w: tower.z2 - tower.z1, cut: true },
         ],
       });
     }, { part: 'north wall' });
@@ -222,13 +280,13 @@ export class AzaraBuilder extends CourtBuilder {
     const x2 = e.position.x + w / 2;
     const z1 = e.position.z - d / 2;
     const z2 = e.position.z + d / 2;
-    const etz = this.entry('lishkas_haetz');
     this.group('lishkas_hagazis', () => {
       this.roomA({
         x1, x2, z1, z2, floor: e.position.y, h, base: GROUND, floorMat: this.mat.marbleW, wallMat: this.mat.stonePolished, name: 'lishkas_hagazis',
         doors: [
           { face: 'n', at: e.position.z, w: 5, h: 8, frame: this.mat.cedar, doors: 'open', doorMat: this.mat.cedar },
-          { face: 's', at: etz.position.z + 8, w: 4, h: 7, frame: this.mat.cedar },
+          { face: 's', at: e.position.z - 7, w: 4, h: 7, frame: this.mat.cedar, doors: 'closed', doorMat: this.mat.cedar }, // to the Cheil, 16 amos below (no steps in the sources): kept closed
+          { face: 'w', at: this.etzDoorX, w: 3, h: 7, frame: this.mat.cedar }, // into Lishkas HaEtz behind (Abba Shaul)
         ],
       });
       // Seats of the Sanhedrin in a half-circle facing east (Sanhedrin 4:3): three tiers of benches.
@@ -298,7 +356,7 @@ export class AzaraBuilder extends CourtBuilder {
     }, { part: 'mikveh' });
   }
 
-  /** Golah inside the south wall (Middot 5:4); Etz and Palhedrin outside it in the Cheil (Abba Shaul). */
+  /** Golah inside the south wall (Middot 5:4); Etz behind it and the Gazis (Abba Shaul); Palhedrin in the Cheil beside the Water Gate (Yoma 19a). */
   buildSouthernLishkos() {
     const golah = this.entry('lishkas_hagolah');
     {
@@ -323,38 +381,77 @@ export class AzaraBuilder extends CourtBuilder {
         }
       });
     }
+    // Lishkas HaEtz, the next room west of the Gazis in the band of its chol half and
+    // the Cheil (x -67.5 .. -83.5), behind the Golah (Middot 5:4, Abba Shaul), entered
+    // from the Gazis' chol half through a door in its east wall; the court wall goes on
+    // above it as over the Gazis.
     const etz = this.entry('lishkas_haetz');
-    const hag = this.entry('lishkas_hagazis');
-    const hagX1 = hag.position.x - hag.geometry.w / 2;
     {
-      // JSON gives x -73.5 .. -83.5, which overlaps Lishkas HaGazis (to -77.5); built from the Gazis face out to the Soreg line.
-      const { d, h } = etz.geometry;
-      const x2 = hagX1;
-      const x1 = etz.position.x - etz.geometry.w / 2;
+      const { w, d, h } = etz.geometry;
+      const x1 = etz.position.x - w / 2;
+      const x2 = etz.position.x + w / 2;
       const z1 = etz.position.z - d / 2;
       const z2 = etz.position.z + d / 2;
       this.group('lishkas_haetz', () => {
-        this.roomA({ x1, x2, z1, z2, floor: etz.position.y, h, base: GROUND, floorMat: this.mat.floor, name: 'lishkas_haetz', doors: [{ face: 'n', at: etz.position.z + 8, w: 4, h: 7, frame: this.mat.cedar }] });
+        this.roomA({
+          x1, x2, z1, z2, floor: etz.position.y, h, base: GROUND, floorMat: this.mat.floor, wallMat: this.mat.stonePolished, name: 'lishkas_haetz',
+          doors: [{ face: 'e', at: this.etzDoorX, w: 3, h: 7, frame: this.mat.cedar }],
+        });
+        this.decoA(-X_OUT, -X_IN, z1, z2, etz.position.y + h + 1, WALL_TOP, this.mat.stone);
       });
     }
+    // Lishkas Palhedrin, in the Cheil beside the Water Gate with its floor at the Cheil
+    // level and its door to the Cheil (east). Inside, two flights of sixteen half-amah
+    // steps (the Cheil steps' profile) climb the 16 amos to a landing at the court level,
+    // whose door opens through the wall into a bay of the Water Gate passage (Yoma 19a;
+    // reconstruction), so the chamber connects the Cheil to the court.
     const pal = this.entry('lishkas_palhedrin');
     {
       const { w, d, h } = pal.geometry;
-      const x1 = pal.position.x - w / 2;
-      const x2 = pal.position.x + w / 2;
-      const z1 = pal.position.z - d / 2;
-      const z2 = pal.position.z + d / 2;
+      const x1 = pal.position.x - w / 2; // -83.5
+      const x2 = pal.position.x + w / 2; // -73.5
+      const z1 = pal.position.z - d / 2; // -37
+      const z2 = pal.position.z + d / 2; // -21
+      const floor = pal.position.y; // the Cheil level: the Cheil pavement is its floor
+      const bay = this.palhedrinBay;
+      const top = this.yKohanim;
+      const steps = 16;
+      const rise = (top - floor) / (2 * steps); // 0.5
+      const run = steps * rise; // 8: half-amah treads
+      const t = 1; // ROOM_WALL_T
+      const bottom = floor - SLAB;
       this.group('lishkas_palhedrin', () => {
-        this.roomA({ x1, x2, z1, z2, floor: pal.position.y, h, base: GROUND, floorMat: this.mat.floor, name: 'lishkas_palhedrin', doors: [{ face: 'e', at: pal.position.x, w: 4, h: 7, frame: this.mat.cedar, doors: 'closed', doorMat: this.mat.cedar }] });
+        this.roomA({
+          x1, x2, z1, z2, floor, h, base: GROUND, wallMat: this.mat.stonePolished, name: 'lishkas_palhedrin',
+          doors: [
+            { face: 'e', at: pal.position.x, w: 4, h: 7, frame: this.mat.cedar },
+            { face: 'n', at: (bay.z1 + bay.z2) / 2, w: bay.w, h: bay.h - 1, floor: top, frame: this.mat.cedar, threshold: true, name: 'lishkas_palhedrin upper door' },
+          ],
+        });
+        // Lower flight along the south side, west from the entrance strip; landing across the west end; upper flight back east along the north side.
+        const zFoot = z2 - t - 3; // -25: a 3-amah strip inside the Cheil door
+        const zTurn = zFoot - run; // -33
+        this.flightA({ axis: 'z', span: [x1 + t, x1 + t + 3], from: zFoot, to: zTurn, yBase: floor, bottom, steps, rise, mat: this.mat.stonePolished, name: 'lishkas_palhedrin stair' });
+        this.blockA(x1 + t, x2 - t, zTurn, z1 + t, bottom, floor + run, this.mat.stonePolished, 'lishkas_palhedrin landing');
+        this.flightA({ axis: 'z', span: [x2 - t - 3, x2 - t], from: zTurn, to: zFoot, yBase: floor + run, bottom, steps, rise, mat: this.mat.stonePolished, name: 'lishkas_palhedrin stair' });
+        this.blockA(x2 - t - 3, x2 - t, zFoot, z2 - t, bottom, top, this.mat.stonePolished, 'lishkas_palhedrin landing');
       });
     }
   }
 
+  /** x of the door between the Gazis' chol half and Lishkas HaEtz: the middle of the wall's thickness. */
+  get etzDoorX() {
+    return -(X_IN + X_OUT) / 2;
+  }
+
   /**
    * Beis Avtinas: an upper storey over a court gate on whichever wall the content puts it
-   * (north, over Shaar HaKorban, per Yoma 19a). The Kohen Gadol's first immersion was on
-   * the roof of the Water Gate beside Palhedrin (Yoma 31a), so the mikveh sits on the south
-   * wall top over that gate.
+   * (north, over Shaar HaKorban, per Yoma 19a), reached by a stair tower beside the
+   * gate's east jamb in the storey's own x band: four flights of ten half-amah steps
+   * (20 amos, the gate's height) round the tower's walls, a door from the court in its
+   * east face and a door into the storey at the top. The Kohen Gadol's first immersion
+   * was on the roof of the Water Gate beside Palhedrin (Yoma 31a), so the mikveh sits on
+   * the south wall top over that gate.
    */
   buildBeisAvtinas() {
     const e = this.entry('beis_avtinas');
@@ -366,11 +463,53 @@ export class AzaraBuilder extends CourtBuilder {
     const floor = e.position.y;
     const side = Math.sign(e.position.x); // +1 north wall, -1 south wall
     const [inner, edge] = side > 0 ? [x1, X_IN] : [-X_IN, x2]; // the part overhanging the court
+    const tower = this.avtinasTower;
+    const t = ROOM_WALL_T;
+    const doorX = tower.x1 + t + 1.25; // the door is in the tower's first x band, x 62.5 .. 65
+    const doorW = 2.5;
     this.group('beis_avtinas', () => {
-      this.roomA({ x1, x2, z1, z2, floor, h, floorMat: this.mat.floor, wallMat: this.mat.stonePolished, roof: 'walk', roofMat: this.mat.stone, name: 'beis_avtinas', doors: [{ face: side > 0 ? 's' : 'n', at: e.position.z, w: 3, h: 6, frame: this.mat.cedar, doors: 'closed', doorMat: this.mat.cedar }] });
-      // Corbels under the part that overhangs the court.
-      for (const z of [z1 + 1, (z1 + z2) / 2, z2 - 1]) this.decoA(inner, edge, z - 0.5, z + 0.5, floor - SLAB - 1.5, floor - SLAB, this.mat.stone);
+      this.roomA({
+        x1, x2, z1, z2, floor, h, floorMat: this.mat.floor, wallMat: this.mat.stonePolished, roof: 'walk', roofMat: this.mat.stone, name: 'beis_avtinas',
+        doors: [{ face: 'e', at: doorX, w: doorW, h: 6, frame: this.mat.cedar }],
+      });
+      // Corbels under the part that overhangs the court, clear of the tower.
+      for (const z of [z1 + 1, (z1 + z2) / 2, z2 - 1].filter((zc) => zc + 0.5 <= tower.z1)) this.decoA(inner, edge, z - 0.5, z + 0.5, floor - SLAB - 1.5, floor - SLAB, this.mat.stone);
     });
+    // The stair tower: from the court floor to the storey, walls to the storey's roof. Its
+    // west face is the storey's east wall (with the door at the top); below the storey a
+    // plain wall closes that side.
+    this.group('beis_avtinas', () => {
+      const yCourt = this.yKohanim;
+      const bottom = yCourt - SLAB;
+      this.roomA({
+        x1: tower.x1, x2: tower.x2, z1: tower.z1, z2: tower.z2, floor: yCourt, h: floor + h - yCourt, base: GROUND, floorMat: this.mat.floor, wallMat: this.mat.stone, name: 'beis_avtinas stair', skip: ['w'],
+        doors: [{ face: 'e', at: doorX, w: doorW, h: 7, frame: this.mat.cedar, name: 'beis_avtinas stair door' }],
+      });
+      this.wallA(tower.x1, tower.x2, tower.z1, tower.z1 + t, GROUND, floor - SLAB, this.mat.stone);
+      // Four flights along x in four z bands, landings at alternate ends, all solid to the court floor.
+      const ix1 = tower.x1 + t;
+      const ix2 = tower.x2 - t;
+      const iz1 = tower.z1 + t;
+      const iz2 = tower.z2 - t;
+      const landing = 2.5;
+      const band = (iz2 - iz1) / 4;
+      const steps = 10;
+      const rise = (floor - yCourt) / (4 * steps); // 0.5
+      const from = ix1 + landing;
+      const to = ix2 - landing;
+      let y = yCourt + LIP;
+      for (let k = 0; k < 4; k++) {
+        const za = iz2 - k * band;
+        const zb = za - band;
+        const up = k % 2 === 0; // even flights climb north (+x), odd ones back south
+        this.flightA({ axis: 'x', span: [zb, za], from: up ? from : to, to: up ? to : from, yBase: y, bottom, steps, rise, mat: this.mat.stonePolished, name: 'beis_avtinas stair' });
+        y += steps * rise;
+        // Landing at the flight's top end, shared with the next flight's foot.
+        const zc = k < 3 ? zb - band : zb;
+        if (up) this.blockA(to, ix2, zc, za, bottom, y, this.mat.stonePolished, 'beis_avtinas landing');
+        else this.blockA(ix1, from, zc, za, bottom, y, this.mat.stonePolished, 'beis_avtinas landing');
+      }
+    }, { part: 'stair' });
     // Mikveh on the south wall top over the Water Gate (Yoma 31a).
     const wg = this.entry('water_gate');
     this.group('azaras_kohanim', () => {

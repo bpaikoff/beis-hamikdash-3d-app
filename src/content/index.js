@@ -5,7 +5,25 @@
 import data from './temple.json';
 import { toWorld, AMAH, AZARAH_FLOOR_Y } from './units.js';
 
-export const entries = data.entries;
+/**
+ * Every entry, with each parent's `children` (the four rooms of Beis HaMoked) flattened
+ * in after it so that `byId`, `hotspots()`, `?at=` and the walk routes can address them.
+ * A child keeps its own id, name, desc, position and sources; type, area, period, icon
+ * and questions come from the parent, and `parent` names it. The parent keeps its
+ * `children` array untouched.
+ */
+function flatten(list) {
+  const out = [];
+  for (const e of list) {
+    out.push(e);
+    for (const c of e.children ?? []) {
+      out.push({ type: e.type, area: e.area, period: e.period, icon: e.icon, questions: e.questions, ...c, position: c.position ?? e.position, parent: e.id });
+    }
+  }
+  return out;
+}
+
+export const entries = flatten(data.entries);
 export const byId = Object.fromEntries(entries.map((e) => [e.id, e]));
 
 export const areas = entries.filter((e) => e.type === 'area');

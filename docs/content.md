@@ -75,7 +75,7 @@ assumption is stated in the entry's `position.note` or `geometry.notes`.
   "questions": [{"he": "", "en": ""}],                    // 2-4, become tzadek.ai ?q= links
   "icon": "🛁",                      // emoji for now
   "geometry": {"kind": "box|room|gate|steps|ramp|arc_steps|pillar", "w": 0, "d": 0, "h": 0, "notes": ""},
-  "children": [ { "id", "name", "desc", "position", "sources" } ],   // sub-rooms (Beis HaMoked)
+  "children": [ { "id", "name", "desc", "position", "sources" } ],   // sub-rooms (Beis HaMoked); index.js flattens them into `entries`/`byId` with `parent` set
   "gateScheme": ["middos_1_4", "middos_2_6"],   // gates: which count(s) include this gate
   "outsideWall": "south",            // Azarah entries built in the Cheil beyond the wall (Etz, Palhedrin)
   "legacyId": "..."                  // phase-1 hotspot key, kept for the migration
@@ -89,11 +89,24 @@ Conventions:
 - Gates are placed at the **inner** face of their wall (x ±67.5 or z −187) so they fall
   inside the Azarah bounds test. `beis_hamoked_gate` is in the hall's south wall (x 52.5).
   Chambers that straddle a wall (`lishkas_hagazis`, `beis_hamoked`) are centred on the wall
-  line; the two that stand wholly outside it (`lishkas_haetz`, `lishkas_palhedrin`) carry
-  `outsideWall` and are 10 wide so they fill the Cheil strip exactly to its outer edge
-  (x ±83.5, the Soreg line) and no further. Palhedrin is beside the Water Gate in the south
-  and Beis Avtinas an upper storey on the north wall (Yoma 19a); the Kohen Gadol's first
-  immersion was on the Water Gate's roof beside Palhedrin (Yoma 31a).
+  line; the two that lie beyond the wall's inner face (`lishkas_haetz`, `lishkas_palhedrin`)
+  carry `outsideWall` and reach the Cheil's outer edge (x ±83.5, the Soreg line) and no
+  further. Lishkas HaEtz is the next room west of the Gazis, in the band of its chol half
+  and the Cheil (x −67.5 .. −83.5, z −118 .. −148), behind the Golah and beyond the Gazis
+  (Middot 5:4, Abba Shaul), entered from the Gazis' chol half. Palhedrin is in the Cheil
+  beside the Water Gate in the south (Yoma 19a) with its floor at the Cheil level and an
+  internal stair to a landing at the court level whose door opens into the Water Gate
+  passage; Beis Avtinas is an upper storey on the north wall over the Korban gate, reached
+  by a stair tower beside the gate (`geometry.stair`). Both stairs are reconstructions.
+  The Kohen Gadol's first immersion was on the Water Gate's roof beside Palhedrin (Yoma 31a).
+- Sub-rooms listed under a parent's `children` (Beis HaMoked's four) are flattened by
+  `src/content/index.js` into `entries` and `byId` with `parent` set: they keep their own
+  id, name, desc, position and sources and inherit type, area, period, icon and questions,
+  so `?at=`, `hotspots()` and the walk routes can address them. The bounds test skips them
+  (they lie inside their parent's footprint, which may straddle a wall).
+- Hotspot positions are walkable spots, not geometric centres: `azaras_kohanim` sits at
+  x 25, z −60 (the court's centre is inside the altar), `ezras_nashim_balcony` on the
+  gallery floor (z 139), `lishkos_klei_shir` in its northern door (x 20).
 - The thirteen-gate count (Abba Yose ben Chanan, Middot 2:6) is fully represented.
   Gates with `gateScheme: ["middos_2_6"]` only are optional for the builders; two of them
   (`shaar_yechonya`, `shaar_hashir`) share an opening with `nitzotz_gate` and
@@ -169,6 +182,46 @@ Applied as notes only (low-confidence geometry/position rows, nothing moved):
   `geometry.notes`; the column at x 52 stays.
 - `duchan` position: the area/bounds mismatch is stated in `position.note`; `area` stays
   `azaras_yisrael` and the flight stays at z −11 .. −14.
+
+### 2026-09-05 — Round A (content positions + builders)
+
+Content (`id.field old -> new`): `azaras_kohanim.position` x 0 -> 25, z −43.5 -> −60 (the
+old spot was inside the altar); `lishkos_klei_shir.position.x` 30 -> 20 (doors on the open
+court between the steps' radius 12.5 and the corner chambers at 27.5);
+`lishkas_hamadichin` / `lishkas_haparvah` / `lishkas_hamelach` z −96 / −112 / −128 ->
+−100 / −116 / −132 (12 amos west, so the strip beside the Ulam's north wing, x 50 .. 67.5,
+z −76 .. −92, stays open; recorded in each one's `disputes` as a reconstruction);
+`lishkas_haetz.position` x −78.5 -> −75.5, z −118 -> −133, `geometry` w 10 -> 16, d 32 -> 30
+(behind the Gazis per Abba Shaul, Middot 5:4: the next room west in the band of the Gazis'
+chol half and the Cheil, with a door from the Gazis); `lishkas_palhedrin.position` y 2.5 ->
+−13.5, z −30 -> −29, `geometry.h` 10 -> 22 (floor at the Cheil level, door to the Cheil,
+internal stair and a second door into the Water Gate passage, Yoma 19a; reconstruction);
+`beis_avtinas.geometry.stair` added ("internal, from the court beside the Korban gate");
+`ezras_nashim_balcony.position.z` 137 -> 139 (on the gallery floor). `src/content/index.js`
+flattens `children` into `entries`/`byId` with `parent` set (test: `lishkas_telaei_korban`).
+
+Builders: the Duchan flight and platform stop 12 amos short of the south wall and of the
+Beis HaMoked's face (x −55.5 .. 40.5); beside its ends the Kohanim floor runs east to the
+Water Gate's and the Beis HaMoked gate's frontage (both gateways are at the Kohanim level,
+2.5) and five half-amah steps drop to the Ezras Yisrael, so both gates open onto flat
+court. Palhedrin is built at the Cheil level (the Cheil pavement is its floor) with two
+flights of sixteen half-amah steps to a landing at 2.5 and a door into a 4-amah bay of the
+Water Gate passage cut through the wall west of the gate's south reveal, so the chamber
+connects the Cheil to the court. Beis Avtinas gets a stair tower east of the storey
+(x 61.5 .. 73.5, z −51 .. −42, sharing the storey's east wall): four flights of ten
+half-amah steps with half-amah treads (the plan's "20 half-amah steps, 1-amah treads"
+would rise only 10 amos; the storey is 20 up over the 20-amah gate, and 1-amah treads do
+not fit between the gates), a door from the court on its east face and a door into the
+storey at the top. Lishkas HaEtz is built west of the Gazis with the door between them in
+the middle of the wall's thickness (x −70.5); the Gazis' chol door to the Cheil, 16 amos
+above the Cheil, is kept closed. The klei-shir doors and the northern lishkos follow the
+JSON. CharacterSystem: doves orbit their spawn point (baseX/baseZ; the code used baseY
+for x). Routes added: `azarah_palhedrin`, `azarah_avtinas`, `azarah_etz`;
+`lishkos_klei_shir` rewritten from the open court; `azarah_gazis`, `azarah_yisrael`,
+`azarah_slaughter`, `azarah_gates_north`, `azarah_west`, `azarah_northern_lishkos` and
+`ezras_nashim_balcony` adjusted where entries moved or the tower now stands.
+
+### 2026-09-04 — builder follow-through
 
 Builder adjustments made so the geometry follows the JSON: Beis Avtinas door/corbels are
 side-aware and its mikveh moved to the wall top over the Water Gate; the Beis HaMoked

@@ -84,7 +84,7 @@ export const routes = {
     amos(8, 135, BALCONY), // top step
     amos(5.5, 135, BALCONY), // landing
     amos(5.5, 139, BALCONY), // gallery over the gate
-    at('ezras_nashim_balcony', { dz: 1, ...BALCONY }), // the hotspot is on the parapet line
+    at('ezras_nashim_balcony', BALCONY), // the hotspot is on the gallery floor over the gate
     amos(25.5, 139, BALCONY),
     amos(25.5, 99, BALCONY), // along the wood store's court wall
     amos(45, 99, BALCONY), // along its west wall
@@ -109,29 +109,21 @@ export const routes = {
   ],
 
   // The Lishkos Klei Shir under the Ezras Yisrael (Middot 2:6), through their doors in the
-  // Azarah east wall. temple.json puts the rooms at x +-30, so their doors open inside the
-  // lepers' chamber and the chamber of oils (x +-27.5 .. 67.5), not on the open court:
-  // the way in is through those chambers' doors.
+  // Azarah east wall at x +-20: on the open court between the fifteen steps (outer radius
+  // 12.5) and the corner chambers (x +-27.5).
   lishkos_klei_shir: [
     at('ezras_nashim', EN),
-    amos(25, 26, EN),
-    amos(31, 26, EN), // into the lepers' chamber
-    amos(30, 12, EN),
-    amos(30, 3, EN), // in the doorway (the wall is z 0 .. 6)
+    amos(20, 20, EN),
+    amos(20, 3, EN), // in the doorway (the wall is z 0 .. 6)
     at('lishkos_klei_shir', { dz: -4, ...EN }),
-    amos(30, 3, EN),
-    amos(30, 12, EN),
-    amos(31, 26, EN),
-    amos(25, 26, EN),
-    amos(-25, 26, EN),
-    amos(-31, 26, EN), // into the chamber of oils
-    amos(-30, 12, EN),
-    amos(-30, 3, EN),
-    amos(-30, -5, EN),
-    amos(-30, 3, EN),
-    amos(-30, 12, EN),
-    amos(-31, 26, EN),
-    amos(-25, 26, EN),
+    amos(20, 3, EN),
+    amos(20, 20, EN),
+    amos(-20, 20, EN),
+    amos(-20, 3, EN),
+    amos(-20, -5, EN),
+    amos(-20, 3, EN),
+    amos(-20, 20, EN),
+    at('ezras_nashim', EN),
   ],
 
   // The two chambers beside Nicanor (Middot 1:4) from the Ezras Yisrael through their doors.

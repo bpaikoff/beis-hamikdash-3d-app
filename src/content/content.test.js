@@ -50,6 +50,19 @@ describe('content/temple.json', () => {
     };
     for (const e of entries) check(e, e.id);
   });
+  it('flattens children next to their parent, with parent set and their own position', () => {
+    const c = byId.lishkas_telaei_korban;
+    expect(c).toBeDefined();
+    expect(c.parent).toBe('beis_hamoked');
+    expect(c.position.x).toBe(58.5); // its own position, not the hall's
+    expect(c.type).toBe('chamber');
+    expect(c.area).toBe('azaras_kohanim');
+    expect(hotspots().map((e) => e.id)).toContain('lishkas_telaei_korban');
+    for (const p of entries.filter((e) => e.children?.length)) {
+      for (const ch of p.children) expect(byId[ch.id]?.parent, ch.id).toBe(p.id);
+    }
+    expect(entries.filter((e) => e.parent)).toHaveLength(4);
+  });
   it('the ids the code depends on exist', () => {
     for (const id of REQUIRED_IDS) expect(byId[id], id).toBeDefined();
     for (const id of ['ezras_nashim', 'azaras_yisrael', 'azaras_kohanim', 'har_habayis', 'outside', 'heichal', 'kodesh_hakodashim']) expect(byId[id].type, id).toBe('area');
@@ -88,7 +101,8 @@ describe('content/temple.json', () => {
     }
   });
   it('Azarah items lie within the Azarah rectangle (Middot 5:1)', () => {
-    for (const e of keilim.filter((e) => AZARAH_AREAS.includes(e.area))) {
+    // Sub-rooms (`parent`) lie inside their parent's footprint; Beis HaMoked straddles the wall.
+    for (const e of keilim.filter((e) => AZARAH_AREAS.includes(e.area) && !e.parent)) {
       const { x, z } = e.position;
       const b = e.outsideWall ? CHEIL_OUTER : AZARAH;
       if (e.outsideWall) expect(['north', 'south', 'east', 'west'], `${e.id}.outsideWall`).toContain(e.outsideWall);

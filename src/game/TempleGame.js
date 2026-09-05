@@ -79,6 +79,7 @@ export class TempleGame {
     this.tex = new TextureFactory({
       maxAnisotropy: this.renderer.capabilities.getMaxAnisotropy(),
       baked: new URLSearchParams(window.location.search).get('bake') !== '0',
+      pbr: new URLSearchParams(window.location.search).get('pbr') !== '0',
     });
     this.currentArea = null;
     this.nearbyKli = null;

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { mulberry32 } from './random.js';
+import pbrManifest from '../../public/assets/textures/manifest.json';
 
 /**
  * Every procedural texture, in bake order. `scripts/bake_textures.mjs` renders each one to
@@ -19,14 +20,33 @@ const META = {
 
 export const BAKED_PATH = '/textures/';
 
+/**
+ * Photographic / scanned PBR sets under public/assets/textures/<set>/ (CC0, see
+ * public/assets/LICENSES.md). The manifest that scripts/fetch_assets.mjs writes is the
+ * source of truth for which maps each set has, so a set without an AO map costs no 404.
+ */
+export const PBR_PATH = '/assets/textures/';
+export const PBR_SETS = pbrManifest.sets;
+/** File in the set directory -> material slot, and whether it is colour data (sRGB). */
+const PBR_MAPS = [
+  ['color.jpg', 'map', true],
+  ['normal.jpg', 'normalMap', false],
+  ['roughness.jpg', 'roughnessMap', false],
+  ['ao.jpg', 'aoMap', false],
+];
+/** Flat 1x1 stand-ins when a map fails to load: neutral normal, matte, unoccluded, warm grey. */
+const PBR_NEUTRAL = { map: [176, 168, 144], normalMap: [128, 128, 255], roughnessMap: [200, 200, 200], aoMap: [255, 255, 255] };
+
 // ============================================================================
 // TEXTURE FACTORY - 21 procedural textures, baked to WebP at build time
 // ============================================================================
 export class TextureFactory {
   /**
-   * @param {{maxAnisotropy?: number, baked?: boolean, manager?: THREE.LoadingManager}} [opts]
+   * @param {{maxAnisotropy?: number, baked?: boolean, pbr?: boolean, manager?: THREE.LoadingManager}} [opts]
    *   maxAnisotropy: renderer.capabilities.getMaxAnisotropy();
    *   baked: try public/textures/<name>.webp first (default true; pass false for ?bake=0);
+   *   pbr: serve the photographic sets from pbrSet() (default true; false for ?pbr=0 makes
+   *        pbrSet() return null so materials fall back to the procedural textures);
    *   manager: shared LoadingManager (one is created when omitted).
    */
   constructor(opts = {}) {
@@ -34,6 +54,7 @@ export class TextureFactory {
     this.size = 1024;
     this.maxAnisotropy = opts.maxAnisotropy ?? 4;
     this.baked = opts.baked ?? true;
+    this.pbr = opts.pbr ?? true;
     this.manager = opts.manager ?? new THREE.LoadingManager();
     this.loader = new THREE.TextureLoader(this.manager);
     this.rand = mulberry32(1);
@@ -483,17 +504,64 @@ export class TextureFactory {
     return tex;
   }
 
+  /**
+   * Opus tessellatum floor: one 2 m panel per tile (TILE_METRES.mosaic) at 1024 px, so a
+   * tessera cell of 8 px is ~1.6 cm. A black fillet and a terracotta wave-crest band frame
+   * a cream limestone field carrying a sparse diagonal lattice with black tesserae at the
+   * nodes, the kind of Herodian geometric floor seen at Masada and Herodium. Every tessera
+   * is a slightly irregular quad with its own tone, laid on a dark mortar bed.
+   */
   mosaic() {
-    const c = this.createCanvas(512, 512), ctx = c.getContext('2d');
-    ctx.fillStyle = '#2A2520';
-    ctx.fillRect(0, 0, 512, 512);
-    const colors = ['#D4C4A8', '#C9B896', '#E8DCC8', '#BFA88A', '#FFFFFF', '#1E3A5F', '#8B0000'];
-    const ts = 8;
-    for (let y = 0; y < 512; y += ts) {
-      for (let x = 0; x < 512; x += ts) {
-        const dist = Math.sqrt((x - 256) ** 2 + (y - 256) ** 2);
-        ctx.fillStyle = colors[Math.floor(dist / 40) % colors.length];
-        ctx.fillRect(x + 1, y + 1, ts - 2, ts - 2);
+    const S = this.size, c = this.createCanvas(S, S), ctx = c.getContext('2d');
+    const cell = 8, n = S / cell; // 128 x 128 tesserae
+    ctx.fillStyle = '#5E544A'; // mortar
+    ctx.fillRect(0, 0, S, S);
+    const jitter = () => (this.rand() - 0.5) * 1.6;
+    const shade = ([r, g, b], amt) => {
+      const k = 1 + (this.rand() - 0.5) * amt;
+      return `rgb(${Math.round(r * k)},${Math.round(g * k)},${Math.round(b * k)})`;
+    };
+    const CREAM = [214, 200, 172], TERRA = [162, 84, 52], BLACK = [46, 40, 36], PALE = [232, 222, 200];
+    // Border, counted in tesserae from each edge (the tile repeats, so both edges match).
+    const edge = (i, j) => Math.min(i, j, n - 1 - i, n - 1 - j);
+    const wave = (i, j) => {
+      // Wave-crest (running scroll) band: a terracotta line that sweeps between the two
+      // inner rows of the band, black crest in the trough. Period 16 tesserae.
+      const along = (i <= 5 || i >= n - 6) ? j : i; // which axis the band runs along
+      const across = edge(i, j) - 3; // 0..2 inside the band
+      const t = (along % 16) / 16;
+      const crest = Math.round(1 + Math.sin(t * Math.PI * 2)); // 0..2
+      if (across === crest) return TERRA;
+      if (across === 1 && t > 0.55 && t < 0.7) return BLACK;
+      return CREAM;
+    };
+    for (let j = 0; j < n; j++) {
+      for (let i = 0; i < n; i++) {
+        const e = edge(i, j);
+        let col, amt = 0.12;
+        if (e <= 1) { col = BLACK; amt = 0.25; }              // outer fillet, 2 rows
+        else if (e === 2) col = PALE;                          // light guard row
+        else if (e <= 5) col = wave(i, j);                     // wave-crest band, 3 rows
+        else if (e === 6) col = TERRA;                         // inner fillet
+        else if (e === 7) col = PALE;
+        else {
+          // Field: diagonal lattice every 12 tesserae, black tessera at the crossings.
+          const a = (i + j) % 12 === 0, b = (i - j + 12 * n) % 12 === 0;
+          col = a && b ? BLACK : (a || b) ? TERRA : CREAM;
+          amt = a || b ? 0.15 : 0.14;
+        }
+        ctx.fillStyle = shade(col, amt);
+        const x = i * cell, y = j * cell;
+        ctx.beginPath();
+        ctx.moveTo(x + 0.8 + jitter(), y + 0.8 + jitter());
+        ctx.lineTo(x + cell - 0.8 + jitter(), y + 0.8 + jitter());
+        ctx.lineTo(x + cell - 0.8 + jitter(), y + cell - 0.8 + jitter());
+        ctx.lineTo(x + 0.8 + jitter(), y + cell - 0.8 + jitter());
+        ctx.closePath();
+        ctx.fill();
+        // A faint highlight on the top-left edge gives each tessera a bevel.
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.fillRect(x + 1, y + 1, cell - 2, 1);
       }
     }
     const tex = this.finish(new THREE.CanvasTexture(c));
@@ -626,9 +694,65 @@ export class TextureFactory {
     return tex;
   }
 
-  /** Release every cached texture. */
+  /**
+   * The photographic PBR maps of `set` (a key of PBR_SETS: ashlar, limestone, ...), loaded
+   * through the shared LoadingManager and counted in the same progress as the baked files.
+   * Returns `{ map, normalMap, roughnessMap, aoMap }` (a slot is absent when the set has no
+   * such file; only sets with an AO map return `aoMap`), the same object on every call.
+   * Colour is sRGB, the data maps linear; all RepeatWrapping with anisotropy. URLs carry
+   * the file's content hash as a query so the immutable /assets/ cache never goes stale.
+   * Returns null when the factory was built with `pbr: false` (?pbr=0) or the set is
+   * unknown, so callers fall back to the procedural textures. A map that fails to load is
+   * replaced by a flat neutral pixel (and a console warning) rather than a black surface.
+   * @param {string} set
+   * @returns {{map?: THREE.Texture, normalMap?: THREE.Texture, roughnessMap?: THREE.Texture, aoMap?: THREE.Texture} | null}
+   */
+  pbrSet(set) {
+    if (!this.pbr) return null;
+    const key = `pbr:${set}`;
+    if (this.cache.has(key)) return this.cache.get(key);
+    const spec = PBR_SETS[set];
+    if (!spec) return null;
+    const out = {};
+    for (const [file, slot, srgb] of PBR_MAPS) {
+      const f = spec.files[file];
+      if (!f) continue;
+      this.total++;
+      const url = `${PBR_PATH}${set}/${file}?v=${f.sha256.slice(0, 8)}`;
+      const tex = this.loader.load(
+        url,
+        () => this.settle(),
+        undefined,
+        () => {
+          console.warn(`TextureFactory: ${url} failed to load; using a flat ${slot}`);
+          const px = this.neutralPixel(PBR_NEUTRAL[slot]);
+          if (px) { tex.image = px; tex.needsUpdate = true; }
+          this.settle();
+        }
+      );
+      this.finish(tex, { srgb, update: false });
+      out[slot] = tex;
+    }
+    this.cache.set(key, out);
+    return out;
+  }
+
+  /** 1x1 canvas of a flat colour (null outside the browser). */
+  neutralPixel([r, g, b]) {
+    if (typeof document === 'undefined') return null;
+    const c = this.createCanvas(1, 1);
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.fillRect(0, 0, 1, 1);
+    return c;
+  }
+
+  /** Release every cached texture (procedural and PBR sets). */
   dispose() {
-    for (const t of this.cache.values()) t.dispose();
+    for (const t of this.cache.values()) {
+      if (t.isTexture) t.dispose();
+      else for (const m of Object.values(t)) m.dispose();
+    }
     this.cache.clear();
   }
 }

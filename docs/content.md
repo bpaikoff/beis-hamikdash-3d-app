@@ -143,7 +143,8 @@ node scripts/verify_refs.mjs --file other.json --gap 500
 ```
 
 It collects every `sources[]`, `dimensions[].source` and `position.source` (including
-`children`), dedupes, and requests
+`children`) from `temple.json`, plus the tour and stop `sources[]` of every
+`tours/*.json`, dedupes, and requests
 `https://www.sefaria.org/api/v3/texts/<ref>?version=hebrew`. A ref is bad on HTTP 404 or
 a JSON body with an `error` key; 5xx and network errors are retried twice. Exit code 1
 if any ref is bad. `.refs-cache.json` is a local convenience and is not committed.
@@ -154,6 +155,69 @@ Unique ids; bilingual name/desc; azarah frame; areas have bounds; ref-shaped sou
 entries and children; required ids exist; ≥2 sources, 2-4 questions, icon and parent area
 on every non-area; known `geometry.kind` and units; Azarah items inside x ±67.5, z −187..0;
 the Middot 5:1 arithmetic (altar −38, Heichal −118, Kodesh HaKodashim −149, levels).
+
+## Tours (`src/content/tours/*.json`)
+
+A tour is an ordered list of stops over the entries above; the engine (`src/game/Tour.js`)
+moves the camera between them and shows a text card at each. `src/content/tours/index.js`
+exports `tours`, `byTourId`, and three helpers: `tourEntry(id)` (an entry, or one of Beis
+HaMoked's `children` with `parent` set until those are flattened into `entries`),
+`stopCamera(stop)` and `stopLook(stop)` (both in amos, azarah frame).
+
+```jsonc
+{
+  "id": "tamid",
+  "title": {"he": "", "en": ""},
+  "intro": {"he": "", "en": ""},
+  "sources": ["Mishnah Tamid 1:1", ...],       // superset of every stop's sources
+  "stops": [{
+    "id": "beis_hamoked_watch",                // snake_case, unique within the tour
+    "at": "beis_hamoked",                      // entry id (or a Beis HaMoked child id)
+    "camera": {"x": 64, "y": 2.5, "z": -14},   // amos, azarah frame; y = the floor it was authored at
+    // or "offset": {"dx": 0, "dz": 4.5},      // metres from `at` (+x north, +z east), 4-8 m into open court
+    "look": "beis_hatevilah_descent",          // entry id, or {"x", "z"} (optional "y") in amos
+    "dwell": 12,                               // seconds on the card, 5-20
+    "title": {"he": "", "en": ""},
+    "text": {"he": "", "en": ""},              // 2-4 sentences each; Hebrew without transliteration
+    "sources": ["Mishnah Tamid 1:1", ...],     // 2-4 exact Sefaria refs
+    "questions": [{"he": "", "en": ""}]        // 1-2, become tzadek.ai ?q= links
+  }]
+}
+```
+
+Conventions:
+
+- A camera is a walkable spot beside the entry, never inside a wall, a chamber's solid, or
+  the altar's body; the engine stands the camera at eye height on the floor there (so `y`
+  is a hint — the `maaracha` stop stands on the kevesh at about 7.8 amos up). Beis HaMoked
+  stops stand in the hall's free cross (x 62.5..72.5 / z −16..−12); Lishkas HaGazis stops
+  in its eastern (kodesh) half, clear of the Sanhedrin benches (x < −71.5).
+- The stops follow the Mishnah's order, not the shortest path: the tamid tour goes Beis
+  HaMoked → Gazis → altar → Beis HaMoked → Ulam → rings → kevesh → Gazis → Heichal → Ulam
+  steps → Duchan, as the service did.
+- `scripts/verify_refs.mjs` scans every `tours/*.json` (tour and stop `sources[]`) along
+  with `temple.json`; `--file` restricts it to one file of either kind.
+- Tests (`src/content/tours.test.js`): ids unique; every `at`/`look` id exists (entries or
+  children); `camera` xor `offset` (offset ≤ 8 m); the camera inside the courts and not in
+  the altar or the building's walls; dwell 5-20; 10-14 stops; bilingual title/text/questions;
+  2-4 ref-shaped sources per stop, each listed on the tour; Hebrew fields contain Hebrew.
+
+### Tamid (`tamid.json`) — "The Morning Tamid"
+
+Thirteen stops through Mishnah Tamid 1-7 with Yoma 2-4 and Middot where they fix a place:
+Beis HaMoked at night (1:1) → the memuneh and the mikveh under the hall (1:2, Middot 1:9)
+→ the first payis in Lishkas HaGazis (1:2-3, Yoma 2:2, Yoma 25a) → terumas hadeshen east of
+the kevesh (1:4, 2:1-2) → the ma'aracha seen from the kevesh (2:3-5) → the second payis,
+"Barkai", and the lamb by torchlight from Lishkas Telaei Korban (3:2-4, Middot 1:6) → the
+wicket and the great gate of the Heichal (3:6-8) → the slaughter on the second ring and the
+blood on the north-east and south-west corners (4:1) → dismembering and the limbs on the
+lower west half of the kevesh (4:2-3) → Shema and the ketores lottery in the Gazis (5:1-3)
+→ the menorah and the ketores on the golden altar (3:9, 6:1-3, Yoma 3:5) → the blessing on
+the Ulam steps and the limbs on the fire (7:1-3) → the Levites' song on the Duchan (7:3-4,
+Middot 2:6). Where the sources differ, the card states the Mishnah's text and the tour
+follows the Gemara's placement: Tamid 1:2 reads as if the first lottery was in Beis HaMoked,
+Yoma 25a puts it in the east of the Gazis; Tamid 3:3 puts the chamber of lambs in the
+north-west, Middot 1:6 in the south-west (Yoma 17a reconciles).
 
 ## Review log
 

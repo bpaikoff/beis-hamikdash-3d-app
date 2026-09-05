@@ -570,30 +570,35 @@ export class AzaraBuilder extends CourtBuilder {
   }
 
   /**
-   * North of the altar (Middot 3:5, 5:2): 24 rings set in the floor (x 24 .. 48), eight
-   * marble tables at x 52, eight short pillars at x 58 with cedar beams and three rows
-   * of hooks.
+   * North of the altar (Middot 3:5, 5:2): 24 rings set in the floor (x 24 .. 48, z -26 ..
+   * -50, with the altar), eight marble tables at x 52 and eight short pillars at x 58
+   * with cedar beams and three rows of hooks. The tables' column and the pillars' row
+   * are as long as the ring area but centred on their own `position.z` (-39: an amah
+   * further west than the rings, so their north ends stand clear of Beis HaMoked's
+   * corner at z -26).
    */
   buildSlaughterArea() {
     const y = this.yKohanim;
     const tables = this.entry('slaughter_tables');
     const rings = this.entry('slaughter_rings');
     const pillars = this.entry('hanging_pillars');
-    const z1 = rings.position.z + rings.geometry.d / 2; // -26
-    const z2 = rings.position.z - rings.geometry.d / 2; // -50
+    const half = rings.geometry.d / 2; // 12
+    const z1 = rings.position.z + half; // -26
+    const z2 = rings.position.z - half; // -50
 
     this.group('slaughter_tables', () => {
       const { w, d, h } = tables.geometry;
       const n = 8;
-      const pitch = (z1 - z2) / n;
+      const pitch = (2 * half) / n; // 3
+      const tz1 = tables.position.z + half; // -27: the column's east end
       const positions = [];
-      for (let i = 0; i < n; i++) positions.push({ position: this.pt(tables.position.x, y + h / 2, z1 - pitch * (i + 0.5)) });
+      for (let i = 0; i < n; i++) positions.push({ position: this.pt(tables.position.x, y + h / 2, tz1 - pitch * (i + 0.5)) });
       const mesh = instance(this.box(w * AMAH, h * AMAH, d * AMAH, this.mat.marbleW), this.mat.marbleW, positions, { name: 'slaughter_tables' });
       this.scene.add(mesh);
       // One solid per table (a row-long collider sealed the amah between the tables), and
       // as a mass rather than a wall: a 1.5-amah table is below the head-height wall test.
       for (let i = 0; i < n; i++) {
-        const zc = z1 - pitch * (i + 0.5);
+        const zc = tz1 - pitch * (i + 0.5);
         this.solidA(tables.position.x - w / 2, tables.position.x + w / 2, zc + d / 2, zc - d / 2, y, y + h, 'slaughter_tables');
       }
     });
@@ -619,7 +624,8 @@ export class AzaraBuilder extends CourtBuilder {
       const n = 8;
       const gap = 3;
       const zs = [];
-      for (let i = 0; i < n; i++) zs.push(z1 - 1 - i * gap); // -27 .. -48
+      const pz1 = pillars.position.z + half - 1; // -28: the first pillar, an amah in from the row's east end
+      for (let i = 0; i < n; i++) zs.push(pz1 - i * gap); // -28 .. -49
       const px = pillars.position.x;
       const shafts = zs.map((z) => ({ position: this.pt(px, y + h / 2, z) }));
       this.scene.add(instance(this.box(w * AMAH, h * AMAH, w * AMAH, this.mat.stone), this.mat.stone, shafts, { name: 'hanging_pillars' }));

@@ -70,26 +70,28 @@ export const routes = {
     p(-62, -18, K),
   ],
 
-  // Slaughtering area (Middot 3:5, 5:2): along the tables, between the tables and the
-  // pillars, between the pillars and the north wall, through the gaps, and into a table
-  // and a pillar (both must stop the player).
+  // Slaughtering area (Middot 3:5, 5:2): along the tables (x 51.5 .. 52.5, centres z
+  // -28.5, -31.5 .. -49.5) and the pillars (x 57.5 .. 58.5, z -28, -31 .. -49), between the
+  // tables and the pillars, between the pillars and the north wall, through the first
+  // gap of each (z -30 between the tables, -29.5 between the pillars), and into the
+  // first table and the first pillar (both must stop the player).
   azarah_slaughter: [
     p(50, -20, K),
-    p(50, -52, K),
-    p(55, -52, K),
-    p(55, -28.5, K, { reach: 0.4 }),
-    p(60, -28.5, K),
-    p(60, -52, K), // between the pillars and the Beis Avtinas stair tower (x 61.5 .. 73.5, z -51 .. -42)
-    p(60, -28.5, K, { reach: 0.4 }),
-    p(55, -28.5, K, { reach: 0.4 }),
-    p(55, -29, K, { reach: 0.4 }),
-    p(48, -29, K),
-    p(48, -27.5, K, { reach: 0.4 }),
-    p(56, -27.5, K, blocked),
-    p(48, -29, K, { reach: 0.4 }),
-    p(55, -29, K, { reach: 0.4 }),
-    p(55, -27, K, { reach: 0.4 }),
-    p(61, -27, K, blocked),
+    p(50, -53, K),
+    p(55, -53, K),
+    p(55, -29.5, K, { reach: 0.4 }),
+    p(60, -29.5, K),
+    p(60, -53, K), // between the pillars and the Beis Avtinas stair tower (x 61.5 .. 73.5, z -51 .. -42)
+    p(60, -29.5, K, { reach: 0.4 }),
+    p(55, -29.5, K, { reach: 0.4 }),
+    p(55, -30, K, { reach: 0.4 }),
+    p(48, -30, K),
+    p(48, -28.5, K, { reach: 0.4 }),
+    p(56, -28.5, K, blocked),
+    p(48, -30, K, { reach: 0.4 }),
+    p(55, -30, K, { reach: 0.4 }),
+    p(55, -28, K, { reach: 0.4 }),
+    p(61, -28, K, blocked),
     p(55, -45, K),
     at('tamid_lamb', { ...amos(0, 4), level: K }),
     p(50, -20, K),
@@ -442,13 +444,13 @@ Object.assign(routes, {
     h(52.5 - HUG, -14, K),
     h(56, -14, K), // the hall's open gate
     hc(52.5 - HUG, -14, K),
-    h(52.5 - HUG, -25, K), // the slaughter tables (x 51.5 .. 52.5) start at z -26.5, half an amah from the hall's corner
-    h(51.5 - HUG, -29, K),
-    h(52.5 + HUG, -29, K), // through the gap between the first two tables
+    h(52.5 - HUG, -25, K), // the slaughter tables (x 51.5 .. 52.5) start at z -27.5, an amah and a half from the hall's corner
+    h(51.5 - HUG, -30, K),
+    h(52.5 + HUG, -30, K), // through the gap between the first two tables (z -29.5 .. -30.5)
     h(52.5 + HUG, -26 - HUG, K),
-    h(57.5 - HUG, -26 - HUG, K), // the hall's west face, to the first pillar (x 57.5 .. 58.5, z -27.5 .. -26.5)
-    h(57.5 - HUG, -28.5, K),
-    h(58.5 + HUG, -28.5, K), // through the gap between the first two pillars
+    h(57.5 - HUG, -26 - HUG, K), // the hall's west face, to the first pillar (x 57.5 .. 58.5, z -28.5 .. -27.5)
+    h(57.5 - HUG, -29.5, K),
+    h(58.5 + HUG, -29.5, K), // through the gap between the first two pillars (z -28.5 .. -30.5)
     h(58.5 + HUG, -26 - HUG, K),
     h(X_IN - HUG, -26 - HUG, K), // the rest of the hall's west face
     ...gateReveal(1, -36),
@@ -550,22 +552,22 @@ Object.assign(routes, {
     h(-19.5, -48 - HUG - 0.4, K),
     h(-19.5, -54.6, K),
     p(44, -54.6, K),
-    h(51.5 - HUG, -49.5 - HUG, K),
-    h(51.5 - HUG, -27, K), // the tables' court side, up to the hall's corner (z -26)
-    h(51.5 - HUG, -29, K),
-    h(52.5 + HUG, -29, K), // through the gap between the first two tables
+    h(51.5 - HUG, -50.5 - HUG, K), // the last table ends at z -50.5
+    h(51.5 - HUG, -27, K), // the tables' court side, past their north end (z -27.5) toward the hall's corner (z -26)
+    h(51.5 - HUG, -30, K),
+    h(52.5 + HUG, -30, K), // through the gap between the first two tables (z -29.5 .. -30.5)
     h(52.5 + HUG, -27, K),
-    h(52.5 + HUG, -49.5 - HUG, K), // between the tables and the pillars
-    h(57.5 - HUG, -49.5 - HUG, K),
+    h(52.5 + HUG, -50.5 - HUG, K), // between the tables and the pillars
+    h(57.5 - HUG, -50.5 - HUG, K),
     h(57.5 - HUG, -27, K),
-    h(57.5 - HUG, -28.5, K),
-    h(58.5 + HUG, -28.5, K), // through the gap between the first two pillars
+    h(57.5 - HUG, -29.5, K),
+    h(58.5 + HUG, -29.5, K), // through the gap between the first two pillars (z -28.5 .. -30.5)
     h(58.5 + HUG, -27, K),
-    h(58.5 + HUG, -48.5 - HUG, K), // between the pillars and the wall
-    h(58.5 + HUG, -28.5, K),
-    h(57.5 - HUG, -28.5, K),
-    h(52.5 + HUG, -29, K),
-    h(51.5 - HUG, -29, K),
+    h(58.5 + HUG, -49.5 - HUG, K), // between the pillars and the wall (the last pillar ends at z -49.5)
+    h(58.5 + HUG, -29.5, K),
+    h(57.5 - HUG, -29.5, K),
+    h(52.5 + HUG, -30, K),
+    h(51.5 - HUG, -30, K),
   ]),
 
   // (e) The terrace over Madichin / Parvah / Melach: up the Madichin stair, round the

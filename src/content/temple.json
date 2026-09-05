@@ -490,7 +490,7 @@
       "dimensions": [
         {"label": "tables", "value": 8, "unit": "count", "source": "Mishnah Shekalim 6:4", "note": ""}
       ],
-      "position": {"frame": "azarah", "x": 52, "y": 2.5, "z": -38, "unit": "amah", "source": "Mishnah Middot 5:2", "note": "legacy: x 28, y 1, z -92 (pre-2026 scene coordinates converted to amos); now Middot 5:2: 8 north of the altar face at x 16, 24 for the rings (x 24 .. 48), 4 to the tables: tables at x 52, in a row along the altar's length"},
+      "position": {"frame": "azarah", "x": 52, "y": 2.5, "z": -39, "unit": "amah", "source": "Mishnah Middot 5:2", "note": "legacy: x 28, y 1, z -92 (pre-2026 scene coordinates converted to amos); now Middot 5:2: 8 north of the altar face at x 16, 24 for the rings (x 24 .. 48), 4 to the tables: tables at x 52, in a row along the altar's length; the row's centre is at z -39 (z -27 .. -51), an amah west of the altar's centre line, so its north end stands an amah clear of Beis HaMoked's south-west corner (z -26) rather than half an amah"},
       "sources": ["Mishnah Middot 3:5","Mishnah Shekalim 6:4","Mishnah Middot 5:2","Mishnah Tamid 4:3"],
       "questions": [
         {"he": "למה שולחנות של שיש ולא של כסף?", "en": "Why marble tables rather than silver?"},
@@ -500,7 +500,7 @@
       "legacyId": "slaughterTables",
       "icon": "🔪",
       "area": "azaras_kohanim",
-      "geometry": {"kind": "box", "w": 1, "d": 2, "h": 1.5, "notes": "eight marble tables 1 x 2 in a north-south column at x 52 spread over z -26 .. -50; size of each not given. Middot 3:5 says the marble tables stood 'between the pillars'; the 4-amah gap between tables and pillars in Middot 5:2 is the Tosafos Yom Tov reconciliation used here."}
+      "geometry": {"kind": "box", "w": 1, "d": 2, "h": 1.5, "notes": "eight marble tables 1 x 2 in a column at x 52 along the court's length, spread over z -27 .. -51 (centre z -39; the builder reads the column's centre from `position`); size of each not given. Middot 3:5 says the marble tables stood 'between the pillars'; the 4-amah gap between tables and pillars in Middot 5:2 is the Tosafos Yom Tov reconciliation used here."}
     },
     {
       "id": "slaughter_rings",
@@ -541,7 +541,7 @@
         {"label": "pillars", "value": 8, "unit": "count", "source": "Mishnah Middot 3:5", "note": "short (nanasin), of stone, with cedar blocks"},
         {"label": "rows of hooks per pillar", "value": 3, "unit": "count", "source": "Mishnah Middot 3:5", "note": ""}
       ],
-      "position": {"frame": "azarah", "x": 58, "y": 2.5, "z": -38, "unit": "amah", "source": "Mishnah Middot 5:2", "note": "legacy: x 12, y 1, z -88 (pre-2026 scene coordinates converted to amos); now Middot 5:2: 4 amos north of the tables at x 52, then 8 amos from the pillars to the north wall at 67.5: pillars in a row at x 58"},
+      "position": {"frame": "azarah", "x": 58, "y": 2.5, "z": -39, "unit": "amah", "source": "Mishnah Middot 5:2", "note": "legacy: x 12, y 1, z -88 (pre-2026 scene coordinates converted to amos); now Middot 5:2: 4 amos north of the tables at x 52, then 8 amos from the pillars to the north wall at 67.5: pillars in a row at x 58, z -28 .. -49, centred with the tables at z -39 so the first pillar stands two amos clear of Beis HaMoked's corner (z -26)"},
       "sources": ["Mishnah Middot 3:5","Mishnah Tamid 3:5","Mishnah Pesachim 5:9","Mishnah Shekalim 6:4"],
       "questions": [
         {"he": "למה היו העמודים נמוכים ומה היה עליהם?", "en": "Why were the pillars short, and what sat on top of them?"},
@@ -551,7 +551,7 @@
       "legacyId": "hangingPillars",
       "icon": "🪝",
       "area": "azaras_kohanim",
-      "geometry": {"kind": "pillar", "w": 1, "d": 1, "h": 4, "notes": "eight short stone pillars at x 58, z -27 .. -48 (3 amos apart), each topped by a cedar block with three rows of iron hooks; height not given (short enough to hang a carcass)."}
+      "geometry": {"kind": "pillar", "w": 1, "d": 1, "h": 4, "notes": "eight short stone pillars at x 58, z -28 .. -49 (3 amos apart; the builder reads the row's centre from `position`), each topped by a cedar block with three rows of iron hooks; height not given (short enough to hang a carcass)."}
     },
     {
       "id": "tamid_lamb",

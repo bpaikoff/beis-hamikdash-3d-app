@@ -21,72 +21,19 @@ import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { chromium } from '@playwright/test';
 
-const AMAH = 0.5;
-const at = (id, o = {}) => ({ id, ...o });
+import { readdirSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
-export const ROUTES = {
-  // The main ladder: Har HaBayis -> Cheil steps -> Ezras Nashim -> 15 steps -> Nicanor -> Duchan
-  // -> Kohanim court -> altar ramp -> back down -> Ulam steps -> Ulam -> Heichal -> KHK
-  ladder: [
-    at('ezras_nashim_gate', { dz: 14, level: 'har_habayis' }),
-    at('cheil_steps', { dz: 5, level: 'har_habayis' }),
-    at('cheil_steps', { dz: -5, level: 'ezras_nashim' }),
-    at('ezras_nashim_gate', { dz: -6, level: 'ezras_nashim' }),
-    at('ezras_nashim', { level: 'ezras_nashim' }),
-    at('maalos_shir', { dz: 8, level: 'ezras_nashim' }),
-    at('nicanor_gate', { dz: 1.5, level: 'azaras_yisrael' }),
-    at('nicanor_gate', { dz: -4, level: 'azaras_yisrael' }),
-    at('duchan', { dz: 2, level: 'azaras_yisrael' }),
-    at('duchan', { dz: -3, level: 'azaras_kohanim' }),
-    at('mizbeach', { dz: 12, level: 'azaras_kohanim' }),
-    at('kevesh', { dx: -10, dz: 0, level: 'azaras_kohanim' }), // foot of the ramp (south end)
-    at('kevesh', { dx: 6, dz: 0, level: 'azaras_kohanim', minY: 3 }), // up the ramp
-    at('kevesh', { dx: -10, dz: 0, level: 'azaras_kohanim' }),
-    at('kiyor', { dz: 3, level: 'azaras_kohanim' }),
-    at('maalos_ulam', { dz: 7, level: 'azaras_kohanim' }),
-    at('maalos_ulam', { dz: -7, level: 'ulam' }),
-    at('ulam', { level: 'ulam' }),
-    at('pesach_haheichal', { dz: 2, level: 'ulam' }),
-    at('heichal', { dz: 6, level: 'heichal' }),
-    at('mizbeach_hazahav', { dz: 3, level: 'heichal' }),
-    at('paroches', { dz: 2, level: 'heichal' }),
-    at('even_hashtiya', { dz: 3, level: 'kodesh_hakodashim' }),
-  ],
-  // Around the Ezras Nashim: the four corner chambers through their doors
-  ezras_nashim: [
-    at('ezras_nashim', { level: 'ezras_nashim' }),
-    at('chamber_oils', { level: 'ezras_nashim' }),
-    at('ezras_nashim', { level: 'ezras_nashim' }),
-    at('chamber_lepers', { level: 'ezras_nashim' }),
-    at('ezras_nashim', { level: 'ezras_nashim' }),
-    at('chamber_nazirites', { level: 'ezras_nashim' }),
-    at('ezras_nashim', { level: 'ezras_nashim' }),
-    at('chamber_wood', { level: 'ezras_nashim' }),
-  ],
-  // Around the Azarah: the lishkos and the gates from inside the court
-  azarah: [
-    at('azaras_kohanim', { level: 'azaras_kohanim' }),
-    at('lishkas_hagazis', { level: 'azaras_kohanim' }),
-    at('azaras_kohanim', { level: 'azaras_kohanim' }),
-    at('beis_hamoked', { level: 'azaras_kohanim' }),
-    at('azaras_kohanim', { level: 'azaras_kohanim' }),
-    at('slaughter_tables', { dz: 4, level: 'azaras_kohanim' }),
-    at('hanging_pillars', { dz: 4, level: 'azaras_kohanim' }),
-    at('water_gate', { dx: 4, level: 'azaras_kohanim' }),
-    at('lishkas_haparvah', { level: 'azaras_kohanim' }),
-    at('azaras_kohanim', { level: 'azaras_kohanim' }),
-    at('kevesh_katan_east', { dz: 3, level: 'azaras_kohanim' }),
-  ],
-  // Behind and beside the building at the Kohanim level
-  around_building: [
-    at('maalos_ulam', { dz: 7, level: 'azaras_kohanim' }),
-    at('ulam', { dx: 55, dz: 4, level: 'azaras_kohanim' }),
-    at('heichal', { dx: 45, dz: -10, level: 'azaras_kohanim' }),
-    at('kodesh_hakodashim', { dx: 45, dz: -14, level: 'azaras_kohanim' }),
-    at('kodesh_hakodashim', { dx: -45, dz: -14, level: 'azaras_kohanim' }),
-    at('ulam', { dx: -55, dz: 4, level: 'azaras_kohanim' }),
-  ],
-};
+/** A waypoint: a content id with optional dx/dz (metres), level name, reach, minY. */
+export const at = (id, o = {}) => ({ id, ...o });
+
+// Routes live in scripts/walk-routes/*.mjs (one file per area; each exports `routes`).
+const ROUTES = {};
+const routesDir = new URL('./walk-routes/', import.meta.url);
+for (const f of readdirSync(routesDir).filter((n) => n.endsWith('.mjs')).sort()) {
+  const mod = await import(pathToFileURL(new URL(f, routesDir).pathname).href);
+  Object.assign(ROUTES, mod.routes);
+}
 
 const args = process.argv.slice(2);
 const opt = (k, d) => (args.includes(k) ? args[args.indexOf(k) + 1] : d);

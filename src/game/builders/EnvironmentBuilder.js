@@ -42,9 +42,11 @@ const smoothstep = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
  *
  * Octant 0 is +x (north in this frame); octant 2 is +z, east. The east hill is stretched
  * along x into a north-south ridge that stands for Har HaMishcha (Har HaZeisim, the Mount
- * of Olives) east of the mount: Middot 2:4 keeps the east wall low so the Kohen burning
- * the parah on Har HaMishcha sees the Heichal entrance over it. Its position, length and
- * height are a reconstruction; no source gives them.
+ * of Olives, per Bartenura and Tiferes Yisrael there) east of the mount: Middot 2:4 keeps
+ * the east wall low so the Kohen burning the parah, standing on the summit of Har
+ * HaMishcha, sees the Heichal entrance over it. Parah 3:6's arched causeway from the mount
+ * to it is not built. Its position, length and height are a reconstruction; no source
+ * gives them.
  */
 export function hillPlacements(walkable = walkableBounds()) {
   const rand = mulberry32(7);

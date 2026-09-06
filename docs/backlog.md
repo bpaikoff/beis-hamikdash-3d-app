@@ -16,19 +16,21 @@ stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
   undercroft. Shaar HaNitzotz's wicket to the Cheil (Middot 1:5) has no stair either.
 - The 16-amah drop from the Azarah chambers to the Cheil on the north and south is the
   eastern Cheil level (Middot 2:3, 2:5) carried round; no source gives those levels.
-- Tadi: Middot 2:3 says it had no lintel (two leaning stones). The stones are now in
-  relief on both faces, but the wall over the opening is still a box with a framed
-  lintel; a gable cut needs a `wallRunA` change.
 
 ## Player and builders
 
 - The player clamp is now the union of the area bounds with `outside` a ring 40 amos
   beyond the wall (`walkableBounds()` in `src/content/index.js`); all five outer gates
   walk through both ways.
-- Non-colliding furniture a visitor's feet clip through: the Gazis benches, the kiyor's
-  floor rim. The Ulam steps render plain grey (no PBR set).
-- The hills are flat-shaded six-sided cones; at 185-260 m from the ring they still read
-  as pyramids. Fog ends at 352 m, so the corner hills are faint.
+- Round 4 (2026-09-06) closed the first-impression items: the hills are one heightfield
+  (`EnvironmentBuilder.terrainHeight`, the east hill stretched into a north-south ridge for
+  Har HaMishcha, fog to 534 m), Tadi is a gable of two leaning stones with no lintel
+  (`wallRunA` `gable` option), the Ulam steps are dressed limestone with shaded risers,
+  the Gazis benches are solid tiers and the kiyor's rim is a walkable kerb. Left open:
+  the near hills carry the sand normal map's ripple (a second material without it costs
+  a draw call); `ulam_facade` (`?at=maalos_ulam`) spawns on the altar top, so that view
+  never shows the steps (`ulam_steps_altar` and `ulam_steps_low` do); the `?at=` back-off
+  in `TempleGame` could stand beside the altar instead.
 - Beis HaMoked's vestibule floor runs past flight A's outer wall into a dead-end pocket
   under the hall floor (x 68.5..75.75, z -5.25..-3); open, no drop, harmless.
 

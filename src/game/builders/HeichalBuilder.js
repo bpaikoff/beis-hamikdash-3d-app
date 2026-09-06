@@ -195,7 +195,10 @@ export class HeichalBuilder extends BaseBuilder {
     const perGroup = 4;
     // Material: Middot 3:6 gives the steps' count and sizes, not their stone, so this is
     // a reconstruction: dressed limestone (stoneFine, as the altar and the gate frames),
-    // not the Ulam floor's white marble. The Marble021 colour map is a near-uniform
+    // not the white marble of the Ulam floor (itself unsourced; Sukkah 51b and Bava Basra
+    // 4a give Herod's building stones as shaisha and marmara, blue-grey and white marble,
+    // in staggered plastered courses, which describes the walls, not floors or flights).
+    // The Marble021 colour map is a near-uniform
     // white (mean 243, deviation 6, flat normals), so twelve 0.25 m steps in it rendered
     // as one grey slope in every view; the travertine has a visible grain and takes the
     // light. Each riser carries a shaded facing (one instanced draw, 1 cm proud, not a

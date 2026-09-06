@@ -483,7 +483,7 @@
       "legacyId": "kiyor",
       "icon": "💧",
       "area": "azaras_kohanim",
-      "geometry": {"kind": "box", "w": 3, "d": 3, "h": 2, "notes": "bronze basin on a base with 12 spouts; the muchni (wheel and cistern, Mishnah Yoma 3:10) lowers it below floor level overnight; size not given in the sources."}
+      "geometry": {"kind": "box", "w": 3, "d": 3, "h": 2, "notes": "bronze basin on a base with 12 spouts; the muchni (Mishnah Yoma 3:10; a wheel that sank it into a cistern, Yoma 37a and Bartenura) lowers it below floor level overnight; size not given in the sources."}
     },
     {
       "id": "slaughter_tables",
@@ -1064,7 +1064,7 @@
         {"he": "מי יצא דרך שער טדי ומדוע?", "en": "Who left through the Tadi Gate, and why?"}
       ],
       "icon": "🚪",
-      "geometry": {"kind": "gate", "w": 10, "d": 6, "h": 20, "notes": "opening 10 wide x 20 high (Middot 2:3) through a wall taken as 6 thick, with doors gilded (Middot 2:3). No lintel: the two stones leaning one on the other (Middot 2:3) are built as a gable over the opening, two slabs 1 thick rising from the jamb tops to meet at a ridge 3.1 above the opening; their pitch and thickness are a reconstruction, Middot giving only the two stones."},
+      "geometry": {"kind": "gate", "w": 10, "d": 6, "h": 20, "notes": "opening 10 wide x 20 high (Middot 2:3) through a wall taken as 6 thick, with doors gilded (Middot 2:3). No lintel: the two stones leaning one on the other (Middot 2:3) are built as a gable over the opening, two slabs 1 thick rising from the jamb tops to meet at a ridge 3.1 above the opening. The gable follows the Rambam's diagram and Tiferes Yisrael (two stones set aslant against each other); the Rash, cited by Tosafos Yom Tov, reads them instead as two hollowed blocks set one on the other, the upper carved with the lintel and the top halves of the jambs, the lower with the threshold and their bottom halves. On the gable reading the slabs' pitch and thickness are a reconstruction, Middot giving only the two stones."},
       "gateScheme": ["middos_1_3"]
     },
     {

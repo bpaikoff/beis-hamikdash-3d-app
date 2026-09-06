@@ -265,7 +265,8 @@ export class KeilimBuilder extends BaseBuilder {
     const g = this.groupFor(e);
     const r = (e.geometry.w / 2) * A; // 0.75 m
     const h = e.geometry.h * A; // 1 m
-    // Cistern rim round the muchni's shaft (a reconstruction; Yoma 3:10 gives no kerb): a
+    // Cistern rim round the muchni's shaft (a reconstruction: Yoma 3:10 names only the muchni,
+    // Yoma 37a a wheel that sank the laver, Bartenura into a bor; none gives a kerb): a
     // 0.12 m stone step, walkable (userData.isFloor, in this.floors like the yesod; the
     // floor BVH takes the group's transform), so feet stand on it instead of passing
     // through. Its radius clears the laver's solid (half-width r + 0.05) by more than

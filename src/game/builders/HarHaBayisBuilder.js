@@ -25,7 +25,9 @@ const TADI_STONE_T = 1;
  * (y 6.5, the gate being 20 high on the mount at -13.5) to a ridge 3.1 higher, a slope of
  * atan(3.1 / 5) = 31.8 deg over the 10-wide opening. Their tops peak 1 / cos(31.8 deg) = 1.18
  * above that, at 10.78, which keeps the whole gable 0.72 under WALL_TOP (11.5) and clear
- * of the merlons. Middot 2:3 gives the two stones, not their pitch.
+ * of the merlons. Middot 2:3 gives the two stones, not their pitch; the gable itself is the Rambam's and
+ * Tiferes Yisrael's reading of them (the Rash's, two hollowed blocks stacked, is noted in
+ * temple.json shaar_tadi.geometry.notes).
  */
 const TADI_GABLE_RISE = 3.1;
 /** Cheek walls beside the twelve steps: thickness and height over the top tread, amos. */
@@ -60,7 +62,7 @@ export class HarHaBayisBuilder extends CourtBuilder {
 
   /**
    * Shaar Tadi has no lintel: two stones lean one on the other over the opening (Middot
-   * 2:3). wallRunA's `gable` builds them as slabs from the jamb tops meeting at the ridge,
+   * 2:3, as the Rambam and Tiferes Yisrael draw it). wallRunA's `gable` builds them as slabs from the jamb tops meeting at the ridge,
    * the wall's thickness plus TADI_STONE_PROUD beyond each face, under a notched wall.
    */
   tadiGate() {

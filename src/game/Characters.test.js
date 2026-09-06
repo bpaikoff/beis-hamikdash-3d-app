@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -58,7 +59,7 @@ describe('character GLBs', () => {
       let skinned = 0, prims = 0;
       gltf.scene.traverse((o) => { if (o.isMesh) prims++; if (o.isSkinnedMesh) skinned++; });
       expect(skinned).toBeGreaterThan(0);
-      expect(prims, 'draw calls per figure').toBeLessThanOrEqual(3);
+      expect(prims, 'primitives per figure').toBeLessThanOrEqual(3);
       // Pose the first frame of the first clip and measure.
       const mixer = new THREE.AnimationMixer(gltf.scene);
       mixer.clipAction(gltf.animations[0]).play();
@@ -100,7 +101,6 @@ describe('character GLBs', () => {
   });
 
   it('every texture in the manifest is on disk with its sha256 and LICENSES.md names both packs', async () => {
-    const { createHash } = await import('node:crypto'); // this block may not touch the file's imports
     const manifest = JSON.parse(readFileSync(resolve(dir, 'manifest.json'), 'utf8'));
     const textures = manifest.textures ?? {};
     expect(Object.keys(textures).sort()).toEqual(['kohen_eyes.png', 'kohen_hair.jpg', 'kohen_skin.jpg', 'kohen_skin_normal.jpg', 'kohen_skin_rough.jpg']);
@@ -324,7 +324,7 @@ describe('CharacterSystem', () => {
     expect(skin.map.flipY).toBe(false);
     expect(skin.normalMap.colorSpace).not.toBe(THREE.SRGBColorSpace);
     expect(skin.roughnessMap).toBeTruthy();
-    expect(skin.roughness).toBe(0.9);
+    expect(skin.roughness).toBe(1); // the factor multiplies the map; 0.9 only without one
     expect(skin.color.getHex()).toBe(0xffffff);
     expect(garment.vertexColors).toBe(true);
     // The Hair (eyebrows) and Eyes materials exist only when the glb has those meshes (the
@@ -376,8 +376,8 @@ describe('CharacterSystem', () => {
     expect(figureTier(k * 1 - 0.01, 1, k)).toBe('body');
     expect(figureTier(k * (LOD.minPixels / LOD.partsPixels) + 0.01, 1, k)).toBe('body');
     expect(figureTier(k * (LOD.minPixels / LOD.partsPixels) - 0.01, 1, k)).toBe('full');
-    expect(figureTier(35, 1.2, k)).toBe('full'); // an animal's radius 1.2 keeps its parts to ~36 m
-    expect(figureTier(40, 1.2, k)).toBe('body');
+    expect(figureTier(20, 0.8, k)).toBe('full'); // an animal's radius 0.8 keeps its parts to ~24 m
+    expect(figureTier(28, 0.8, k)).toBe('body');
     expect(figureTier(35, 1, k)).toBe('body');
     expect(figureTier(25, 1, k)).toBe('full');
 
@@ -393,11 +393,14 @@ describe('CharacterSystem', () => {
     for (const p of parts(gadol)) if (!p.isSkinnedMesh) expect(p.userData.noCull).toBe(true);
     const visibleParts = (g) => parts(g).filter((p) => p.visible).length;
 
+    camera.position.set(200, 1.7, 0);
+    sys.update(1 / 60, camera, 720);
+    for (const g of [kohen, gadol, sheep, walker]) expect(g.visible, g.name).toBe(true);
+    expect(sheep.userData.tier).toBe('body'); // radius 0.8: 4 px until ~240 m
     camera.position.set(300, 1.7, 0);
     sys.update(1 / 60, camera, 720);
     for (const g of [kohen, gadol, walker]) expect(g.visible, g.name).toBe(false);
-    expect(sheep.visible).toBe(true); // radius 1.2: 4 px until ~360 m
-    expect(sheep.userData.tier).toBe('body');
+    expect(sheep.visible).toBe(false);
     camera.position.set(400, 1.7, 0);
     sys.update(1 / 60, camera, 720);
     for (const g of [kohen, gadol, sheep, walker]) expect(g.visible, g.name).toBe(false);

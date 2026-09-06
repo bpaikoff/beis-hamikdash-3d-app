@@ -9,7 +9,7 @@ import * as THREE from 'three';
  *    near-first and `count` trimmed (`lodCount`, the pure part). One draw call either way;
  *    this spares the vertex work and, when nothing is near, the call itself.
  *  - `DistanceCuller`: a plain Mesh is hidden once its bounding sphere would cover fewer
- *    than `minPixels` on screen. Hooks, lamps, loaves and the limbs of a distant Kohen are
+ *    than `minPixels` on screen. Hooks, lamps and loaves are
  *    sub-pixel long before the far plane; the walls and floors never qualify.
  */
 

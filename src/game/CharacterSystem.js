@@ -20,7 +20,7 @@ import manifest from '../../public/assets/characters/manifest.json';
  * manifest.textures, when present) and `garment` (vertex-coloured linen or wool), split
  * per triangle at the neck and the wrists of the rig's rest pose; the `Eyes` and `Hair`
  * meshes (on the base body the latter is the eyebrows) and the hat or gold are the small
- * parts. Per figure that is 5 draw calls (4 for a Yisrael), and `update` drops the small parts
+ * parts. Per figure that is 5 draw calls (9 for the Kohen Gadol), and `update` drops the small parts
  * beyond LOD.partsPixels and the whole figure beyond LOD.minPixels of projected size, the
  * way DistanceCuller does for plain meshes (it skips SkinnedMesh).
  */
@@ -36,10 +36,11 @@ export const ANIMATE_RADIUS = 80;
  * Skinned LOD: a figure is hidden once a sphere of its radius would cover fewer than
  * `minPixels` on screen, and loses its small parts (eyes, brows, hat, gold) below
  * `partsPixels`. With the 62 deg camera on a 720 px viewport that is ~300 m and ~30 m for
- * a human (radius 1), ~360 m and ~36 m for an animal (1.2).
+ * a human (radius 1), ~240 m and ~24 m for an animal (0.8: a sheep's posed radius is
+ * under a metre and a bull's about one).
  */
 export const LOD = { minPixels: 4, partsPixels: 40 };
-export const FIGURE_RADIUS = { human: 1, animal: 1.2 };
+export const FIGURE_RADIUS = { human: 1, animal: 0.8 };
 /** How far above the neck_01 joint the skin starts (the collar sits at the neck), metres. */
 const NECK_MARGIN = 0.03;
 /** How far before the hand joint, along the forearm, the sleeve ends, metres. */
@@ -236,11 +237,13 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
     const px = pos.getX(i), y = pos.getY(i), pz = pos.getZ(i), x = Math.abs(px);
     let hex;
     if (isSkin(px, y, pz, bounds, tmp)) {
-      hex = SKIN;
+      // The skin material ignores vertex colour; a skin vertex shared by a garment triangle
+      // at the collar or cuff must not bleed tan into the cloth, so it takes the cloth colour.
+      hex = role === 'yisrael' ? WOOL : LINEN;
       skin[i] = 1;
     } else {
       if (role === 'yisrael') hex = x < 0.32 && y > waist[0] && y < waist[1] ? WOOL_BELT : y < hemY ? WOOL_HEM : WOOL;
-      else if (role === 'kohenGadol' && x < 0.3 && y > 0.5 && y < 1.5) hex = TECHEILES;
+      else if (role === 'kohenGadol' && x < (limbs?.shoulderX ?? 0.3) && y > 0.5 && y < 1.5) hex = TECHEILES; // sleeveless: ends at the shoulder joint
       else hex = x < 0.32 && y > waist[0] && y < waist[1] ? AVNET : LINEN;
       if (limbs && nor) {
         // Flatten the shading to the limb's tube and push the cloth out, except right at the skin.
@@ -305,7 +308,9 @@ export class CharacterSystem {
    * @param {THREE.Scene} scene
    * @param {{get?: (name: string) => THREE.Texture | null, manager?: THREE.LoadingManager}} tex
    *   TextureFactory (or a stub): `get` supplies the linen/wool/hide maps, `manager` the
-   *   shared LoadingManager so the start screen's progress counts the model files.
+   *   shared LoadingManager so the start screen's progress counts the model files (the skin
+   *   maps are counted too, but the start screen does not wait for them: a body can draw
+   *   flat for the first frames before its maps arrive).
    * @param {{loader?: {load: Function}, textureLoader?: {load: Function}, textures?: object}} [opts]
    *   loader stand-ins for tests (node has no Image); `textures` replaces manifest.textures.
    */
@@ -428,10 +433,12 @@ export class CharacterSystem {
   skinMaterial() {
     return this.material('skin', () => {
       const mat = new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0 });
-      const drop = (slot) => () => { mat[slot] = null; mat.needsUpdate = true; };
+      // A map that fails to load drops its slot and falls back to the flat colour, never white.
+      const drop = (slot) => () => { mat[slot] = null; if (slot === 'map') mat.color.setHex(SKIN); if (slot === 'roughnessMap') mat.roughness = 0.9; mat.needsUpdate = true; };
       mat.map = this.loadTexture('kohen_skin.jpg', { srgb: true }, drop('map'));
       mat.normalMap = this.loadTexture('kohen_skin_normal.jpg', {}, drop('normalMap'));
       mat.roughnessMap = this.loadTexture('kohen_skin_rough.jpg', {}, drop('roughnessMap'));
+      if (mat.roughnessMap) mat.roughness = 1; // the factor multiplies the map
       mat.color.setHex(mat.map ? 0xffffff : SKIN);
       return mat;
     });
@@ -448,7 +455,7 @@ export class CharacterSystem {
     return this.material('hair', () => {
       const mat = new THREE.MeshStandardMaterial({ color: 0x3a2a1c, roughness: 0.8, metalness: 0 });
       mat.map = this.loadTexture('kohen_hair.jpg', { srgb: true }, () => { mat.map = null; mat.needsUpdate = true; });
-      if (mat.map) mat.color.setHex(0xffffff);
+      // The pack's hair map is a near-white sheen mask meant to be tinted: keep the colour.
       return mat;
     });
   }
@@ -456,7 +463,7 @@ export class CharacterSystem {
   eyesMaterial() {
     return this.material('eyes', () => {
       const mat = new THREE.MeshStandardMaterial({ color: 0x2a1c12, roughness: 0.4, metalness: 0 });
-      mat.map = this.loadTexture('kohen_eyes.png', { srgb: true }, () => { mat.map = null; mat.needsUpdate = true; });
+      mat.map = this.loadTexture('kohen_eyes.png', { srgb: true }, () => { mat.map = null; mat.color.setHex(0x2a1c12); mat.needsUpdate = true; });
       if (mat.map) mat.color.setHex(0xffffff);
       return mat;
     });
@@ -763,6 +770,7 @@ export class CharacterSystem {
     this.materials.clear();
     this.loadedTextures = [];
     this.models = {};
+    this.loading = null; // load() after dispose() loads again
   }
 }
 

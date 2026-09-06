@@ -336,6 +336,22 @@ describe('court builders', () => {
     expect(meshes + instanced).toBeLessThan(900);
   });
 
+  it("stands Tadi's leaning stones proud of both faces of the north wall, over the opening", () => {
+    // Middot 2:3: no lintel, two stones leaning on each other. The wall (x 197.5 .. 203.5)
+    // is built over the opening, so the stones must show on its faces or they are buried.
+    const g = built.scene.children.find((o) => o.userData.entryId === 'shaar_tadi' && o.userData.part === 'leaning stones');
+    expect(g).toBeTruthy();
+    const box = new THREE.Box3().setFromObject(g);
+    const [inner] = toWorld({ x: 197.5, y: 0, z: 0 });
+    const [outer] = toWorld({ x: 203.5, y: 0, z: 0 });
+    expect(box.min.x).toBeLessThan(inner - 0.2);
+    expect(box.max.x).toBeGreaterThan(outer + 0.2);
+    const gate = byId.shaar_tadi;
+    expect(box.min.y).toBeGreaterThan(toWorld({ x: 0, y: gate.position.y + gate.geometry.h, z: 0 })[1] - 0.01); // above the opening
+    const [, , gz] = worldPos(gate);
+    expect((box.min.z + box.max.z) / 2).toBeCloseTo(gz, 1); // centred on the gate
+  });
+
   it('places the gate groups on their content positions', () => {
     for (const id of ['shaar_shushan', 'shaar_tadi', 'shaar_kiponus', 'chuldah_gate_east', 'ezras_nashim_gate', 'nicanor_gate', 'water_gate', 'korban_gate', 'nitzotz_gate']) {
       const g = built.scene.children.find((o) => o.userData.entryId === id);

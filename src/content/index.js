@@ -47,6 +47,20 @@ export function worldBounds(area) {
   return { minX: Math.min(minX, maxX), maxX: Math.max(minX, maxX), minZ: Math.min(minZ, maxZ), maxZ: Math.max(minZ, maxZ) };
 }
 
+/**
+ * Union of every area's world bounds: the ground the player is clamped to (TempleGame)
+ * and so the ground the scenery must keep clear of (EnvironmentBuilder).
+ */
+export function walkableBounds() {
+  const all = areas.map(worldBounds);
+  return {
+    minX: Math.min(...all.map((b) => b.minX)),
+    maxX: Math.max(...all.map((b) => b.maxX)),
+    minZ: Math.min(...all.map((b) => b.minZ)),
+    maxZ: Math.max(...all.map((b) => b.maxZ)),
+  };
+}
+
 /** Floor levels in amos relative to the Azarah floor (see meta.levels in temple.json). */
 export const levels = data.meta.levels;
 

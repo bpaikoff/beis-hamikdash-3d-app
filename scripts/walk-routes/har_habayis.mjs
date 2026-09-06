@@ -283,4 +283,194 @@ export const routes = {
     amos(-312, 90, HB),
     amos(-309.3, 275, HB), // to the south-east corner
   ],
+
+  // A visitor's circuit, gate to gate (Middot 2:2: in by the right, round the mount, out by
+  // the left): from the ground outside, in through one gate, round the plaza outside the
+  // Soreg (x +-83.5, z -203 .. 157), and out through another. The mount's wall is 6 thick
+  // (outer faces x -308.5 / 203.5, z -228 / 284); the ground outside is the environment
+  // plane, 0.1 amah below the plaza.
+  visitor_shushan_tadi: [
+    amos(0, 300, HB), // the road east of the mount (Har HaMishcha side)
+    amos(0, 288, HB),
+    at('shaar_shushan', HB),
+    amos(0, 265, HB),
+    amos(185, 265, HB),
+    amos(185, -20, HB),
+    at('shaar_tadi', HB),
+    amos(215, -20, HB),
+  ],
+  visitor_tadi_kiponus: [
+    amos(215, -20, HB),
+    at('shaar_tadi', HB),
+    amos(185, -20, HB),
+    amos(100, -210, HB),
+    amos(0, -210, HB),
+    at('shaar_kiponus', HB),
+    amos(0, -245, HB),
+  ],
+  visitor_kiponus_chuldah: [
+    amos(0, -245, HB),
+    at('shaar_kiponus', HB),
+    amos(0, -210, HB),
+    amos(-100, -215, HB),
+    amos(-290, -30, HB),
+    at('chuldah_gate_west', HB),
+    amos(-325, -30, HB),
+  ],
+  visitor_chuldah_shushan: [
+    amos(-325, 90, HB),
+    at('chuldah_gate_east', HB),
+    amos(-290, 90, HB),
+    amos(-290, 200, HB),
+    amos(-100, 265, HB),
+    amos(0, 265, HB),
+    at('shaar_shushan', HB),
+    amos(0, 300, HB),
+  ],
+  // In by the western Chuldah gate, round the southern expanse, out by the eastern (Middot 1:3).
+  visitor_chuldah_pair: [
+    amos(-325, -30, HB),
+    at('chuldah_gate_west', HB),
+    amos(-290, -30, HB),
+    amos(-100, -100, HB),
+    amos(-100, 200, HB),
+    amos(-290, 90, HB),
+    at('chuldah_gate_east', HB),
+    amos(-325, 90, HB),
+  ],
+
+  // The gate reveals, both directions: in hugging one reveal and out hugging the other,
+  // 1.3 amos off the reveal (the open leaves stand folded 0.5 amah off it for the middle
+  // 5 amos of the passage; CourtBuilder.gateA). East and north gates, then west and south.
+  gate_reveals_east: [
+    amos(3.7, 295, HB),
+    amos(3.7, 265, HB), // Shushan, north reveal
+    amos(-3.7, 265, HB),
+    amos(-3.7, 295, HB), // south reveal
+    amos(215, 295, HB), // round the north-east corner outside
+    amos(215, -16.3, HB),
+    amos(185, -16.3, HB), // Tadi, east reveal
+    amos(185, -23.7, HB),
+    amos(215, -23.7, HB), // west reveal
+  ],
+  gate_reveals_west: [
+    amos(3.7, -250, HB),
+    amos(3.7, -210, HB), // Kiponus, north reveal
+    amos(-3.7, -210, HB),
+    amos(-3.7, -250, HB), // south reveal
+    amos(-325, -250, HB), // round the south-west corner outside
+    amos(-325, -26.3, HB),
+    amos(-290, -26.3, HB), // the western Chuldah gate, east reveal
+    amos(-290, -33.7, HB),
+    amos(-325, -33.7, HB), // west reveal
+    amos(-325, 86.3, HB),
+    amos(-290, 86.3, HB), // the eastern Chuldah gate, west reveal
+    amos(-290, 93.7, HB),
+    amos(-325, 93.7, HB), // east reveal
+  ],
+
+  // Along the outer faces at 0.8 amos, into each gate from outside (mid-wall, then out
+  // to 3.5 amos clear of the reveal before the run resumes), with `blocked` legs into the
+  // wall faces and the gate jambs (the frame's jambs stand in the amah of wall beside
+  // each opening). East face (the low wall, Middot 2:4) and north face; then west and south.
+  outside_east_north: [
+    amos(-150, 284.8, HB),
+    amos(-20, 284.8, HB),
+    amos(-20, 275, { ...HB, expect: 'blocked' }), // the east wall's outer face
+    amos(-20, 288, HB),
+    amos(-6.2, 288, HB),
+    amos(-6.2, 272, { ...HB, expect: 'blocked' }), // Shushan's south jamb
+    amos(-6.2, 288, HB),
+    amos(0, 288, HB),
+    amos(0, 281, HB), // into Shushan, mid-wall
+    amos(0, 288.5, HB),
+    amos(6.2, 288, HB),
+    amos(6.2, 272, { ...HB, expect: 'blocked' }), // the north jamb
+    amos(6.2, 288, HB),
+    amos(150, 284.8, HB),
+    amos(205, 284.8, { ...HB, reach: 0.3 }), // north-east corner
+    amos(205, 270, HB),
+    amos(204.3, 100, HB),
+    amos(204.3, 0, HB),
+    amos(195, 0, { ...HB, expect: 'blocked' }), // the north wall's outer face
+    amos(208, 0, HB),
+    amos(208, -13.8, HB),
+    amos(190, -13.8, { ...HB, expect: 'blocked' }), // Tadi's east jamb
+    amos(208, -13.8, HB),
+    amos(208, -20, HB),
+    amos(200.5, -20, HB), // into Tadi, mid-wall, under the leaning stones
+    amos(208.5, -20, HB),
+    amos(208, -26.2, HB),
+    amos(190, -26.2, { ...HB, expect: 'blocked' }), // the west jamb
+    amos(208, -26.2, HB),
+    amos(204.3, -150, HB),
+    amos(204.3, -229.5, { ...HB, reach: 0.3 }), // north-west corner
+    amos(190, -229.5, HB),
+  ],
+  outside_west_south: [
+    amos(190, -228.8, HB),
+    amos(20, -228.8, HB),
+    amos(20, -215, { ...HB, expect: 'blocked' }), // the west wall's outer face
+    amos(20, -232, HB),
+    amos(6.2, -232, HB),
+    amos(6.2, -215, { ...HB, expect: 'blocked' }), // Kiponus's north jamb
+    amos(6.2, -232, HB),
+    amos(0, -232, HB),
+    amos(0, -225, HB), // into Kiponus, mid-wall
+    amos(0, -232.5, HB),
+    amos(-6.2, -232, HB),
+    amos(-6.2, -215, { ...HB, expect: 'blocked' }), // the south jamb
+    amos(-6.2, -232, HB),
+    amos(-150, -228.8, HB),
+    amos(-310, -228.8, { ...HB, reach: 0.3 }), // south-west corner
+    amos(-310, -215, HB),
+    amos(-309.3, -100, HB),
+    amos(-309.3, -50, HB),
+    amos(-300, -50, { ...HB, expect: 'blocked' }), // the south wall's outer face
+    amos(-313, -50, HB),
+    amos(-313, -36.2, HB),
+    amos(-295, -36.2, { ...HB, expect: 'blocked' }), // the western Chuldah gate's west jamb
+    amos(-313, -36.2, HB),
+    amos(-313, -30, HB),
+    amos(-305.5, -30, HB), // in, mid-wall
+    amos(-313.5, -30, HB),
+    amos(-313, -23.8, HB),
+    amos(-295, -23.8, { ...HB, expect: 'blocked' }), // its east jamb
+    amos(-313, -23.8, HB),
+    amos(-309.3, 60, HB),
+    amos(-313, 83.8, HB),
+    amos(-295, 83.8, { ...HB, expect: 'blocked' }), // the eastern gate's west jamb
+    amos(-313, 83.8, HB),
+    amos(-313, 90, HB),
+    amos(-305.5, 90, HB), // in, mid-wall
+    amos(-313.5, 90, HB),
+    amos(-313, 96.2, HB),
+    amos(-295, 96.2, { ...HB, expect: 'blocked' }), // its east jamb
+    amos(-313, 96.2, HB),
+    amos(-309.3, 200, HB),
+    amos(-309.3, 285.5, { ...HB, reach: 0.3 }), // south-east corner
+    amos(-296, 285.5, HB),
+    amos(-150, 284.8, HB),
+  ],
+  // Diagonally into each corner of the wall from outside: the body must wedge in the
+  // corner, not clip through either face.
+  outside_corners: [
+    amos(-318, 294, HB),
+    amos(-306, 282, { ...HB, expect: 'blocked' }), // south-east
+    amos(-318, 294, HB),
+    amos(-318, 0, HB),
+    amos(-318, -238, HB),
+    amos(-306, -226, { ...HB, expect: 'blocked' }), // south-west
+    amos(-318, -238, HB),
+    amos(0, -238, HB),
+    amos(213, -238, HB),
+    amos(201, -226, { ...HB, expect: 'blocked' }), // north-west
+    amos(213, -238, HB),
+    amos(213, 0, HB),
+    amos(213, 294, HB),
+    amos(201, 282, { ...HB, expect: 'blocked' }), // north-east
+    amos(213, 294, HB),
+    amos(0, 294, HB),
+    amos(-318, 294, HB),
+  ],
 };

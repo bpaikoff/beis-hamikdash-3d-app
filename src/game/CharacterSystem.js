@@ -46,6 +46,18 @@ const NECK_MARGIN = 0.03;
 const WRIST_MARGIN = 0.01;
 /** How far above the foot (ankle) joint the hem ends: everyone on Har HaBayis is barefoot (Berachos 54a). */
 const ANKLE_MARGIN = 0.02;
+/**
+ * The garment over the base body: its normals are 3/4 a per-limb tube normal and 1/4 the
+ * body's own (the body is muscular and its normals shade every muscle under a painted
+ * robe), and its vertices are pushed GARMENT_PUFF along that normal, ramping to zero over
+ * GARMENT_BLEND next to the skin so the neck, wrists and ankles do not open.
+ */
+const TUBE_WEIGHT = 0.75;
+const GARMENT_PUFF = 0.03;
+const GARMENT_BLEND = 0.03;
+/** The belt band (avnet / a Yisrael's belt) above the pelvis joint, metres, and how tall the hem band is. */
+const WAIST_BAND = [0.03, 0.11];
+const HEM_BAND = 0.12;
 /** Ground speed (m/s) at which each walk clip's feet do not slide; the mixer's timeScale follows speed / this. */
 export const CLIP_SPEED = { kohen: 1.25, bull: 1.0 };
 /** Clip names in the files (scripts/fetch_assets.mjs keeps exactly these). */
@@ -57,7 +69,9 @@ export const CLIPS = {
 
 const SKIN = 0xd9a878;
 const LINEN = 0xf2eee4;
-const WOOL = 0xa89c86; // undyed wool, grey enough not to read as skin on the muscular base body
+const WOOL = 0xd8d0c0; // the Yisraelim's light grey-beige wool
+const WOOL_BELT = 0x5a4632;
+const WOOL_HEM = 0x8a7a66;
 const TECHEILES = 0x1f3f8f;
 const AVNET = 0x7a2e3e;
 const GOLD = 0xd4a83a;
@@ -100,12 +114,18 @@ export function figureTier(distance, radius, k) {
  * everything above `headY` (the neck_01 joint plus NECK_MARGIN), everything below `ankleY`
  * (the higher foot joint plus ANKLE_MARGIN: bare feet) and, per arm, everything past the
  * wrist plane through the hand joint, normal to the forearm (so the split does not care
- * whether the rest pose is a T or an A). Falls back to the UAL mannequin's numbers when a
- * bone is missing.
+ * whether the rest pose is a T or an A). Also the limb frames the garment's tube normals
+ * use (`limbs`): the shoulder x (upperarm joint), the hip and crotch heights (pelvis joint),
+ * the belt band, each thigh's x and each arm's axis from the upperarm joint to the hand.
+ * Falls back to the UAL mannequin's numbers when a bone is missing.
  * @param {THREE.Object3D} scene the loaded model, matrices up to date
  */
 export function skinBounds(scene) {
   const v = new THREE.Vector3();
+  const at = (name) => {
+    const b = scene.getObjectByName(name);
+    return b ? b.getWorldPosition(new THREE.Vector3()) : null;
+  };
   const neck = scene.getObjectByName('neck_01');
   const head = scene.getObjectByName('Head');
   const headY = neck ? neck.getWorldPosition(v).y + NECK_MARGIN : head ? head.getWorldPosition(v).y - 0.05 : 1.56;
@@ -123,7 +143,62 @@ export function skinBounds(scene) {
   if (!wrists.length) {
     for (const sx of [1, -1]) wrists.push({ origin: new THREE.Vector3(sx * 0.78, 1.44, 0), axis: new THREE.Vector3(sx, 0, 0) });
   }
-  return { headY, ankleY, wrists };
+  const pelvis = at('pelvis') ?? new THREE.Vector3(0, 0.92, 0);
+  const shoulder = at('upperarm_l') ?? new THREE.Vector3(0.2, 1.44, 0);
+  const arms = [];
+  for (const [side, sign] of [['l', 1], ['r', -1]]) {
+    const origin = at(`upperarm_${side}`) ?? new THREE.Vector3(sign * 0.2, 1.44, 0);
+    const hand = at(`hand_${side}`) ?? new THREE.Vector3(sign * 0.78, 1.44, 0);
+    arms.push({ sign, origin, axis: hand.clone().sub(origin).normalize() });
+  }
+  const limbs = {
+    shoulderX: Math.abs(shoulder.x),
+    hipY: pelvis.y,
+    crotchY: pelvis.y - 0.1,
+    waist: [pelvis.y + WAIST_BAND[0], pelvis.y + WAIST_BAND[1]],
+    thighX: [Math.abs(at('thigh_l')?.x ?? 0.09), -Math.abs(at('thigh_r')?.x ?? 0.09)],
+    arms,
+  };
+  return { headY, ankleY, wrists, limbs };
+}
+
+/** Half-width of the blend between limb frames at the shoulder and the crotch, metres. */
+const LIMB_BLEND = 0.05;
+const _limb = new THREE.Vector3();
+
+/**
+ * The garment's "tube" normal at a bind-pose vertex: radial from the torso's vertical axis,
+ * from the arm's bone axis (upperarm to hand) or from the vertical through the thigh joint,
+ * by where the vertex sits (arm: beyond the shoulder and above the hip; leg: below the
+ * crotch, the sign of x picking the side; else torso), the frames cross-faded over
+ * LIMB_BLEND either side of the shoulder x and the crotch y. Writes into `out`.
+ */
+function tubeNormal(x, y, z, limbs, out) {
+  out.set(x, 0, z); // torso
+  if (out.lengthSq() < 1e-8) out.set(0, 0, 1);
+  out.normalize();
+  const armT = y > limbs.hipY ? Math.min(1, Math.max(0, (Math.abs(x) - limbs.shoulderX + LIMB_BLEND) / (2 * LIMB_BLEND))) : 0;
+  if (armT > 0) {
+    const arm = limbs.arms[x > 0 ? 0 : 1];
+    _limb.set(x, y, z).sub(arm.origin);
+    _limb.addScaledVector(arm.axis, -_limb.dot(arm.axis));
+    if (_limb.lengthSq() < 1e-8) _limb.set(0, 1, 0);
+    out.lerp(_limb.normalize(), armT);
+  }
+  const legT = Math.min(1, Math.max(0, (limbs.crotchY + LIMB_BLEND - y) / (2 * LIMB_BLEND)));
+  if (legT > 0) {
+    _limb.set(x - (x > 0 ? limbs.thighX[0] : limbs.thighX[1]), 0, z);
+    if (_limb.lengthSq() < 1e-8) _limb.set(0, 0, 1);
+    out.lerp(_limb.normalize(), legT);
+  }
+  return out.normalize();
+}
+
+/** Distance from a garment vertex to the nearest skin boundary (neck, ankle, wrist planes). */
+function skinDistance(x, y, z, bounds, tmp) {
+  let d = Math.min(bounds.headY - y, y - bounds.ankleY);
+  for (const w of bounds.wrists) d = Math.min(d, -WRIST_MARGIN - tmp.set(x, y, z).sub(w.origin).dot(w.axis));
+  return Math.max(d, 0);
 }
 
 /** Whether a bind-pose vertex is skin (head, hand or foot) by `bounds` from skinBounds. */
@@ -136,34 +211,51 @@ function isSkin(x, y, z, bounds, tmp) {
 }
 
 /**
- * A per-role copy of a human body geometry: vertex colours for the garment (the Kohen
- * Gadol's techeiles meil covers the torso down to the knees but has no sleeves, so the
- * white kesones shows on the arms and at the hem) and the index reordered into two
- * groups, 0 = skin and 1 = garment, each triangle going with the majority of its three
- * vertices. The skin group takes material 0 (the textured skin), the garment group
- * material 1 (linen or wool with vertexColors).
+ * A per-role copy of a human body geometry: vertex colours for the garment (white linen
+ * with the dark-red avnet for kohanim; the Kohen Gadol's techeiles meil covers the torso
+ * down to the knees but has no sleeves, so the white kesones shows on the arms and at the
+ * hem; grey-beige wool with a brown belt and a darker hem band for Yisraelim), garment
+ * normals flattened to per-limb tubes and the garment puffed GARMENT_PUFF outward so the
+ * muscles do not shade through (see TUBE_WEIGHT), and the index reordered into two groups,
+ * 0 = skin and 1 = garment, each triangle going with the majority of its three vertices.
+ * The skin group takes material 0 (the textured skin), the garment group material 1
+ * (linen or wool with vertexColors). Skin vertices are left exactly as loaded.
  */
 export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infinity, wrists: [] }) {
-  const pos = geometry.attributes.position;
+  const g = geometry.clone();
+  const pos = g.attributes.position;
+  const nor = g.attributes.normal;
   const colors = new Float32Array(pos.count * 3);
   const skin = new Uint8Array(pos.count);
   const c = new THREE.Color();
-  const tmp = new THREE.Vector3();
-  const garment = role === 'yisrael' ? WOOL : LINEN;
+  const tmp = new THREE.Vector3(), tube = new THREE.Vector3(), n = new THREE.Vector3();
+  const limbs = bounds.limbs;
+  const waist = limbs?.waist ?? [0.98, 1.06];
+  const hemY = bounds.ankleY + HEM_BAND;
   for (let i = 0; i < pos.count; i++) {
-    const px = pos.getX(i), y = pos.getY(i), x = Math.abs(px);
-    let hex = garment;
-    if (isSkin(px, y, pos.getZ(i), bounds, tmp)) {
+    const px = pos.getX(i), y = pos.getY(i), pz = pos.getZ(i), x = Math.abs(px);
+    let hex;
+    if (isSkin(px, y, pz, bounds, tmp)) {
       hex = SKIN;
       skin[i] = 1;
-    } else if (role === 'kohenGadol' && x < 0.3 && y > 0.5 && y < 1.5) hex = TECHEILES;
-    else if (role !== 'yisrael' && x < 0.32 && y > 0.98 && y < 1.06) hex = AVNET;
+    } else {
+      if (role === 'yisrael') hex = x < 0.32 && y > waist[0] && y < waist[1] ? WOOL_BELT : y < hemY ? WOOL_HEM : WOOL;
+      else if (role === 'kohenGadol' && x < 0.3 && y > 0.5 && y < 1.5) hex = TECHEILES;
+      else hex = x < 0.32 && y > waist[0] && y < waist[1] ? AVNET : LINEN;
+      if (limbs && nor) {
+        // Flatten the shading to the limb's tube and push the cloth out, except right at the skin.
+        tubeNormal(px, y, pz, limbs, tube);
+        n.set(nor.getX(i), nor.getY(i), nor.getZ(i)).multiplyScalar(1 - TUBE_WEIGHT).addScaledVector(tube, TUBE_WEIGHT).normalize();
+        nor.setXYZ(i, n.x, n.y, n.z);
+        const puff = GARMENT_PUFF * Math.min(1, skinDistance(px, y, pz, bounds, tmp) / GARMENT_BLEND);
+        pos.setXYZ(i, px + n.x * puff, y + n.y * puff, pz + n.z * puff);
+      }
+    }
     c.setHex(hex);
     colors[i * 3] = c.r;
     colors[i * 3 + 1] = c.g;
     colors[i * 3 + 2] = c.b;
   }
-  const g = geometry.clone();
   g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   // Split the triangles: skin first, then garment, as two groups over one index buffer.
   const src = geometry.index ? geometry.index.array : Uint32Array.from({ length: pos.count }, (_, i) => i);
@@ -180,6 +272,7 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
   g.clearGroups();
   g.addGroup(0, skinTris.length, 0);
   g.addGroup(skinTris.length, garmentTris.length, 1);
+  g.computeBoundingBox();
   g.computeBoundingSphere();
   return g;
 }
@@ -473,7 +566,7 @@ export class CharacterSystem {
    * Head covering and, for the Kohen Gadol, the golden garments. The hats hang from the
    * crown measured in prepare (model.headTop): the migba'as cylinder is centred 3 cm above
    * it (its 20 cm height reaches 7 cm down the skull), the mitznefes dome starts 5 cm below
-   * it and the tzitz sits 9 cm below on the forehead.
+   * it, the tzitz sits 9 cm below on the forehead and a Yisrael's sudar 6 cm below.
    */
   dress(root, role) {
     const linen = this.material('hat:linen', () => new THREE.MeshStandardMaterial({ color: LINEN, map: this.tex?.get?.('whiteLinen') ?? null, roughness: 0.9 }));
@@ -495,6 +588,12 @@ export class CharacterSystem {
       this.attachToBone(root, 'spine_03', choshen, new THREE.Vector3(0, 1.3, 0.16));
       const stones = new THREE.Mesh(this.geometry('stones', stonesGeometry), this.material('stones', () => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.25, metalness: 0.1 })));
       this.attachToBone(root, 'spine_03', stones, new THREE.Vector3(0, 1.3, 0.175));
+    } else if (role === 'yisrael') {
+      // Sudar: a wool skullcap over the top 6 cm of the head (the skull is longer in z than x:
+      // 7.4 cm half-width, 10 cm back and 9 cm forward at that depth on the base body).
+      const wool = this.material('hat:wool', () => new THREE.MeshStandardMaterial({ color: 0xb5a992, map: this.tex?.get?.('sheepWool') ?? null, roughness: 0.95 }));
+      const sudar = new THREE.Mesh(this.geometry('sudar', () => new THREE.SphereGeometry(0.085, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.88, 1.3)), wool);
+      this.attachToBone(root, 'Head', sudar, new THREE.Vector3(-0.02, top - 0.06, 0.01));
     }
   }
 

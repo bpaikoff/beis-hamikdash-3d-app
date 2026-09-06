@@ -7,7 +7,6 @@ import { CharacterSystem, templePlacements } from './CharacterSystem.js';
 import { ParticleSystem } from './ParticleSystem.js';
 import { Daylight } from './Daylight.js';
 import { DistanceCuller } from './lod.js';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
@@ -173,13 +172,6 @@ export class TempleGame {
       this.camera.position.set(gx, levelWorldY('har_habayis') + CONFIG.PLAYER_HEIGHT, gz + 14);
     }
 
-    // Image-based lighting: without an environment the PBR gold and copper have nothing
-    // to reflect and render almost black. RoomEnvironment ships with three (no download).
-    const pmrem = new THREE.PMREMGenerator(r);
-    this.envTexture = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    this.scene.environment = this.envTexture;
-    pmrem.dispose();
-
     // Baked textures stream in from /textures/*.webp while the geometry builds; the
     // canvas generators only run for files that are missing (or with ?bake=0).
     this.tex.onProgress((n, total) => this.store.setState({ loading: `Loading textures ${n}/${total}...` })); // counts PBR maps and models too
@@ -188,8 +180,10 @@ export class TempleGame {
     await this.setLoading('Building the Beis HaMikdash...');
     const { floors, walls } = builder.build();
     this.sky = this.scene.getObjectByName('sky');
-    // The sun, the sky dome, the hemisphere light and the fog follow store.timeOfDay.
-    this.daylight = new Daylight(this.scene, { exposure: r.toneMappingExposure });
+    // The sun, the sky dome, the hemisphere light, the fog and the image-based lighting
+    // (scene.environment, a PMREM of the dome: without one the PBR gold and copper have
+    // nothing to reflect and render almost black) follow store.timeOfDay.
+    this.daylight = new Daylight(this.scene, { exposure: r.toneMappingExposure, renderer: r });
     this.daylight.set(this.store.getState().timeOfDay);
     this.player = new PlayerController(this.camera, floors, walls, { bounds: walkableBounds() });
     this.applyPeriod();
@@ -520,7 +514,7 @@ export class TempleGame {
     });
     this.scene.clear();
     this.tex.dispose();
-    this.envTexture?.dispose();
+    this.daylight?.dispose();
     if (this.composer) {
       this.bloomPass?.dispose();
       this.outputPass?.dispose();

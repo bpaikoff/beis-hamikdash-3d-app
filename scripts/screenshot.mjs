@@ -86,6 +86,12 @@ const VIEWS = [
   { name: 'hills_south', cam: '-200,1.75,20,90,4' },         // from the south ring, facing -x (south)
   { name: 'hills_west', cam: '14,1.75,-115,0,4' },           // from the west ring, facing -z (west)
   { name: 'ridge_se', cam: '-175,1.75,163,-135,4' },         // the east ridge from the SE corner, facing north-east
+  // Round 5 sky: the environment map is rendered from the dome per time of day (`time`
+  // fixes a view's ?time=, whatever --time says), so the stone in the hero view should
+  // warm at dawn and dusk and the gold by the altar fire should catch the dusk sky.
+  { name: 'hero_dawn', at: 'ezras_nashim_gate', time: 'dawn' },
+  { name: 'hero_dusk', at: 'ezras_nashim_gate', time: 'dusk' },
+  { name: 'altar_fire_dusk', cam: '-22,9.75,0,-63,9', bloom: true, time: 'dusk' },
 ];
 
 // Hard watchdog: SwiftShader can wedge a renderer so that even browser.close() never
@@ -157,7 +163,8 @@ try {
         : `cam=${v.cam}`;
     // Bloom is off by default (the software rasteriser is slow); a view can opt in with `bloom: true`.
     const bloom = v.bloom ? '' : '&bloom=0';
-    const time = timeOfDay ? `&time=${encodeURIComponent(timeOfDay)}` : '';
+    const viewTime = v.time ?? timeOfDay;
+    const time = viewTime ? `&time=${encodeURIComponent(viewTime)}` : '';
     await page.goto(`${base}/?${where}&autostart=1&shadows=0${bloom}${time}`, { waitUntil: 'load', timeout: 60000 });
     // Older builds have no ?autostart; click through the start screen if it is there.
     const btn = page.locator('.start-btn');

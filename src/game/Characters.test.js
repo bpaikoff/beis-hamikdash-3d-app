@@ -67,6 +67,56 @@ describe('character GLBs', () => {
       expect(Math.abs(bb.min.y), `${name} feet at y ${bb.min.y.toFixed(2)}`).toBeLessThan(0.05);
     });
   }
+
+  it('kohen.glb is the textured body on the UAL rig: Body/Hair/Eyes skinned on 65 joints, three clips, no images inside', async () => {
+    const gltf = await parseGlb('kohen');
+    const meshes = [];
+    gltf.scene.traverse((o) => { if (o.isMesh) meshes.push(o); });
+    expect(meshes.map((m) => m.name).sort()).toEqual(['Body', 'Eyes', 'Hair']);
+    expect(meshes.map((m) => m.material.name).sort()).toEqual(['MI_Eyes', 'MI_Hair_1', 'MI_Superhero_Male']);
+    const joints = meshes[0].skeleton.bones.map((b) => b.name);
+    expect(joints).toHaveLength(65);
+    for (const j of ['root', 'pelvis', 'spine_03', 'neck_01', 'Head', 'hand_l', 'hand_r', 'foot_l', 'foot_r']) expect(joints).toContain(j);
+    for (const m of meshes) {
+      expect(m.isSkinnedMesh, m.name).toBe(true);
+      expect(m.skeleton.bones.map((b) => b.name)).toEqual(joints);
+      expect(m.geometry.attributes.uv, `${m.name} uv`).toBeTruthy();
+      for (const k of ['map', 'normalMap', 'roughnessMap']) expect(m.material[k], `${m.name} ${k}`).toBeNull();
+    }
+    expect(gltf.animations.map((a) => a.name).sort()).toEqual(['Idle_Loop', 'Idle_Talking_Loop', 'Walk_Loop']);
+    // The body faces +z (the eyes sit in front of the head) and the clips move the whole rig.
+    const eyes = meshes.find((m) => m.name === 'Eyes');
+    eyes.geometry.computeBoundingBox();
+    expect(eyes.geometry.boundingBox.min.z).toBeGreaterThan(0);
+    // Textures left the file: the GLB's JSON chunk has no images.
+    const bytes = readFileSync(resolve(dir, 'kohen.glb'));
+    const json = JSON.parse(bytes.toString('utf8', 20, 20 + bytes.readUInt32LE(12)));
+    expect(json.images).toBeUndefined();
+    expect(json.textures).toBeUndefined();
+    expect(json.extensionsUsed ?? []).toEqual([]);
+  });
+
+  it('every texture in the manifest is on disk with its sha256 and LICENSES.md names both packs', async () => {
+    const { createHash } = await import('node:crypto'); // this block may not touch the file's imports
+    const manifest = JSON.parse(readFileSync(resolve(dir, 'manifest.json'), 'utf8'));
+    const textures = manifest.textures ?? {};
+    expect(Object.keys(textures).sort()).toEqual(['kohen_eyes.png', 'kohen_hair.jpg', 'kohen_skin.jpg', 'kohen_skin_normal.jpg', 'kohen_skin_rough.jpg']);
+    for (const [file, t] of Object.entries(textures)) {
+      const data = readFileSync(resolve(dir, file));
+      expect(data.length, file).toBe(t.bytes);
+      expect(createHash('sha256').update(data).digest('hex'), file).toBe(t.sha256);
+      expect(t.size, file).toBeGreaterThanOrEqual(256);
+      expect(t.source, file).toMatch(/^Universal Base Characters/);
+    }
+    expect(Object.values(textures).reduce((n, t) => n + t.bytes, 0), 'texture bytes').toBeLessThan(700 * 1024);
+    const kohen = manifest.files['kohen.glb'];
+    expect(kohen.pack).toBe('universal-base-characters');
+    expect(kohen.animations.pack).toBe('universal-animation-library');
+    expect(kohen.bytes, 'kohen.glb bytes').toBeLessThan(1.7 * 1024 * 1024);
+    const licenses = readFileSync(resolve(dir, '../LICENSES.md'), 'utf8');
+    for (const pack of ['universal-base-characters', 'universal-animation-library', 'lowpoly-animated-animals']) expect(licenses).toContain(`https://quaternius.itch.io/${pack}`);
+    for (const file of Object.keys(textures)) expect(licenses).toContain(file);
+  });
 });
 
 describe('CharacterSystem', () => {

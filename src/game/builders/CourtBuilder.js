@@ -24,6 +24,10 @@ export const GROUND = levels.har_habayis - 0.5;
 const FRAME_T = 1;
 /** Door leaf thickness, amos. */
 const DOOR_T = 0.5;
+/** Thickness of a gable's leaning slabs, amos (wallRunA `gable`; a stone slab, not a plank). */
+const GABLE_T = 1;
+/** How far a gable's slabs are buried in the notch above them, amos (2.5 cm: no shared face, no visible gap). */
+const GABLE_SINK = 0.05;
 /** Interior partition thickness of a chamber, amos (not given in the sources). */
 export const ROOM_WALL_T = 1;
 /**
@@ -285,6 +289,12 @@ export class CourtBuilder extends BaseBuilder {
    * walkable slab through the wall at `floor`. `solidAbove` makes the wall over the
    * opening collide too (an opening below a court floor, whose lintel is that floor's
    * wall face); `frameTop` caps the frame's lintel (see gateA).
+   *
+   * `gable: { rise, t?, proud?, mat? }` builds the wall over the opening with no lintel:
+   * two stone slabs lean from the opening's top corners and meet at a ridge `rise` above
+   * it (Shaar Tadi, Middot 2:3), and the wall above them is one extruded piece with an
+   * inverted-V notch that the slabs fill (see gableWallA / gableStonesA). The frame keeps
+   * its jambs and drops its lintel.
    */
   wallRunA({ along, across: [a1, a2], from, to, y1, y2, mat, openings = [] }) {
     const lo = Math.min(from, to);
@@ -304,8 +314,16 @@ export class CourtBuilder extends BaseBuilder {
         const floor = o.floor ?? y1;
         const top = floor + o.h;
         if (floor - SLAB > y1) seg(o.lo, o.hi, y1, floor - SLAB);
-        if (y2 > top) seg(o.lo, o.hi, top, y2, Boolean(o.solidAbove));
-        const build = () => this.gateA({ along, across: [a1, a2], ...o, floor });
+        if (o.gable) {
+          const gable = { along, across: [a1, a2], lo: o.lo, hi: o.hi, at: o.at, top, mat, ...o.gable };
+          if (y2 > top) this.gableWallA({ ...gable, y2 });
+          else throw new Error(`gable over an opening whose top ${top} reaches the wall top ${y2}`);
+        } else if (y2 > top) seg(o.lo, o.hi, top, y2, Boolean(o.solidAbove));
+        const build = () => {
+          // A gabled opening has no lintel: cap the frame at the opening's top (gateA).
+          this.gateA({ along, across: [a1, a2], ...o, floor, frameTop: o.gable ? Math.min(o.frameTop ?? Infinity, top) : o.frameTop });
+          if (o.gable) this.gableStonesA({ along, across: [a1, a2], lo: o.lo, hi: o.hi, at: o.at, top, mat, name: o.name, ...o.gable });
+        };
         if (o.entry) this.group(o.entry, build, o.labels ? { altEntryIds: o.labels } : undefined);
         else build();
       }
@@ -349,6 +367,91 @@ export class CourtBuilder extends BaseBuilder {
       }
     }
     if (threshold) this.floorA(...rect(at - w / 2, at + w / 2, a1, a2), floor, thresholdMat ?? this.mat.stonePolished, name);
+  }
+
+  /** Slope, slab thickness and extents shared by the two halves of a gable. */
+  gableGeom({ lo, hi, at, top, rise, t = GABLE_T }) {
+    const half = (hi - lo) / 2;
+    const theta = Math.atan2(rise, half); // slope of the slabs from the opening's top corners
+    // Vertical thickness of a slab of t leaning at theta: its top edge runs t / cos(theta)
+    // above its underside at every point along the run.
+    const tv = t / Math.cos(theta);
+    return { half, theta, t, tv, ridge: top + rise, ridgeTop: top + rise + tv, at };
+  }
+
+  /**
+   * The wall over a gabled opening: the rectangle [lo, hi] x [base, y2] with an
+   * inverted-V notch cut from its bottom corners up to the ridge of the slabs' tops,
+   * extruded through the wall's thickness. Non-colliding, like the lintel segment it
+   * replaces. The notch's outline sits GABLE_SINK under the slabs' tops so the two never
+   * share a face (the slabs' top edges are buried by that much).
+   */
+  gableWallA({ along, across: [a1, a2], lo, hi, at, top, y2, rise, t, mat }) {
+    const g = this.gableGeom({ lo, hi, at, top, rise, t });
+    const base = top + g.tv - GABLE_SINK;
+    const apex = g.ridgeTop - GABLE_SINK;
+    if (apex >= y2 - 1e-6) throw new Error(`gable ridge ${apex} reaches the wall top ${y2}`);
+    // The shape's x is the run (world x for a wall along x, world z for one along z) and
+    // its y is up, both in metres, so the extruder's world-space UVs tile like a box's once
+    // divided by the material's tile size.
+    const u = (v) => (along === 'x' ? this.pt(v, 0, 0)[0] : this.pt(0, 0, v)[2]);
+    const yw = (v) => this.pt(0, v, 0)[1];
+    const shape = new THREE.Shape();
+    shape.moveTo(u(lo), yw(base));
+    shape.lineTo(u(at), yw(apex));
+    shape.lineTo(u(hi), yw(base));
+    shape.lineTo(u(hi), yw(y2));
+    shape.lineTo(u(lo), yw(y2));
+    shape.closePath();
+    const depth = Math.abs(a2 - a1) * AMAH;
+    const geo = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: false });
+    const tile = this.tileMetresFor(mat);
+    const uv = geo.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) / tile, uv.getY(i) / tile);
+    // The extrusion runs 0..depth along local z; turn it across the wall.
+    if (along === 'x') geo.translate(0, 0, this.pt(0, 0, Math.min(a1, a2))[2]);
+    else geo.rotateY(-Math.PI / 2).translate(this.pt(Math.max(a1, a2), 0, 0)[0], 0, 0);
+    geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, mat);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    m.name = 'gable wall';
+    this.scene.add(m);
+    return m;
+  }
+
+  /**
+   * The two leaning slabs of a gabled opening: boxes `t` thick, the wall's thickness plus
+   * `proud` beyond each face, whose undersides run from the opening's top corners to the
+   * ridge. Each slab overruns the centre by t * sin(theta) so its top corner lands exactly
+   * on the ridge of the tops and its end face is buried in the other slab: the union is a
+   * clean inverted V above and below, with no slit at the ridge. Non-colliding.
+   */
+  gableStonesA({ along, across: [a1, a2], lo, hi, at, top, rise, t, proud = 0, mat, name }) {
+    const g = this.gableGeom({ lo, hi, at, top, rise, t });
+    const { theta, half } = g;
+    const mid = (a1 + a2) / 2;
+    const depth = Math.abs(a2 - a1) + 2 * proud;
+    const runU = half + g.t * Math.sin(theta); // horizontal extent of one slab's underside
+    const len = runU / Math.cos(theta);
+    const cy = top + (runU / 2) * Math.tan(theta) + (g.t / 2) * Math.cos(theta);
+    const stones = [];
+    for (const s of [-1, 1]) {
+      // s = +1: foot at `lo`, rising toward +run; s = -1: foot at `hi`, rising toward -run.
+      const cu = at - s * half + s * (runU / 2) - s * (g.t / 2) * Math.sin(theta);
+      const geo = along === 'x' ? this.box(len * AMAH, g.t * AMAH, depth * AMAH, mat) : this.box(depth * AMAH, g.t * AMAH, len * AMAH, mat);
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(...(along === 'x' ? this.pt(cu, cy, mid) : this.pt(mid, cy, cu)));
+      if (along === 'x') m.rotation.z = s * theta;
+      else m.rotation.x = -s * theta;
+      m.castShadow = true;
+      m.receiveShadow = true;
+      m.name = `${name ?? 'gate'} leaning stone`;
+      m.userData = { gableStone: true };
+      this.scene.add(m);
+      stones.push(m);
+    }
+    return stones;
   }
 
   /** A BoxGeometry translated to world position, for merging. */

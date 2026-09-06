@@ -56,6 +56,8 @@ const VIEWS = [
   // to the `outside` ring (TempleGame), so each stands inside it, diagonally off the gate.
   { name: 'shushan_outside', cam: '20,1.75,166,50,6' },      // the east wall (low, Middot 2:4) and Shushan
   { name: 'tadi_outside', cam: '118,1.75,14,45,6' },         // the north wall, Tadi and its leaning stones
+  { name: 'tadi_inside', cam: '76,1.75,-2,-90,10' },         // Tadi's gable from the mount (x 152 amos), facing north
+  { name: 'tadi_gable', cam: '114,1.75,-2,90,12' },          // Tadi's gable straight on from outside the north wall
   { name: 'kiponus_outside', cam: '14,1.75,-122,139,6' },    // the west wall and Kiponus
   { name: 'chuldah_outside', cam: '-200,1.75,23,-90,4' },    // the south wall with both Chuldah gates
   { name: 'corner_se_outside', cam: '-175,1.75,163,-58,6' }, // the south-east corner of the wall from outside

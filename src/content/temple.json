@@ -1064,7 +1064,7 @@
         {"he": "מי יצא דרך שער טדי ומדוע?", "en": "Who left through the Tadi Gate, and why?"}
       ],
       "icon": "🚪",
-      "geometry": {"kind": "gate", "w": 10, "d": 6, "h": 20, "notes": "opening 10 wide x 20 high (Middot 2:3) through a wall taken as 6 thick, with doors gilded (Middot 2:3). Two leaning stones instead of a lintel (Middot 2:3)."},
+      "geometry": {"kind": "gate", "w": 10, "d": 6, "h": 20, "notes": "opening 10 wide x 20 high (Middot 2:3) through a wall taken as 6 thick, with doors gilded (Middot 2:3). No lintel: the two stones leaning one on the other (Middot 2:3) are built as a gable over the opening, two slabs 1 thick rising from the jamb tops to meet at a ridge 3.1 above the opening; their pitch and thickness are a reconstruction, Middot giving only the two stones."},
       "gateScheme": ["middos_1_3"]
     },
     {

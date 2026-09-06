@@ -25,10 +25,6 @@ stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
 - The player clamp is now the union of the area bounds with `outside` a ring 40 amos
   beyond the wall (`walkableBounds()` in `src/content/index.js`); all five outer gates
   walk through both ways.
-- Fuzz false positive: a start in the Ezras Yisrael that walks down the Maalos Shir and
-  into a Klei Shir room (under the Yisrael floor) is reported as `fell`, because the
-  fuzz check treats any floor below the area's level as a fall. Teach `walk.mjs` the
-  room floors, or exclude the doors.
 - Non-colliding furniture a visitor's feet clip through: the Gazis benches, the kiyor's
   floor rim. The Ulam steps render plain grey (no PBR set).
 - The hills are flat-shaded six-sided cones; at 185-260 m from the ring they still read

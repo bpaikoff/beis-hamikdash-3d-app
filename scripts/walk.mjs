@@ -115,6 +115,7 @@ try {
     // A wall stopping the walker is fine; falling below the level while a floor exists
     // above the feet (clipped through), or standing inside a solid, is a failure.
     const rand = mulberry32(seed);
+    const rooms = (await page.evaluate(() => window.__mikdash.rooms)) ?? [];
     const areasInfo = (await page.evaluate(() => window.__mikdash.areas)).filter((a) => a.level != null && (fuzzArea === 'all' || a.id === fuzzArea));
     for (const area of areasInfo) {
       const steps = [];
@@ -157,7 +158,13 @@ try {
             const feet = s.y - 1.7;
             pos = [s.x, feet, s.z].map((v) => Number(v.toFixed(2)));
             if (s.inside) { result = 'inside'; detail = `inside a solid at (${pos.join(', ')})`; break; }
-            if (s.top - feet > 1.0 && feet < area.level - 1.0) { result = 'fell'; detail = `under a floor: feet ${feet.toFixed(2)}, surface above at ${s.top.toFixed(2)}`; break; }
+            if (s.top - feet > 1.0 && feet < area.level - 1.0) {
+              // Under a floor: a fall, unless the walker has entered a room built under
+              // that floor (a Klei Shir room, a Cheil vestibule) and stands on its floor.
+              const room = rooms.find((r) => s.x >= r.bounds.minX && s.x <= r.bounds.maxX && s.z >= r.bounds.minZ && s.z <= r.bounds.maxZ && Math.abs(feet - r.floor) < 0.6);
+              if (room) { detail = `in ${room.id}`; break; }
+              result = 'fell'; detail = `under a floor: feet ${feet.toFixed(2)}, surface above at ${s.top.toFixed(2)}`; break;
+            }
             if (feet < -1) { result = 'fell'; detail = `below the ground plane at (${pos.join(', ')})`; break; }
           }
           await page.keyboard.up('KeyW');

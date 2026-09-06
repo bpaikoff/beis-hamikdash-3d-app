@@ -62,6 +62,29 @@ function readSpawn(search) {
 // ============================================================================
 // MAIN GAME
 // ============================================================================
+/**
+ * Scene-space footprints of every `room` entry at its own floor, the mirrored Klei
+ * Shir room, and the two vestibules at the Cheil level under the chol halves of Beis
+ * HaMoked and Lishkas HaGazis (docs/content.md, GEO-D).
+ */
+function roomFootprints() {
+  const out = [];
+  const add = (id, e, dx = 0, yOverride = null) => {
+    const [x, y, z] = worldPos(e);
+    const w = (e.geometry?.w ?? 0) * AMAH / 2;
+    const d = (e.geometry?.d ?? e.geometry?.w ?? 0) * AMAH / 2;
+    out.push({ id, bounds: { minX: x + dx - w, maxX: x + dx + w, minZ: z - d, maxZ: z + d }, floor: yOverride ?? y });
+  };
+  for (const e of Object.values(byId)) {
+    if (e.geometry?.kind !== 'room' || e.bounds) continue;
+    add(e.id, e);
+    if (e.id === 'lishkos_klei_shir') add(`${e.id} (south)`, e, -2 * e.position.x * AMAH);
+  }
+  const cheil = levelWorldY('cheil');
+  for (const id of ['beis_hamoked', 'lishkas_hagazis']) if (byId[id]) add(`${id} vestibule`, byId[id], 0, cheil);
+  return out;
+}
+
 export class TempleGame {
   /**
    * @param {HTMLElement} container  the element the canvas is appended to
@@ -292,6 +315,12 @@ export class TempleGame {
         try { level = levelWorldY(entry.id); } catch { level = worldPos(entry)[1]; }
         return { id: entry.id, bounds, level };
       }),
+      /**
+       * Rooms a walker can legitimately stand in below an area's floor (the Klei Shir
+       * rooms under the Ezras Yisrael, the Cheil vestibules under Beis HaMoked and the
+       * Gazis): scene-space bounds and floor height, for the fuzz walker's fall check.
+       */
+      rooms: roomFootprints(),
     };
     this.animate();
     // Ready once one full frame has been rendered.

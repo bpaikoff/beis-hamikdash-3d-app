@@ -411,7 +411,20 @@ export class AzaraBuilder extends CourtBuilder {
       this.floorA(wellX[1], mad.x2, mad.z1, mad.z2, roofY, this.mat.stone, 'lishkas_hamadichin roof');
       this.floorA(wellX[0], wellX[1], wellZ[0], mad.z2, roofY, this.mat.stone, 'lishkas_hamadichin roof');
       this.floorA(wellX[0], wellX[1], mad.z1, wellZ[1], roofY, this.mat.stone, 'lishkas_hamadichin roof');
-      this.flightA({ axis: 'z', span: wellX, from: wellZ[0], to: wellZ[1], yBase: mad.floor, steps: 22, rise: (roofY - mad.floor) / 22, mat: this.mat.stonePolished, name: 'lishkas_hamadichin stair' });
+      const steps = 22;
+      const rise = (roofY - mad.floor) / steps;
+      this.flightA({ axis: 'z', span: wellX, from: wellZ[0], to: wellZ[1], yBase: mad.floor, steps, rise, mat: this.mat.stonePolished, name: 'lishkas_hamadichin stair' });
+      // The flight's two long sides inside the room: a stepped parapet 1.5 amos over each
+      // tread on the room side (a mass, so it stops the player; the first two treads stay
+      // open, they are the foot, entered from the room), and the amah between the flight
+      // and the court wall filled to the roof. Without them a walker on the upper treads
+      // could step off either side and fall up to 11 amos onto the room floor.
+      const tread = (wellZ[1] - wellZ[0]) / steps;
+      for (let k = 2; k < steps; k++) {
+        const za = wellZ[0] + k * tread;
+        this.blockA(wellX[0] - 0.5, wellX[0], za + tread, za, mad.floor + LIP, mad.floor + (k + 1) * rise + 1.5, this.mat.stonePolished, 'lishkas_hamadichin stair parapet');
+      }
+      this.wallA(wellX[1], mad.x2, wellZ[1], wellZ[0], mad.floor - SLAB, roofY, this.mat.stone);
       // Parapet around the terrace (court edge, east and west ends): 1.5 amos, a solid
       // mass so it actually stops the player (a wall this low is below the head-height
       // test), standing a LIP above the roof like every mass on a floor (see solidA).

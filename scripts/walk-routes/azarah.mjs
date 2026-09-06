@@ -207,15 +207,16 @@ export const routes = {
     p(40, -100, K),
     p(49, -100, K),
     at('lishkas_hamadichin', { level: K }),
-    p(59.5, -94.3, K),
-    p(64, -94.3, K, { reach: 0.5, minY: 0 }),
+    p(59.5, -94, K),
+    p(64, -94, K, { reach: 0.3, minY: 0 }), // the flight's foot (its first two treads have no parapet)
     p(64, -108, K, { minY: 11 * AMAH }),
     p(64, -116, K, { minY: 11 * AMAH }),
     p(64, -136, K, { minY: 11 * AMAH }),
     p(64, -116, K, { minY: 11 * AMAH }),
     p(59.5, -116, K, { ...blocked, minY: 11 * AMAH }),
     p(64, -108, K, { minY: 11 * AMAH }),
-    p(64, -94.3, K, { reach: 0.5, minY: 0 }),
+    p(64, -94, K, { reach: 0.3, minY: 0 }), // the flight's foot (its first two treads have no parapet)
+    p(59.5, -94, K),
     p(56, -96, K),
     at('lishkas_hamadichin', { level: K }),
     p(49, -100, K),
@@ -584,8 +585,8 @@ Object.assign(routes, {
     p(40, -100, K),
     p(49, -100, K),
     at('lishkas_hamadichin', { level: K }),
-    p(59.5, -94.3, K),
-    p(64, -94.3, K, { reach: 0.5, minY: 0 }),
+    p(59.5, -94, K),
+    p(64, -94, K, { reach: 0.3, minY: 0 }), // the flight's foot (its first two treads have no parapet)
     p(64, -107.5, K, { reach: 0.5, minY: 11 * AMAH }),
     h(60, -107.5, K, { minY: 11 * AMAH }), // beside the well's top end
     h(60, -95, K, { minY: 11 * AMAH }), // along the well's court-side parapet
@@ -610,7 +611,8 @@ Object.assign(routes, {
     h(61.5 + HUG, -118 - HUG, K, { minY: 11 * AMAH }),
     p(59.5, -116, K, { ...blocked, minY: 11 * AMAH }), // into the rim
     h(64, -108.5, K, { minY: 11 * AMAH }),
-    p(64, -94.3, K, { reach: 0.5, minY: 0 }),
+    p(64, -94, K, { reach: 0.3, minY: 0 }), // the flight's foot (its first two treads have no parapet)
+    p(59.5, -94, K),
     p(56, -96, K),
     at('lishkas_hamadichin', { level: K }),
     p(49, -100, K),

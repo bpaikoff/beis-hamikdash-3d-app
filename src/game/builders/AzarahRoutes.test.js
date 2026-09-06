@@ -7,6 +7,7 @@ import { CONFIG } from '../../config.js';
 import { AMAH, toWorld } from '../../content/units.js';
 import { routes } from '../../../scripts/walk-routes/azarah.mjs';
 import { routes as stairRoutes } from '../../../scripts/walk-routes/stairs.mjs';
+import { routes as r3Routes } from '../../../scripts/walk-routes/azarah_r3.mjs';
 
 /**
  * Walks every Azarah route of scripts/walk-routes/azarah.mjs with the real
@@ -220,6 +221,23 @@ describe('Ezras Kohanim floor over the whole Temple', () => {
     for (const [x, z] of [[61.25, -95], [61.25, -106], [67, -100], [64, -93.25]]) expect(under(x, z, roof + 3), `${x},${z}`).toBeCloseTo(parapet, 2);
     expect(under(64, -107.5, roof + 3)).toBeCloseTo(roof, 2);
     expect(under(60, -95, roof + 3)).toBeCloseTo(roof, 2);
+    // Inside the room the flight (x 61.5 .. 66.5, 22 treads of 0.5 from z -93.5 to -107) has a stepped parapet
+    // 1.5 amos over each tread on its room side from the third tread on, and the amah between it and the
+    // court wall (x 66.5 .. 67.5) is filled to the roof; the foot's first two treads stay open.
+    // Cast from just under the roof slab (its underside is 0.4 m below its top); the top treads and their
+    // parapet reach into the slab, so only treads up to the sixteenth are probed.
+    const underRoof = roof - 0.45;
+    const tread = 13.5 / 22;
+    const top = (z) => K + (Math.floor((-93.5 - z) / tread) + 1) * 0.5 * AMAH;
+    for (const z of [-95, -100, -103]) {
+      expect(under(64, z, underRoof), `tread ${z}`).toBeCloseTo(top(z), 2);
+      expect(under(61.25, z, underRoof), `parapet ${z}`).toBeCloseTo(top(z) + 1.5 * AMAH, 2);
+      const box = new THREE.Box3();
+      const [wx, wz] = xz(67, z);
+      const pt = new THREE.Vector3(wx, K + 2, wz);
+      expect(walls.some((w) => box.setFromObject(w).containsPoint(pt)), `slot wall ${z}`).toBe(true);
+    }
+    for (const z of [-93.75, -94.5]) expect(under(61.25, z, underRoof), `open foot ${z}`).toBeCloseTo(K + LIP, 2);
     // The court-edge parapet follows each roof's own edge (the Madichin is 15 wide, x 52.5 .. 67.5; Parvah and Melach 16), with a return across the step at z -108.
     for (const [x, z] of [[52.75, -100], [51.75, -116], [51.75, -132], [52.25, -108.25], [52.75, -108.25], [52, -139.75]]) expect(under(x, z, roof + 3), `${x},${z}`).toBeCloseTo(parapet, 2);
     expect(under(53.25, -100, roof + 3)).toBeCloseTo(roof, 2);
@@ -264,8 +282,116 @@ describe('Ezras Kohanim floor over the whole Temple', () => {
   });
 });
 
-describe('Azarah walking routes (scripts/walk-routes/azarah.mjs, stairs.mjs)', () => {
-  for (const [name, waypoints] of [...Object.entries(routes), ...Object.entries(stairRoutes)]) {
+/**
+ * The Cheil stairs (GEO-D, CourtBuilder.switchbackA): every open side of every flight
+ * and landing is fenced by a wall, and where the band walls stop an amah short of the
+ * landings the flight across the gap is at most 1.5 amos (0.75 m) lower: a stumble
+ * onto the neighbouring flight at the same turn, never a fall to a lower one. The
+ * walk harness cannot see a drop that lands right, so the heights are asserted here.
+ */
+describe('Cheil stair landing edges and band-wall gaps', () => {
+  /** World y of a height in amos over the Azarah floor. */
+  const yOf = (a) => toWorld({ x: 0, y: a, z: 0 })[1];
+  /** Highest surface under (x, z) amos cast from `from` amos, in amos. */
+  const hA = (x, z, from = 200) => (player.getFloorHeight(...xz(x, z), from === 200 ? 200 : yOf(from)) - yOf(0)) / AMAH;
+  /** Is (x, y, z) amos inside a wall box? */
+  const wallAt = (x, y, z) => {
+    const [wx, wy, wz] = toWorld({ x, y, z });
+    const pt = new THREE.Vector3(wx, wy, wz);
+    return player.wallBoxes.some((b) => b.containsPoint(pt));
+  };
+  const CEIL = 1.6; // under the chamber floor slabs (their underside is at 1.7)
+  const F = -13.41; // the vestibule floors: the Cheil pavement plus its LIP and the stair's LIP
+  const H = 2.55; // the chamber floors: the court level plus a LIP
+  const PARAPET = H + 0.05 + 1.5;
+
+  /** One stair: `s` mirrors x (+1 Beis HaMoked, -1 Gazis); z values are the stair's own. */
+  const cases = [
+    // xOuter: inside flight A's outer wall (Beis HaMoked: the stair's own quarter-amah wall at x 75.5; Gazis: the vestibule's wall x -77.5 .. -76.5).
+    { name: 'Beis HaMoked', s: 1, zFoot: -13.5, zL1: [-8, -5.5], zL2: [-16, -13.5], y: -5, xOuter: 75.625 },
+    { name: 'Lishkas HaGazis', s: -1, zFoot: -97, zL1: [-91.5, -89], zL2: [-99.5, -97], y: -5, xOuter: -77 },
+  ];
+  for (const c of cases) {
+    const x = (d) => c.s * d; // distance from the court wall line (x +-67.5), signed
+    const [zA1, zTop] = [c.zFoot + 5.5, c.zFoot + 5]; // top of A / foot of B; top of C
+    const xA = x(74.5);
+    const xB = x(72);
+    const xC = x(69.5);
+    const xAB = x(73.25);
+    const xBC = x(70.75);
+
+    it(`${c.name}: the flights and landings are at their heights`, () => {
+      expect(hA(xA, c.zFoot + 0.25, CEIL)).toBeCloseTo(F + 0.46, 2); // A's first tread, a quarter metre over the vestibule floor
+      expect(hA(xA, zA1 - 0.25, CEIL)).toBeCloseTo(-7.95, 2); // A's top tread
+      expect(hA(xB, (c.zL1[0] + c.zL1[1]) / 2, CEIL)).toBeCloseTo(-7.95, 2); // L1
+      expect(hA(xA, (c.zL1[0] + c.zL1[1]) / 2, CEIL)).toBeCloseTo(-7.95, 2);
+      expect(hA(xB, zA1 - 0.25, CEIL)).toBeCloseTo(-7.45, 2); // B's first tread
+      expect(hA(xB, c.zFoot + 0.25, CEIL)).toBeCloseTo(-2.45, 2); // B's top tread
+      expect(hA(xC, (c.zL2[0] + c.zL2[1]) / 2, CEIL)).toBeCloseTo(-2.45, 2); // L2
+      expect(hA(xC, c.zFoot + 0.25, CEIL)).toBeCloseTo(-1.95, 2); // C's first tread
+      expect(hA(xC, zTop - 0.25)).toBeCloseTo(H, 2); // C's top tread, level with the chamber floor
+      expect(hA(xC, zTop + 0.25)).toBeCloseTo(H, 2); // the chamber floor past the well's open end
+    });
+
+    it(`${c.name}: every open side of every flight and landing is fenced`, () => {
+      // Flight A: its outer side is the outer wall, its inner side the A/B band wall up to an amah short of L1.
+      for (const z of [c.zFoot + 0.5, zA1 - 1.25]) {
+        expect(wallAt(c.xOuter, -10, z), `A outer ${z}`).toBe(true);
+        expect(wallAt(xAB, -10, z), `A/B ${z}`).toBe(true);
+      }
+      // L1: the B/C band wall on its inner side, the end wall / the chamber wall at its far end, the outer wall.
+      for (const z of [c.zL1[0] + 0.25, c.zL1[1] - 0.25]) expect(wallAt(xBC, c.y, z), `L1 inner ${z}`).toBe(true);
+      expect(wallAt(xB, c.y, c.zL1[1] + 0.25), 'L1 far end').toBe(true);
+      expect(wallAt(xA, c.y, c.zL1[1] + 0.25), 'L1 far end').toBe(true);
+      expect(wallAt(c.xOuter, c.y, (c.zL1[0] + c.zL1[1]) / 2), 'L1 outer').toBe(true);
+      // Flight B: the A/B wall on one side, the B/C wall on the other, each to an amah short of the landing it does not serve.
+      for (const z of [c.zFoot + 1.25, zA1 - 1.25]) {
+        expect(wallAt(xAB, -3, z), `B/A ${z}`).toBe(true);
+        expect(wallAt(xBC, -3, z), `B/C ${z}`).toBe(true);
+      }
+      // L2: its end wall, the A/B wall on its outer side, the partition on its inner side.
+      expect(wallAt(xC, 0, c.zL2[0] - 0.125), 'L2 end').toBe(true);
+      expect(wallAt(xB, 0, c.zL2[0] - 0.125), 'L2 end').toBe(true);
+      for (const z of [c.zL2[0] + 0.25, c.zL2[1] - 0.25]) {
+        expect(wallAt(xAB, 0, z), `L2 outer ${z}`).toBe(true);
+        expect(wallAt(x(68), 0, z), `L2 inner ${z}`).toBe(true);
+      }
+      // Flight C: the partition, the B/C wall from an amah past its foot, and above the ceiling the well parapet on both sides and at its foot end.
+      for (const z of [c.zFoot + 1.25, zTop - 0.25]) {
+        expect(wallAt(x(68), 1, z), `C inner ${z}`).toBe(true);
+        expect(wallAt(xBC, 1, z), `C/B ${z}`).toBe(true);
+      }
+      for (const z of [c.zFoot - 0.25, c.zFoot + 2, zTop - 0.25]) {
+        expect(hA(x(68.25), z), `parapet inner ${z}`).toBeCloseTo(PARAPET, 2);
+        expect(hA(x(70.75), z), `parapet outer ${z}`).toBeCloseTo(PARAPET, 2);
+      }
+      expect(hA(xC, c.zFoot - 0.25), 'parapet end').toBeCloseTo(PARAPET, 2);
+      // The void beside L1 under the chamber floor (the C band past the well) is fenced from L1 by the B/C wall.
+      expect(hA(xC, c.zL1[1] - 0.5, CEIL), 'void past the well').toBeCloseTo(F, 2);
+      expect(wallAt(xBC, c.y, c.zL1[1] - 0.5)).toBe(true);
+    });
+
+    it(`${c.name}: across the amah gaps at the band walls' ends the next flight is at most 1.5 amos lower`, () => {
+      // A/B wall: ends an amah short of L1 (z zA1 - 1 .. zA1 open).
+      expect(wallAt(xAB, -10, zA1 - 1.25)).toBe(true);
+      expect(wallAt(xAB, -10, zA1 - 0.75)).toBe(false);
+      expect(hA(xA, zA1 - 0.75, CEIL)).toBeCloseTo(-8.45, 2);
+      expect(hA(xB, zA1 - 0.75, CEIL)).toBeCloseTo(-6.95, 2); // B's second tread: 1.5 amos over A's tenth
+      expect(hA(xA, zA1 - 0.25, CEIL)).toBeCloseTo(-7.95, 2);
+      expect(hA(xB, zA1 - 0.25, CEIL)).toBeCloseTo(-7.45, 2); // half an amah
+      // B/C wall: starts an amah past the foot (z zFoot .. zFoot + 1 open).
+      expect(wallAt(xBC, -3, c.zFoot + 1.25)).toBe(true);
+      expect(wallAt(xBC, -3, c.zFoot + 0.75)).toBe(false);
+      expect(hA(xC, c.zFoot + 0.75, CEIL)).toBeCloseTo(-1.45, 2);
+      expect(hA(xB, c.zFoot + 0.75, CEIL)).toBeCloseTo(-2.95, 2); // B's tenth tread: 1.5 amos under C's second
+      expect(hA(xC, c.zFoot + 0.25, CEIL)).toBeCloseTo(-1.95, 2);
+      expect(hA(xB, c.zFoot + 0.25, CEIL)).toBeCloseTo(-2.45, 2);
+    });
+  }
+});
+
+describe('Azarah walking routes (scripts/walk-routes/azarah.mjs, stairs.mjs, azarah_r3.mjs)', () => {
+  for (const [name, waypoints] of [...Object.entries(routes), ...Object.entries(stairRoutes), ...Object.entries(r3Routes)]) {
     it(name, () => {
       const failures = walkRoute(waypoints);
       expect(failures, failures.join('\n')).toEqual([]);

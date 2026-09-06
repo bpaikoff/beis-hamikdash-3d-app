@@ -60,6 +60,12 @@ const VIEWS = [
   { name: 'chuldah_outside', cam: '-200,1.75,23,-90,4' },    // the south wall with both Chuldah gates
   { name: 'corner_se_outside', cam: '-175,1.75,163,-58,6' }, // the south-east corner of the wall from outside
   { name: 'hills_east', cam: '20,1.75,166,180,4' },          // from outside Shushan, away from the mount
+  // Round 4 terrain: the heightfield hills from each side of the ring, away from the mount,
+  // and the Har HaMishcha ridge along its length from the south-east corner.
+  { name: 'hills_north', cam: '110,1.75,-20,-90,4' },        // from the north ring, facing +x (north)
+  { name: 'hills_south', cam: '-200,1.75,20,90,4' },         // from the south ring, facing -x (south)
+  { name: 'hills_west', cam: '14,1.75,-115,0,4' },           // from the west ring, facing -z (west)
+  { name: 'ridge_se', cam: '-175,1.75,163,-135,4' },         // the east ridge from the SE corner, facing north-east
 ];
 
 // Hard watchdog: SwiftShader can wedge a renderer so that even browser.close() never

@@ -17,6 +17,8 @@ const EAST_WALL_TOP = 8.5;
 const MERLON_PITCH = 4;
 /** Soreg post pitch, amos. */
 const POST_PITCH = 1;
+/** How far Tadi's leaning stones stand out of each face of the wall, amos. */
+const TADI_STONE_PROUD = 0.5;
 /** Cheek walls beside the twelve steps: thickness and height over the top tread, amos. */
 const CHEEK_T = 0.5;
 const CHEEK_H = 1.2;
@@ -66,7 +68,11 @@ export class HarHaBayisBuilder extends CourtBuilder {
     }, { part: 'wall' });
   }
 
-  /** Shaar Tadi has two leaning stones instead of a lintel (Middot 2:3). */
+  /**
+   * Shaar Tadi has two leaning stones instead of a lintel (Middot 2:3). The wall over the
+   * opening is built like the rest of the run, so the stones stand TADI_STONE_PROUD out
+   * of each face of it as a gable in relief; a wall's thickness of stone would be buried.
+   */
   buildTadiStones() {
     const t = this.entry('shaar_tadi');
     const b = this.area.bounds;
@@ -75,7 +81,7 @@ export class HarHaBayisBuilder extends CourtBuilder {
     const len = (w / 2 + 1.5) / Math.cos(Math.PI / 5);
     this.group('shaar_tadi', () => {
       for (const s of [-1, 1]) {
-        const stone = new THREE.Mesh(this.box(WALL_T * AMAH, 1 * AMAH, len * AMAH, this.mat.stone), this.mat.stone);
+        const stone = new THREE.Mesh(this.box((WALL_T + 2 * TADI_STONE_PROUD) * AMAH, 1 * AMAH, len * AMAH, this.mat.stone), this.mat.stone);
         stone.position.set(...this.pt(b.maxX + WALL_T / 2, top + Math.sin(Math.PI / 5) * len / 2 + 0.5, t.position.z + s * (w / 4 + 0.75)));
         stone.rotation.x = s * (Math.PI / 5);
         stone.castShadow = true;

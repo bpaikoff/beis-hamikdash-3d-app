@@ -44,6 +44,14 @@ const VIEWS = [
   { name: 'tour_5', tour: 'tamid', stop: 5 },   // the ma'aracha from the kevesh
   { name: 'tour_9', tour: 'tamid', stop: 9 },   // the limbs on the kevesh, from the south-west
   { name: 'tour_13', tour: 'tamid', stop: 13 }, // the Levites' song, the Duchan from the Ezras Yisrael
+  // The mount's gates from the ground outside its wall (Middot 1:3). The player is clamped
+  // to the `outside` ring (TempleGame), so each stands inside it, diagonally off the gate.
+  { name: 'shushan_outside', cam: '20,1.75,166,50,6' },      // the east wall (low, Middot 2:4) and Shushan
+  { name: 'tadi_outside', cam: '118,1.75,14,45,6' },         // the north wall, Tadi and its leaning stones
+  { name: 'kiponus_outside', cam: '14,1.75,-122,139,6' },    // the west wall and Kiponus
+  { name: 'chuldah_outside', cam: '-200,1.75,23,-90,4' },    // the south wall with both Chuldah gates
+  { name: 'corner_se_outside', cam: '-175,1.75,163,-58,6' }, // the south-east corner of the wall from outside
+  { name: 'hills_east', cam: '20,1.75,166,180,4' },          // from outside Shushan, away from the mount
 ];
 
 // Hard watchdog: SwiftShader can wedge a renderer so that even browser.close() never

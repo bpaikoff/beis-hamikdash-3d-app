@@ -12,7 +12,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
-import { areas, byId, hotspots, worldBounds, worldPos, levelWorldY } from '../content/index.js';
+import { areas, byId, hotspots, walkableBounds, worldBounds, worldPos, levelWorldY } from '../content/index.js';
 import { AMAH } from '../content/units.js';
 import { byTourId } from '../content/tours/index.js';
 import { Tour } from './Tour.js';
@@ -168,14 +168,7 @@ export class TempleGame {
     // The sun, the sky dome, the hemisphere light and the fog follow store.timeOfDay.
     this.daylight = new Daylight(this.scene, { exposure: r.toneMappingExposure });
     this.daylight.set(this.store.getState().timeOfDay);
-    const all = this.areaBounds.map((a) => a.bounds);
-    const bounds = {
-      minX: Math.min(...all.map((b) => b.minX)),
-      maxX: Math.max(...all.map((b) => b.maxX)),
-      minZ: Math.min(...all.map((b) => b.minZ)),
-      maxZ: Math.max(...all.map((b) => b.maxZ)),
-    };
-    this.player = new PlayerController(this.camera, floors, walls, { bounds });
+    this.player = new PlayerController(this.camera, floors, walls, { bounds: walkableBounds() });
     this.applyPeriod();
     if (this.disposed) return;
 

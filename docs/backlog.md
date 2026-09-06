@@ -5,26 +5,36 @@ these block the build; the routes and fuzz pass with the geometry as it stands.
 
 ## Content (`src/content/temple.json`)
 
-- `outside.position.y` is -19.5 amos but the environment ground plane is at world y 0
-  (amos -13.6), flush with the mount. Nothing models the six-amah drop, and the Chuldah
-  thresholds meet the ground with a 5 cm step.
-- The mikveh passage of Middot 1:9 (down from Beis HaMoked under the Birah) is not
-  built; the hall's Cheil gate is reached by the vestibule and stair under its chol half
-  (docs/content.md, GEO-D), and the hall's own north gateway stays closed above it.
-- `soreg.position.z` is 158 while its notes and the builder put the ring at 157.
-- `beis_avtinas` y 22.5 should be 24 (its floor is the storey over the Water Gate).
-- Slaughter tables and pillars sit one amah too far north; `kiyor` x should be -24 so its
-  north side clears the Ulam steps; the Klei Shir doors and the Madichin slot need a
-  second look against Middos 5:3.
-- Tour stops 9 and 13 (`src/content/tours/tamid.json`) would read better with the camera
-  a few amos further back.
+Round 3 (September 2026) closed the position items: `outside` y -13.5 (ground flush with
+the mount, the drop is not modelled), `soreg` z 157, `beis_avtinas` y 24, tables and
+pillars at z -39, `kiyor` x -24, Madichin 15 wide, tour stops 9 and 13 moved, and the
+Cheil doors of Beis HaMoked and Lishkas HaGazis reached by vestibules and switchback
+stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
+
+- The mikveh passage of Middot 1:9 (down from the north-west chamber of Beis HaMoked
+  under the Birah) is not built; it would start in the west bay of the vestibule's
+  undercroft. Shaar HaNitzotz's wicket to the Cheil (Middot 1:5) has no stair either.
+- The 16-amah drop from the Azarah chambers to the Cheil on the north and south is the
+  eastern Cheil level (Middot 2:3, 2:5) carried round; no source gives those levels.
+- Tadi: Middot 2:3 says it had no lintel (two leaning stones). The stones are now in
+  relief on both faces, but the wall over the opening is still a box with a framed
+  lintel; a gable cut needs a `wallRunA` change.
 
 ## Player and builders
 
-- The player clamp (union of the area bounds in `TempleGame`) stops at the outer wall's
-  inner face, so Shushan, Tadi and Kiponus cannot be walked through. Give `outside` (or
-  each of those gates) bounds beyond the wall.
-- The `cheil` route's comment still cites Lishkas HaEtz at z -102..-134 (now -118..-148).
+- The player clamp is now the union of the area bounds with `outside` a ring 40 amos
+  beyond the wall (`walkableBounds()` in `src/content/index.js`); all five outer gates
+  walk through both ways.
+- Fuzz false positive: a start in the Ezras Yisrael that walks down the Maalos Shir and
+  into a Klei Shir room (under the Yisrael floor) is reported as `fell`, because the
+  fuzz check treats any floor below the area's level as a fall. Teach `walk.mjs` the
+  room floors, or exclude the doors.
+- Non-colliding furniture a visitor's feet clip through: the Gazis benches, the kiyor's
+  floor rim. The Ulam steps render plain grey (no PBR set).
+- The hills are flat-shaded six-sided cones; at 185-260 m from the ring they still read
+  as pyramids. Fog ends at 352 m, so the corner hills are faint.
+- Beis HaMoked's vestibule floor runs past flight A's outer wall into a dead-end pocket
+  under the hall floor (x 68.5..75.75, z -5.25..-3); open, no drop, harmless.
 
 ## Characters (Sprint 4)
 

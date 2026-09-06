@@ -221,6 +221,23 @@ describe('Ezras Kohanim floor over the whole Temple', () => {
     for (const [x, z] of [[61.25, -95], [61.25, -106], [67, -100], [64, -93.25]]) expect(under(x, z, roof + 3), `${x},${z}`).toBeCloseTo(parapet, 2);
     expect(under(64, -107.5, roof + 3)).toBeCloseTo(roof, 2);
     expect(under(60, -95, roof + 3)).toBeCloseTo(roof, 2);
+    // Inside the room the flight (x 61.5 .. 66.5, 22 treads of 0.5 from z -93.5 to -107) has a stepped parapet
+    // 1.5 amos over each tread on its room side from the third tread on, and the amah between it and the
+    // court wall (x 66.5 .. 67.5) is filled to the roof; the foot's first two treads stay open.
+    // Cast from just under the roof slab (its underside is 0.4 m below its top); the top treads and their
+    // parapet reach into the slab, so only treads up to the sixteenth are probed.
+    const underRoof = roof - 0.45;
+    const tread = 13.5 / 22;
+    const top = (z) => K + (Math.floor((-93.5 - z) / tread) + 1) * 0.5 * AMAH;
+    for (const z of [-95, -100, -103]) {
+      expect(under(64, z, underRoof), `tread ${z}`).toBeCloseTo(top(z), 2);
+      expect(under(61.25, z, underRoof), `parapet ${z}`).toBeCloseTo(top(z) + 1.5 * AMAH, 2);
+      const box = new THREE.Box3();
+      const [wx, wz] = xz(67, z);
+      const pt = new THREE.Vector3(wx, K + 2, wz);
+      expect(walls.some((w) => box.setFromObject(w).containsPoint(pt)), `slot wall ${z}`).toBe(true);
+    }
+    for (const z of [-93.75, -94.5]) expect(under(61.25, z, underRoof), `open foot ${z}`).toBeCloseTo(K + LIP, 2);
     // The court-edge parapet follows each roof's own edge (the Madichin is 15 wide, x 52.5 .. 67.5; Parvah and Melach 16), with a return across the step at z -108.
     for (const [x, z] of [[52.75, -100], [51.75, -116], [51.75, -132], [52.25, -108.25], [52.75, -108.25], [52, -139.75]]) expect(under(x, z, roof + 3), `${x},${z}`).toBeCloseTo(parapet, 2);
     expect(under(53.25, -100, roof + 3)).toBeCloseTo(roof, 2);

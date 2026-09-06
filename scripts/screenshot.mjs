@@ -12,7 +12,8 @@
  *   node scripts/screenshot.mjs --time dusk                    # ?time= for every view
  *
  * Views are addressed with ?cam=x,y,z,yaw,pitch (world metres, degrees; yaw 0 faces -z,
- * positive yaw turns toward +x). Until TempleGame supports ?cam the script captures
+ * west; a positive yaw turns toward -x, south, and a negative one toward +x, north:
+ * the camera's rotation.y in three.js). Until TempleGame supports ?cam the script captures
  * whatever the start position shows. It prints renderer.info.render when the app exposes
  * window.__mikdash (draw calls, triangles) so before/after runs can be compared.
  */
@@ -38,6 +39,13 @@ const VIEWS = [
   { name: 'moked_well', cam: '32,9.8,5,-48,-15' },
   { name: 'gazis_vestibule', cam: '-35,1.8,-50,165,3' },
   { name: 'gazis_well', cam: '-31,9.8,-42,126,-15' },
+  // Round 3: the kiyor (x -24) and the Ulam steps' south end from the east, the slaughter
+  // tables and pillars (z -27 .. -51) from the south beside the rings, and the Beis
+  // Avtinas storey through its door from the top landing of the stair tower.
+  { name: 'kiyor_east', cam: '-14,9.75,-17,-15,-6' },
+  { name: 'slaughter_south', cam: '20,10.5,-5,-49,-8' },
+  { name: 'avtinas_storey', cam: '31.9,20.5,-16.6,0,-6' },
+  { name: 'madichin_stair', cam: '28,9.75,-40,-53,5' }, // the stair to the terrace from inside the Madichin, with its balustrade
   // Guided tour stops (`?tour=<id>&stop=N`, N 1-based): the rail stands the camera at the
   // stop and the script waits for the tour to dwell there, so the card is in the frame.
   { name: 'tour_1', tour: 'tamid', stop: 1 },   // Beis HaMoked at night

@@ -208,16 +208,21 @@ export const routes = {
     p(45, -100, K),
   ],
 
-  // (f) The terrace parapet's return across the step at z -108 (x 51.5 .. 53, z -108.5
-  // .. -108), entered from the Parvah roof walking east along the parapet, and the
-  // Madichin roof's court-edge parapet entered from its roof; up and down the Madichin
-  // stair.
+  // (f) Up the Madichin stair with a leg into the balustrade on each side of its flight,
+  // the terrace parapet's return across the step at z -108 (x 51.5 .. 53, z -108.5 ..
+  // -108) entered from the Parvah roof walking east along the parapet, the Madichin
+  // roof's court-edge parapet entered from its roof, and down again.
   r3_terrace_return: [
     p(40, -100, K),
     p(49, -100, K),
     at('lishkas_hamadichin', { level: K }),
-    p(59.5, -94.3, K),
-    p(64, -94.3, K, { reach: 0.5, minY: 0 }),
+    p(59.5, -94, K),
+    p(64, -94, K, { reach: 0.3, minY: 0 }), // the flight's foot (its first two treads have no parapet)
+    p(64, -100, K, { reach: 0.4, minY: 2.5 }), // the eleventh tread, 5.5 amos over the room floor
+    p(60, -100, K, { ...blocked, minY: 2.5 }), // into the stepped parapet on the room side (x 61 .. 61.5)
+    p(64, -100, K, { reach: 0.4, minY: 2.5 }),
+    p(68, -100, K, { ...blocked, minY: 2.5 }), // into the wall filling the amah between the flight and the court wall
+    p(64, -100, K, { reach: 0.4, minY: 2.5 }),
     p(64, -107.5, K, { reach: 0.5, ...T }),
     h(56, -107, K, T),
     h(53.4, -104, K, T), // beside the Madichin parapet (x 52.5 .. 53)
@@ -231,7 +236,8 @@ export const routes = {
     h(52.25, -112, K, T),
     h(56, -112, K, T),
     h(64, -108.5, K, T),
-    p(64, -94.3, K, { reach: 0.5, minY: 0 }),
+    p(64, -94, K, { reach: 0.3, minY: 0 }), // the flight's foot (its first two treads have no parapet)
+    p(59.5, -94, K),
     p(56, -96, K),
     at('lishkas_hamadichin', { level: K }),
     p(49, -100, K),

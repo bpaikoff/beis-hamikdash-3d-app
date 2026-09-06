@@ -157,6 +157,11 @@ describe('CharacterSystem', () => {
     const names = (g) => { const n = []; g.traverse((o) => { if (o.isMesh && !o.isSkinnedMesh) n.push(o.geometry.userData.key); }); return n.sort(); };
     expect(names(b)).toEqual(['choshen', 'ephod', 'mitznefes', 'stones', 'tzitz']);
     expect(names(a)).toEqual(['migbaas']);
+    const y = sys.createKohen(6, 0, 0, { role: 'yisrael' });
+    expect(names(y)).toEqual(['sudar']);
+    y.updateMatrixWorld(true);
+    const sudar = y.getObjectByProperty('geometry', sys.geometries.find((g) => g.userData.key === 'sudar'));
+    expect(sudar.getWorldPosition(new THREE.Vector3()).y).toBeCloseTo(sys.models.kohen.headTop - 0.06, 5);
     // The hat sits on the head: above 1.75 m in the rest pose.
     const hat = a.getObjectByProperty('geometry', sys.geometries.find((g) => g.userData.key === 'migbaas'));
     a.updateMatrixWorld(true);
@@ -234,6 +239,71 @@ describe('CharacterSystem', () => {
         expect(votes >= 2, `triangle ${t}`).toBe(t * 3 < skinGroup.count);
       }
     }
+    sys.dispose();
+  });
+
+  it('flattens and puffs the garment from the limb frames and leaves the skin as loaded', async () => {
+    sys = new CharacterSystem(scene, stubTex, { loader: diskLoader });
+    await sys.load();
+    const { skin: bounds, scene: src } = sys.models.kohen;
+    const { limbs } = bounds;
+    const upperarm = src.getObjectByName('upperarm_l').getWorldPosition(new THREE.Vector3());
+    const thigh = src.getObjectByName('thigh_l').getWorldPosition(new THREE.Vector3());
+    const pelvis = src.getObjectByName('pelvis').getWorldPosition(new THREE.Vector3());
+    const hand = src.getObjectByName('hand_l').getWorldPosition(new THREE.Vector3());
+    expect(limbs.shoulderX).toBeCloseTo(upperarm.x, 5);
+    expect(limbs.thighX[0]).toBeCloseTo(thigh.x, 5);
+    expect(limbs.hipY).toBeCloseTo(pelvis.y, 5);
+    expect(limbs.waist[0]).toBeCloseTo(pelvis.y + 0.03, 5);
+    expect(limbs.arms[1].axis.x).toBeCloseTo(-1, 2);
+    let body;
+    src.traverse((o) => { if (o.isSkinnedMesh && o.name !== 'Hair' && o.name !== 'Eyes' && !body) body = o; });
+    const painted = sys.models.kohen.roles.yisrael.get(body.geometry.uuid);
+    const p0 = body.geometry.attributes.position, p1 = painted.attributes.position, n1 = painted.attributes.normal;
+    const col = painted.attributes.color;
+    const v0 = new THREE.Vector3(), v1 = new THREE.Vector3(), n = new THREE.Vector3(), radial = new THREE.Vector3();
+    let torso = 0, moved = 0, hem = 0, belt = 0, boundary = 0;
+    for (let i = 0; i < p0.count; i++) {
+      v0.fromBufferAttribute(p0, i);
+      v1.fromBufferAttribute(p1, i);
+      const skinV = v0.y > bounds.headY || v0.y < bounds.ankleY || Math.abs(v0.x) > hand.x - 0.01;
+      if (skinV) {
+        expect(v0.distanceTo(v1), `skin vertex ${i} moved`).toBe(0);
+        continue;
+      }
+      const d = v1.distanceTo(v0);
+      expect(d).toBeLessThanOrEqual(0.0301);
+      const nearSkin = bounds.headY - v0.y < 0.03 || v0.y - bounds.ankleY < 0.03 || Math.abs(v0.x) > hand.x - 0.04;
+      if (nearSkin) boundary++;
+      else {
+        expect(d, `garment vertex ${i} puffed`).toBeGreaterThan(0.029);
+        moved++;
+      }
+      // Torso vertices at chest height: normal within ~45 deg of the radial direction and moved outward.
+      if (Math.abs(v0.x) < 0.12 && v0.y > pelvis.y + 0.2 && v0.y < pelvis.y + 0.4 && Math.abs(v0.z) > 0.05) {
+        n.fromBufferAttribute(n1, i);
+        radial.set(v0.x, 0, v0.z).normalize();
+        expect(n.dot(radial), `torso normal ${i}`).toBeGreaterThan(0.7);
+        expect(radial.dot(v1) - radial.dot(v0)).toBeGreaterThan(0.015);
+        torso++;
+      }
+      const hex = new THREE.Color(col.getX(i), col.getY(i), col.getZ(i)).getHex();
+      if (v0.y < bounds.ankleY + 0.12) { expect(hex).toBe(0x8a7a66); hem++; }
+      else if (Math.abs(v0.x) < 0.32 && v0.y > pelvis.y + 0.03 && v0.y < pelvis.y + 0.11) { expect(hex).toBe(0x5a4632); belt++; }
+      else expect(hex).toBe(0xd8d0c0);
+    }
+    expect(torso).toBeGreaterThan(20);
+    expect(moved).toBeGreaterThan(1000);
+    expect(boundary).toBeGreaterThan(10);
+    expect(hem).toBeGreaterThan(20);
+    expect(belt).toBeGreaterThan(20);
+    // A kohen's garment is linen with the avnet at the same band; the Kohen Gadol's meil is techeiles.
+    const kc = sys.models.kohen.roles.kohen.get(body.geometry.uuid).attributes.color;
+    const gc = sys.models.kohen.roles.kohenGadol.get(body.geometry.uuid).attributes.color;
+    const hexAt = (a, i) => new THREE.Color(a.getX(i), a.getY(i), a.getZ(i)).getHex();
+    const beltI = [...Array(p0.count).keys()].find((i) => Math.abs(p0.getX(i)) < 0.1 && p0.getY(i) > pelvis.y + 0.05 && p0.getY(i) < pelvis.y + 0.09);
+    expect(hexAt(kc, beltI)).toBe(0x7a2e3e);
+    expect(hexAt(gc, beltI)).toBe(0x1f3f8f);
     sys.dispose();
   });
 
@@ -331,6 +401,7 @@ describe('CharacterSystem', () => {
     camera.position.set(400, 1.7, 0);
     sys.update(1 / 60, camera, 720);
     for (const g of [kohen, gadol, sheep, walker]) expect(g.visible, g.name).toBe(false);
+    walker.userData.walker.s = 10; // a fixed start (makeWalker picks a random one): no ping-pong at the path's end
     const s0 = walker.userData.walker.s;
     for (let i = 0; i < 60; i++) sys.update(1 / 60, camera, 720);
     expect(walker.userData.walker.s - s0).toBeCloseTo(1, 3); // still walking while hidden

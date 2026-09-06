@@ -1,12 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { store } from '../store.js';
 
-// The scene's +x is north and -z is west. The camera faces -z at yaw 0.
+// The scene's +x is north and -z is west. The camera faces -z at yaw 0; a positive yaw
+// (rotation.y) turns it toward -x, south, so the quadrants run W, S, E, N.
 const POINTS = [
   { he: 'מערב', en: 'W' },
-  { he: 'צפון', en: 'N' },
-  { he: 'מזרח', en: 'E' },
   { he: 'דרום', en: 'S' },
+  { he: 'מזרח', en: 'E' },
+  { he: 'צפון', en: 'N' },
 ];
 
 export function Compass() {

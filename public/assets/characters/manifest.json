@@ -1,21 +1,34 @@
 {
   "files": {
     "kohen.glb": {
-      "pack": "universal-animation-library",
-      "page": "https://quaternius.itch.io/universal-animation-library",
+      "pack": "universal-base-characters",
+      "page": "https://quaternius.itch.io/universal-base-characters",
       "license": "CC0-1.0",
-      "zip": "Universal Animation Library[Standard].zip",
-      "zipSha256": "cc73fc4e495b82958207316596317a3f40b9fa38065bde1027937452da537724",
-      "entry": "Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb",
+      "zip": "Universal Base Characters[Standard].zip",
+      "zipSha256": "fdbf1804c90dfc1ea03e992bff7da2dfd1a79318e13270a660180f9308455f40",
+      "entry": "Universal Base Characters[Standard]/Base Characters/Godot - UE/Superhero_Male_FullBody.gltf",
+      "meshes": {
+        "MI_Superhero_Male": "Body",
+        "MI_Hair_1": "Hair",
+        "MI_Eyes": "Eyes"
+      },
+      "animations": {
+        "pack": "universal-animation-library",
+        "page": "https://quaternius.itch.io/universal-animation-library",
+        "license": "CC0-1.0",
+        "zip": "Universal Animation Library[Standard].zip",
+        "zipSha256": "cc73fc4e495b82958207316596317a3f40b9fa38065bde1027937452da537724",
+        "entry": "Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb"
+      },
       "clips": [
         "Idle_Loop",
         "Idle_Talking_Loop",
         "Walk_Loop"
       ],
       "height": null,
-      "use": "rigged human (the UAL mannequin, 1.8 m, 8.5k vertices): every kohen, the Kohen Gadol and the Yisraelim, with the materials replaced at load",
-      "bytes": 1624540,
-      "sha256": "b0dd07131d1b28a0ee0c204b959e1b0546dc3110e25194d177b2f396a8884a8a"
+      "use": "rigged human (the Universal Base Characters male body on the Universal Animation Library rig, 1.8 m, 8.5k vertices): every kohen, the Kohen Gadol and the Yisraelim, skin textured from the files beside it and the garments painted by vertex colour at load",
+      "bytes": 1562576,
+      "sha256": "8d8de52702079c360bab098ad5e4c348409d7572898fd221ef1af8b4f8f56c0c"
     },
     "sheep.glb": {
       "pack": "lowpoly-animated-animals",
@@ -48,6 +61,43 @@
       "sha256": "d4556dad1d61f0e0b779943c9751479d58e337123da9e6c7ad03a431eaf77636"
     }
   },
-  "fetchedAt": "2026-09-05",
-  "source": "https://quaternius.itch.io (CC0 1.0)"
+  "fetchedAt": "2026-09-06",
+  "source": "https://quaternius.itch.io (CC0 1.0)",
+  "textures": {
+    "kohen_skin.jpg": {
+      "pack": "universal-base-characters",
+      "source": "Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Superhero_Male_Dark.png",
+      "size": 1024,
+      "bytes": 51758,
+      "sha256": "ae856efb2d6b99ae58f64384d0bcf97d05672a6abf2d413ab12027abe7640f65"
+    },
+    "kohen_skin_normal.jpg": {
+      "pack": "universal-base-characters",
+      "source": "Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Superhero_Male_Normal.png",
+      "size": 1024,
+      "bytes": 101397,
+      "sha256": "e25e360f1f99f04d32390fbef49038a47ee5dfbe2374ae22baf895df16dac3d6"
+    },
+    "kohen_skin_rough.jpg": {
+      "pack": "universal-base-characters",
+      "source": "Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Superhero_Male_Roughness.png",
+      "size": 512,
+      "bytes": 39912,
+      "sha256": "e40066b7625983003b0dda355289eaed432912666db9a072935d2dd69c553a10"
+    },
+    "kohen_hair.jpg": {
+      "pack": "universal-base-characters",
+      "source": "Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Hair_1_BaseColor.png",
+      "size": 512,
+      "bytes": 30217,
+      "sha256": "84120b9610e6645b3b7bb03b5afb469992c273af0bd9d0d71a568143440758b8"
+    },
+    "kohen_eyes.png": {
+      "pack": "universal-base-characters",
+      "source": "Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Eye_Brown.png",
+      "size": 256,
+      "bytes": 33024,
+      "sha256": "3eb5ea4e8dc0cf1d0b2d774c0665e8418e3963039b7278d4c7ebd9aba4e9045d"
+    }
+  }
 }

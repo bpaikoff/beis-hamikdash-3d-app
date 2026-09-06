@@ -39,18 +39,34 @@ own License.txt reads "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication. Mod
 
 Each file is one model taken out of the pack's zip and reduced with
 `node scripts/fetch_assets.mjs --characters` (three's loaders and GLTFExporter in node):
-the human keeps only the clips listed, the FBX animals are converted to GLB, scaled to
-metres and their material groups merged. Nothing was resculpted or re-animated.
-`manifest.json` records the itch.io page, the zip's sha256, the source entry and the
-sha256 of every output file; `--verify` checks them.
+the human is the Universal Base Characters body carrying only the clips listed from the
+Universal Animation Library (same rig), with its textures moved out of the glb into the
+files below; the FBX animals are converted to GLB, scaled to metres and their material
+groups merged. Nothing was resculpted or re-animated. `manifest.json` records the
+itch.io page, the zip's sha256, the source entry and the sha256 of every output file;
+`--verify` checks them.
 
 | File | Pack (itch.io) | Source entry | Clips kept | Size | Used for |
 |---|---|---|---|---|---|
-| `kohen.glb` | [universal-animation-library](https://quaternius.itch.io/universal-animation-library) | `Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb` | Idle_Loop, Idle_Talking_Loop, Walk_Loop | 1586 KB | rigged human (the UAL mannequin, 1.8 m, 8.5k vertices): every kohen, the Kohen Gadol and the Yisraelim, with the materials replaced at load |
+| `kohen.glb` | [universal-base-characters](https://quaternius.itch.io/universal-base-characters) (body), [universal-animation-library](https://quaternius.itch.io/universal-animation-library) (clips) | `Universal Base Characters[Standard]/Base Characters/Godot - UE/Superhero_Male_FullBody.gltf` + `Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb` | Idle_Loop, Idle_Talking_Loop, Walk_Loop | 1526 KB | rigged human (the Universal Base Characters male body on the Universal Animation Library rig, 1.8 m, 8.5k vertices): every kohen, the Kohen Gadol and the Yisraelim, skin textured from the files beside it and the garments painted by vertex colour at load |
 | `sheep.glb` | [lowpoly-animated-animals](https://quaternius.itch.io/lowpoly-animated-animals) | `FBX/Sheep.fbx` | Idle | 188 KB | sheep (also the goats, recoloured and narrowed) at the Tamid pen |
 | `bull.glb` | [lowpoly-animated-animals](https://quaternius.itch.io/lowpoly-animated-animals) | `FBX/Cow.fbx` | Idle | 234 KB | bull (the pack's cow, recoloured dark) at the Tamid pen |
 
-Total: 2.0 MB. Fetched 2026-09-05.
+Models: 1.9 MB. Fetched 2026-09-06.
+
+The textures the human is drawn with are the pack's own PNGs, resized (Python PIL,
+`scripts/resize_textures.py`, Lanczos) and re-encoded; the roughness map is the G channel
+of the pack's packed metallic-roughness texture. Nothing was repainted.
+
+| File | Pack (itch.io) | Source entry | Size | Bytes |
+|---|---|---|---|---|
+| `kohen_skin.jpg` | [universal-base-characters](https://quaternius.itch.io/universal-base-characters) | `Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Superhero_Male_Dark.png` | 1024² | 51 KB |
+| `kohen_skin_normal.jpg` | [universal-base-characters](https://quaternius.itch.io/universal-base-characters) | `Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Superhero_Male_Normal.png` | 1024² | 99 KB |
+| `kohen_skin_rough.jpg` | [universal-base-characters](https://quaternius.itch.io/universal-base-characters) | `Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Superhero_Male_Roughness.png` | 512² | 39 KB |
+| `kohen_hair.jpg` | [universal-base-characters](https://quaternius.itch.io/universal-base-characters) | `Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Hair_1_BaseColor.png` | 512² | 30 KB |
+| `kohen_eyes.png` | [universal-base-characters](https://quaternius.itch.io/universal-base-characters) | `Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Eye_Brown.png` | 256² | 32 KB |
+
+Textures: 250 KB.
 
 ## Procedural textures (`public/textures/`)
 

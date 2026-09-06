@@ -17,14 +17,21 @@
  * --characters fetches the CC0 Quaternius packs from itch.io (their "download" flow is a
  * POST for a download page, then a POST per file; no account needed), takes the one file
  * the app uses out of each zip and reduces it with three's own loaders/exporter (node):
- * the Universal Animation Library GLB keeps only the three clips the kohanim play (7.6 MB
- * -> 1.4 MB), and the farm-animal FBX files become GLBs scaled to metres with the feet on
- * y 0 and their material groups merged (two or three draw calls per animal). Output goes
- * to public/assets/characters/<name>.glb with its own manifest.json.
+ * the human is the Universal Base Characters male body (a .gltf + .bin in the zip) with
+ * the three clips the kohanim play taken from the Universal Animation Library GLB (same
+ * 65-joint rig, checked by name before the clips are retargeted), its textures stripped
+ * from the glb and written next to it as small JPEG/PNG files resized with Python PIL
+ * (scripts/resize_textures.py, run through child_process: no npm dependency); the
+ * farm-animal FBX files become GLBs scaled to metres with the feet on y 0 and their
+ * material groups merged (two or three draw calls per animal). Output goes to
+ * public/assets/characters/<name>.glb (+ the texture files) with its own manifest.json.
+ *   node scripts/fetch_assets.mjs --characters --only kohen   # one character
  */
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { inflateRawSync } from 'node:zlib';
 
@@ -41,14 +48,38 @@ const charManifestPath = resolve(charDir, 'manifest.json');
  * clips kept (by name, as they appear in the source); `height` the height in metres the
  * FBX animals are scaled to (they come in Blender's centimetre units and the loader's
  * scale is not trustworthy), with the feet on y 0 and the model facing +z.
+ *
+ * The human is a two-pack spec: `entry` is the .gltf body (its .bin is the sibling zip
+ * entry; the image entries are not loaded, the textures leave the glb), `animations` the
+ * pack/zip/entry the clips come from (the two rigs must have identical joint names, in
+ * order; the script refuses otherwise), `meshes` renames the primitives by their material
+ * name, and `textures` are written as separate files: `source` is a PNG in the entry's
+ * directory, `size` the output width (square), `quality` JPEG quality (a .png output keeps
+ * its alpha), `channel` picks one channel of a packed map (the glTF metallic-roughness
+ * texture carries roughness in G, which is the channel three's roughnessMap reads).
  */
 export const CHARACTERS = {
   kohen: {
-    pack: 'universal-animation-library',
-    zip: 'Universal Animation Library[Standard].zip',
-    entry: 'Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb',
+    pack: 'universal-base-characters',
+    zip: 'Universal Base Characters[Standard].zip',
+    entry: 'Universal Base Characters[Standard]/Base Characters/Godot - UE/Superhero_Male_FullBody.gltf',
+    // Material name -> primitive name the app uses. MI_Hair_1 is the pack's eyebrow strip
+    // (646 vertices on the brow, no hair cap comes with the body); the app calls it Hair.
+    meshes: { MI_Superhero_Male: 'Body', MI_Hair_1: 'Hair', MI_Eyes: 'Eyes' },
+    animations: {
+      pack: 'universal-animation-library',
+      zip: 'Universal Animation Library[Standard].zip',
+      entry: 'Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb',
+    },
     clips: ['Idle_Loop', 'Idle_Talking_Loop', 'Walk_Loop'],
-    use: 'rigged human (the UAL mannequin, 1.8 m, 8.5k vertices): every kohen, the Kohen Gadol and the Yisraelim, with the materials replaced at load',
+    textures: {
+      'kohen_skin.jpg': { source: 'T_Superhero_Male_Dark.png', size: 1024, quality: 85 },
+      'kohen_skin_normal.jpg': { source: 'T_Superhero_Male_Normal.png', size: 1024, quality: 85 },
+      'kohen_skin_rough.jpg': { source: 'T_Superhero_Male_Roughness.png', size: 512, quality: 85, channel: 'G' },
+      'kohen_hair.jpg': { source: 'T_Hair_1_BaseColor.png', size: 512, quality: 85 },
+      'kohen_eyes.png': { source: 'T_Eye_Brown.png', size: 256 },
+    },
+    use: 'rigged human (the Universal Base Characters male body on the Universal Animation Library rig, 1.8 m, 8.5k vertices): every kohen, the Kohen Gadol and the Yisraelim, skin textured from the files beside it and the garments painted by vertex colour at load',
   },
   sheep: {
     pack: 'lowpoly-animated-animals',
@@ -171,8 +202,27 @@ project, same licence as the code.
 function charactersSection(chars) {
   const files = Object.entries(chars.files ?? {});
   if (!files.length) return '';
-  const rows = files.map(([file, f]) => `| \`${file}\` | [${f.pack}](${f.page}) | \`${f.entry}\` | ${f.clips.join(', ')} | ${(f.bytes / 1024).toFixed(0)} KB | ${f.use} |`);
+  const link = (f) => `[${f.pack}](${f.page})`;
+  const rows = files.map(([file, f]) => {
+    const packs = f.animations ? `${link(f)} (body), ${link(f.animations)} (clips)` : link(f);
+    const entries = f.animations ? `\`${f.entry}\` + \`${f.animations.entry}\`` : `\`${f.entry}\``;
+    return `| \`${file}\` | ${packs} | ${entries} | ${f.clips.join(', ')} | ${(f.bytes / 1024).toFixed(0)} KB | ${f.use} |`;
+  });
+  const textures = Object.entries(chars.textures ?? {});
+  const texRows = textures.map(([file, t]) => `| \`${file}\` | [${t.pack}](${itchPage(t.pack)}) | \`${t.source}\` | ${t.size}² | ${(t.bytes / 1024).toFixed(0)} KB |`);
+  const texTotal = textures.reduce((n, [, t]) => n + t.bytes, 0);
   const total = files.reduce((n, [, f]) => n + f.bytes, 0);
+  const texSection = textures.length ? `
+The textures the human is drawn with are the pack's own PNGs, resized (Python PIL,
+\`scripts/resize_textures.py\`, Lanczos) and re-encoded; the roughness map is the G channel
+of the pack's packed metallic-roughness texture. Nothing was repainted.
+
+| File | Pack (itch.io) | Source entry | Size | Bytes |
+|---|---|---|---|---|
+${texRows.join('\n')}
+
+Textures: ${(texTotal / 1024).toFixed(0)} KB.
+` : '';
   return `## Rigged characters (\`public/assets/characters/\`)
 
 The animated figures are by [Quaternius](https://quaternius.com), released under
@@ -183,17 +233,19 @@ own License.txt reads "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication. Mod
 
 Each file is one model taken out of the pack's zip and reduced with
 \`node scripts/fetch_assets.mjs --characters\` (three's loaders and GLTFExporter in node):
-the human keeps only the clips listed, the FBX animals are converted to GLB, scaled to
-metres and their material groups merged. Nothing was resculpted or re-animated.
-\`manifest.json\` records the itch.io page, the zip's sha256, the source entry and the
-sha256 of every output file; \`--verify\` checks them.
+the human is the Universal Base Characters body carrying only the clips listed from the
+Universal Animation Library (same rig), with its textures moved out of the glb into the
+files below; the FBX animals are converted to GLB, scaled to metres and their material
+groups merged. Nothing was resculpted or re-animated. \`manifest.json\` records the
+itch.io page, the zip's sha256, the source entry and the sha256 of every output file;
+\`--verify\` checks them.
 
 | File | Pack (itch.io) | Source entry | Clips kept | Size | Used for |
 |---|---|---|---|---|---|
 ${rows.join('\n')}
 
-Total: ${(total / 1024 / 1024).toFixed(1)} MB. Fetched ${chars.fetchedAt ?? 'n/a'}.
-
+Models: ${(total / 1024 / 1024).toFixed(1)} MB. Fetched ${chars.fetchedAt ?? 'n/a'}.
+${texSection}
 `;
 }
 
@@ -233,7 +285,8 @@ function verify(manifest, chars = loadCharManifest()) {
     for (const [file, f] of Object.entries(s.files)) check(resolve(outDir, set, file), f, `${set}/${file}`);
   }
   for (const [file, f] of Object.entries(chars.files ?? {})) check(resolve(charDir, file), f, `characters/${file}`);
-  console.log(`${Object.keys(manifest.sets).length} sets, ${Object.keys(chars.files ?? {}).length} character files, ${(total / 1024 / 1024).toFixed(1)} MB, ${bad} problem(s)`);
+  for (const [file, t] of Object.entries(chars.textures ?? {})) check(resolve(charDir, file), t, `characters/${file}`);
+  console.log(`${Object.keys(manifest.sets).length} sets, ${Object.keys(chars.files ?? {}).length} character files, ${Object.keys(chars.textures ?? {}).length} character textures, ${(total / 1024 / 1024).toFixed(1)} MB, ${bad} problem(s)`);
   return bad === 0;
 }
 
@@ -269,10 +322,16 @@ async function itchDownload(pack, zipName) {
   const form = (csrf) => ({ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ csrf_token: csrf }) });
   const dl = await (await get(`${page}/download_url`, form(csrfOf(html)))).json();
   if (!dl.url) throw new Error(`${pack}: no download page (${JSON.stringify(dl)})`);
-  const dlHtml = await (await get(dl.url)).text();
-  const uploads = [...dlHtml.matchAll(/data-upload_id="(\d+)"[\s\S]*?<strong title="([^"]+)"/g)].map((m) => ({ id: m[1], name: m[2] }));
+  // itch occasionally serves the download page with no file list (seen right after a large
+  // download); a fresh request a few seconds later has it.
+  let dlHtml = '', uploads = [];
+  for (let attempt = 0; attempt < 4 && !uploads.length; attempt++) {
+    if (attempt) await new Promise((r) => setTimeout(r, 3000 * attempt));
+    dlHtml = await (await get(dl.url)).text();
+    uploads = [...dlHtml.matchAll(/data-upload_id="(\d+)"[\s\S]*?<strong title="([^"]+)"/g)].map((m) => ({ id: m[1], name: m[2] }));
+  }
   const up = uploads.find((u) => u.name === zipName);
-  if (!up) throw new Error(`${pack}: zip "${zipName}" not offered; found ${uploads.map((u) => u.name).join(', ')}`);
+  if (!up) throw new Error(`${pack}: zip "${zipName}" not offered; found ${uploads.map((u) => u.name).join(', ') || 'no files'}`);
   const file = await (await get(`${page}/file/${up.id}?source=view_game&as_prop=1`, { ...form(csrfOf(dlHtml)), headers: { ...form('').headers, Referer: dl.url } })).json();
   if (!file.url) throw new Error(`${pack}: no file url (${JSON.stringify(file)})`);
   const res = await fetch(file.url, { headers: { 'User-Agent': UA } });
@@ -280,32 +339,91 @@ async function itchDownload(pack, zipName) {
   return Buffer.from(await res.arrayBuffer());
 }
 
+/** Vertex attributes the app reads; the rest (extra UV sets, the pack's vertex colours) leave the glb. */
+const KEEP_ATTRIBUTES = new Set(['position', 'normal', 'uv', 'skinIndex', 'skinWeight']);
+
 /**
- * Reduce a source model to what the app loads, with three in node. Returns the GLB bytes
- * and the clip names it holds. Both paths export with GLTFExporter (binary), so the file
- * on disk is plain glTF 2.0 with no extensions (no Draco, no KTX2).
+ * Reduce a source model to what the app loads, with three in node. Returns the GLB bytes.
+ * All paths export with GLTFExporter (binary), so the file on disk is plain glTF 2.0 with
+ * no extensions (no Draco, no KTX2). `entries` is the zip the entry came from (a .gltf
+ * needs its sibling .bin) and `clipBytes` the GLB the clips are taken from when the spec
+ * has `animations`.
  */
-async function reduceModel(spec, bytes) {
+async function reduceModel(spec, bytes, { entries, clipBytes } = {}) {
   const THREE = await import('three');
   const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
   const { GLTFExporter } = await import('three/examples/jsm/exporters/GLTFExporter.js');
-  // The examples loaders/exporter expect a browser: `self` for the loaders, FileReader for GLTFExporter's GLB packing.
+  // The examples loaders/exporter expect a browser: `self` and ProgressEvent for the loaders, FileReader for GLTFExporter's GLB packing.
   globalThis.self ??= globalThis;
+  globalThis.ProgressEvent ??= class { constructor(type, init) { Object.assign(this, init, { type }); } };
   globalThis.FileReader ??= class {
     readAsArrayBuffer(blob) { blob.arrayBuffer().then((b) => { this.result = b; this.onloadend?.(); }); }
   };
-  const ab = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  const toAB = (b) => b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+  const ab = toAB(bytes);
   const exportGlb = (root, animations) => new Promise((res, rej) => new GLTFExporter().parse(root, (out) => res(Buffer.from(out)), rej, { binary: true, animations }));
+  const parseGlb = (buf) => new Promise((res, rej) => new GLTFLoader().parse(toAB(buf), '', res, rej));
   const pickClips = (all, names, label) => names.map((n) => {
     const c = all.find((a) => a.name === n || a.name === `Armature|${n}`);
     if (!c) throw new Error(`${label}: no clip "${n}" in ${all.map((a) => a.name).join(', ')}`);
     c.name = n;
     return c;
   });
+  const skinnedMeshes = (root) => { const out = []; root.traverse((o) => { if (o.isSkinnedMesh) out.push(o); }); return out; };
 
   if (spec.entry.endsWith('.glb')) {
-    const g = await new Promise((res, rej) => new GLTFLoader().parse(ab, '', res, rej));
+    const g = await parseGlb(bytes);
     return exportGlb(g.scene, pickClips(g.animations, spec.clips, spec.entry));
+  }
+
+  if (spec.entry.endsWith('.gltf')) {
+    // A .gltf whose buffers and images are sibling zip entries. The .bin is served to the
+    // loader as a data: URL through the LoadingManager; the images are dropped from the
+    // JSON before parsing (node cannot decode them and the textures leave the glb anyway).
+    const dir = spec.entry.replace(/[^/]*$/, '');
+    const json = JSON.parse(Buffer.from(ab).toString('utf8'));
+    for (const m of json.materials ?? []) {
+      delete m.normalTexture; delete m.occlusionTexture; delete m.emissiveTexture;
+      delete m.pbrMetallicRoughness?.baseColorTexture; delete m.pbrMetallicRoughness?.metallicRoughnessTexture;
+    }
+    delete json.images; delete json.textures; delete json.samplers;
+    const manager = new THREE.LoadingManager();
+    manager.setURLModifier((url) => {
+      const data = entries.get(dir + url);
+      if (!data) throw new Error(`${spec.entry}: references ${url}, not in the zip`);
+      return `data:application/octet-stream;base64,${data.toString('base64')}`;
+    });
+    const body = await new Promise((res, rej) => new GLTFLoader(manager).parse(JSON.stringify(json), '', res, rej));
+    const meshes = skinnedMeshes(body.scene);
+    let prims = 0;
+    body.scene.traverse((o) => { if (o.isMesh) prims++; });
+    if (prims !== meshes.length) throw new Error(`${spec.entry}: ${prims - meshes.length} unskinned mesh(es)`);
+    for (const m of meshes) {
+      const name = spec.meshes?.[m.material.name];
+      if (!name) throw new Error(`${spec.entry}: mesh ${m.name} has material ${m.material.name}, not in spec.meshes`);
+      m.name = name;
+      for (const a of Object.keys(m.geometry.attributes)) if (!KEEP_ATTRIBUTES.has(a)) m.geometry.deleteAttribute(a);
+      m.geometry.deleteAttribute('color');
+      m.material.vertexColors = false;
+      for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap', 'emissiveMap']) m.material[k] = null;
+    }
+    const found = Object.values(spec.meshes ?? {}).filter((n) => !meshes.find((m) => m.name === n));
+    if (found.length) throw new Error(`${spec.entry}: no mesh for ${found.join(', ')}`);
+    // Clips from the animation pack: the rigs must be the same skeleton, joint for joint.
+    const anim = await parseGlb(clipBytes);
+    const jointNames = (root) => skinnedMeshes(root)[0].skeleton.bones.map((b) => b.name);
+    const bodyJoints = jointNames(body.scene), clipJoints = jointNames(anim.scene);
+    if (JSON.stringify(bodyJoints) !== JSON.stringify(clipJoints)) {
+      const diff = bodyJoints.filter((n, i) => clipJoints[i] !== n).slice(0, 5);
+      throw new Error(`${spec.entry}: skeleton (${bodyJoints.length} joints) differs from ${spec.animations.entry} (${clipJoints.length}): ${diff.join(', ')}...`);
+    }
+    const clips = pickClips(anim.animations, spec.clips, spec.animations.entry);
+    for (const c of clips) {
+      const missing = c.tracks.map((t) => t.name.split('.')[0]).filter((n) => !bodyJoints.includes(n));
+      if (missing.length) throw new Error(`${c.name}: tracks on nodes the body lacks: ${[...new Set(missing)].join(', ')}`);
+    }
+    process.stdout.write(`${bodyJoints.length} joints match, ${meshes.map((m) => `${m.name} ${m.geometry.attributes.position.count}v`).join(', ')} -> `);
+    return exportGlb(body.scene, clips);
   }
 
   const { FBXLoader } = await import('three/examples/jsm/loaders/FBXLoader.js');
@@ -343,31 +461,88 @@ async function reduceModel(spec, bytes) {
   return exportGlb(root, clips);
 }
 
-async function fetchCharacters(chars) {
+/**
+ * Resize the spec's texture PNGs (zip entries next to the model) with Python PIL, in one
+ * python3 call over a temp directory, and write them to public/assets/characters/.
+ * Returns manifest entries keyed by file name.
+ */
+function writeTextures(spec, entries) {
+  const dir = spec.entry.replace(/[^/]*$/, '');
+  const tmp = mkdtempSync(join(tmpdir(), 'bhm-textures-'));
+  try {
+    const jobs = Object.entries(spec.textures).map(([file, t]) => {
+      const source = dir + t.source;
+      const png = entries.get(source);
+      if (!png) throw new Error(`${spec.zip}: no texture entry ${source}`);
+      writeFileSync(join(tmp, t.source), png);
+      return { src: join(tmp, t.source), dst: join(tmp, file), size: t.size, quality: t.quality ?? 85, channel: t.channel ?? null, source };
+    });
+    const py = spawnSync('python3', [resolve(root, 'scripts/resize_textures.py')], { input: JSON.stringify(jobs), encoding: 'utf8' });
+    if (py.status !== 0) throw new Error(`resize_textures.py failed (python3 with Pillow is required):\n${py.stderr || py.error}`);
+    const out = {};
+    for (const [file, t] of Object.entries(spec.textures)) {
+      const data = readFileSync(join(tmp, file));
+      writeFileSync(resolve(charDir, file), data);
+      out[file] = { pack: spec.pack, source: dir + t.source, size: t.size, bytes: data.length, sha256: sha256(data) };
+    }
+    return out;
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+}
+
+async function fetchCharacters(chars, only = null) {
   const zips = new Map();
-  mkdirSync(charDir, { recursive: true });
-  for (const [name, spec] of Object.entries(CHARACTERS)) {
-    const key = `${spec.pack}/${spec.zip}`;
+  const getZip = async (pack, zipName) => {
+    const key = `${pack}/${zipName}`;
     if (!zips.has(key)) {
-      process.stdout.write(`${spec.pack.padEnd(28)} ${spec.zip} downloading... `);
-      const zip = await itchDownload(spec.pack, spec.zip);
+      process.stdout.write(`${pack.padEnd(28)} ${zipName} downloading... `);
+      const zip = await itchDownload(pack, zipName);
       console.log(`${(zip.length / 1024 / 1024).toFixed(1)} MB`);
       zips.set(key, { zip, entries: readZip(zip) });
     }
-    const { zip, entries } = zips.get(key);
-    const src = entries.get(spec.entry);
-    if (!src) throw new Error(`${spec.zip}: no entry ${spec.entry}; has ${[...entries.keys()].slice(0, 20).join(', ')}`);
+    return zips.get(key);
+  };
+  const entryOf = (entries, zipName, entry) => {
+    const src = entries.get(entry);
+    if (!src) throw new Error(`${zipName}: no entry ${entry}; has ${[...entries.keys()].slice(0, 20).join(', ')}`);
+    return src;
+  };
+  mkdirSync(charDir, { recursive: true });
+  chars.textures ??= {};
+  for (const [name, spec] of Object.entries(CHARACTERS)) {
+    if (only && name !== only) continue;
+    const { zip, entries } = await getZip(spec.pack, spec.zip);
+    const src = entryOf(entries, spec.zip, spec.entry);
+    let animations = null, clipBytes = null;
+    if (spec.animations) {
+      const a = await getZip(spec.animations.pack, spec.animations.zip);
+      clipBytes = entryOf(a.entries, spec.animations.zip, spec.animations.entry);
+      animations = { pack: spec.animations.pack, page: itchPage(spec.animations.pack), license: 'CC0-1.0', zip: spec.animations.zip, zipSha256: sha256(a.zip), entry: spec.animations.entry };
+    }
     process.stdout.write(`  ${name.padEnd(8)} ${spec.entry} (${(src.length / 1024).toFixed(0)} KB) -> `);
-    const glb = await reduceModel(spec, src);
+    const glb = await reduceModel(spec, src, { entries, clipBytes });
     const file = `${name}.glb`;
     writeFileSync(resolve(charDir, file), glb);
     console.log(`${file} ${(glb.length / 1024).toFixed(0)} KB, clips ${spec.clips.join(', ')}`);
     chars.files[file] = {
       pack: spec.pack, page: itchPage(spec.pack), license: 'CC0-1.0', zip: spec.zip, zipSha256: sha256(zip),
-      entry: spec.entry, clips: spec.clips, height: spec.height ?? null, use: spec.use, bytes: glb.length, sha256: sha256(glb),
+      entry: spec.entry, ...(spec.meshes ? { meshes: spec.meshes } : {}), ...(animations ? { animations } : {}),
+      clips: spec.clips, height: spec.height ?? null, use: spec.use, bytes: glb.length, sha256: sha256(glb),
     };
+    if (spec.textures) {
+      const tex = writeTextures(spec, entries);
+      for (const [f, t] of Object.entries(tex)) {
+        chars.textures[f] = t;
+        console.log(`  ${''.padEnd(8)} ${t.source.replace(/^.*\//, '')} -> ${f} ${t.size}² ${(t.bytes / 1024).toFixed(0)} KB`);
+      }
+    }
   }
-  for (const file of Object.keys(chars.files)) if (!CHARACTERS[file.replace(/\.glb$/, '')]) delete chars.files[file];
+  if (!only) {
+    for (const file of Object.keys(chars.files)) if (!CHARACTERS[file.replace(/\.glb$/, '')]) delete chars.files[file];
+    const wanted = new Set(Object.values(CHARACTERS).flatMap((c) => Object.keys(c.textures ?? {})));
+    for (const file of Object.keys(chars.textures)) if (!wanted.has(file)) delete chars.textures[file];
+  }
   chars.fetchedAt = new Date().toISOString().slice(0, 10);
   chars.source = 'https://quaternius.itch.io (CC0 1.0)';
   writeFileSync(charManifestPath, JSON.stringify(chars, null, 2) + '\n');
@@ -383,7 +558,7 @@ if (isMain) {
   }
   if (args.includes('--characters')) {
     const chars = loadCharManifest();
-    await fetchCharacters(chars);
+    await fetchCharacters(chars, only);
     writeLicenses(manifest, chars);
     console.log(`wrote ${charManifestPath} and ${licensesPath}`);
     process.exit(0);

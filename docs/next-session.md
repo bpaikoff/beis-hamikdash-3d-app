@@ -7,23 +7,26 @@ Paste this (or point Claude at it) to resume:
 > `prod`). Read `CLAUDE.md` in the 3D repo for how rounds run, then `docs/backlog.md` for
 > the open items and `docs/content.md`'s review log for the last round's reasoning.
 >
-> State on 2026-09-06: all six sprints, three content rounds and the Cheil stairs are
-> merged; 70 walk routes and fuzz on all 7 areas pass; 238 vitest tests; hero view 945
-> draw calls under the 1200 CI budget. Verification recipe and the agent-round pattern
-> are in `CLAUDE.md` (content + geometry agents in parallel, then walkers, then a source
-> reviewer and a code reviewer, ≤ 3 agents at once).
+> State on 2026-09-06 (evening): all six sprints, four content/visual rounds and the Cheil
+> stairs are merged; 72 walk routes and fuzz on all areas pass; 253 vitest tests; hero view
+> ~940 draw calls under the 1200 CI budget. Round 4 closed the first-impression items
+> (heightfield hills with a Har HaMishcha ridge, Tadi's gable of two leaning stones, Ulam
+> steps in dressed limestone with shaded risers, solid Gazis benches, a walkable kiyor
+> kerb, the compass fixed). Verification recipe and the agent-round pattern are in
+> `CLAUDE.md` (build agents in parallel, then walkers, then a source reviewer and a code
+> reviewer, ≤ 3 agents at once).
 >
 > Pick from the backlog, in this order unless told otherwise:
-> 1. Visual fidelity a visitor notices first: the flat pyramid hills (a real terrain
->    mesh or a skyline), the untextured Ulam steps, the Tadi gate's lintel box (Middot
->    2:3: two leaning stones, no lintel), non-colliding benches and the kiyor rim.
-> 2. Characters: replace the mannequin kohanim with a textured rigged human (the
+> 1. Characters: replace the mannequin kohanim with a textured rigged human (the
 >    Quaternius Universal Base Characters download was blocked; try again or another CC0
 >    source), keep `CharacterSystem`'s API, add a distance LOD for skinned meshes.
-> 3. Content still unresolved: the Middot 1:9 mikveh passage from Beis HaMoked's
+> 2. Content still unresolved: the Middot 1:9 mikveh passage from Beis HaMoked's
 >    north-west chamber, Shaar HaNitzotz's wicket to the Cheil, and a second reader for
 >    the Yoma 19a Avtinas/Palhedrin assignment.
-> 4. Sky: a sky-based PMREM so dawn and dusk reach the stone in the hero view.
+> 3. Sky: a sky-based PMREM so dawn and dusk reach the stone in the hero view.
+> 4. Small visual leftovers from round 4 (`docs/backlog.md`): the sand normal map's
+>    ripple on the near hills, the `ulam_facade` view spawning on the altar top, the
+>    muchni post pinning a `?cam=` start at (-27, -65).
 > 5. When the app is "closer to perfect": DNS for mikdash.tzadek.ai (CNAME `mikdash` ->
 >    `4bae3oiu.up.railway.app`) and the tzadek.ai landing page link.
 >

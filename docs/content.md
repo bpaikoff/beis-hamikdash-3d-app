@@ -266,6 +266,64 @@ after the first frame, `?tour=tamid&stop=5` starts at a stop (1-based); the star
 
 ## Review log
 
+### 2026-09-06 — Round 4 (visual fidelity: hills, Tadi, Ulam steps, benches, kiyor rim)
+
+Three build agents in worktrees, then two read-only reviewers; no position moved.
+
+- **Terrain** (`EnvironmentBuilder`): the eight six-sided cones and the flat ground quad
+  are one heightfield mesh (`terrainHeight(x, z, hills)`: cosine bumps at the seeded
+  `hillPlacements()` with 1.6-radius feet, plus three octaves of seeded value noise,
+  ±1.5 m; exactly 0 within the walkable ring + 15 m, blended over 40 m beyond; vertex
+  colours from sand to scrub and rock; 6 m cells out to the farthest foot, 16 m beyond,
+  ~52k triangles in the floor collider). The east hill is stretched 3.2× along x into a
+  north-south ridge for Har HaMishcha (Middot 2:4; the Mount of Olives per Bartenura and
+  Tiferes Yisrael; Parah 3:6's causeway is not built); a reconstruction, no source gives
+  its position, length or height. `RENDER_DISTANCE` 400 → 550, fog end 352 → 534 m.
+- **Shaar Tadi** (`CourtBuilder.wallRunA` `gable: { rise, t, proud }`, `gableWallA`,
+  `gableStonesA`; `HarHaBayisBuilder.tadiGate`): the wall over the opening is an extruded
+  piece with an inverted-V notch and two 1-amah slabs lean from the jamb tops (6.5) to a
+  ridge 3.1 higher (31.8°, tops at 10.78, 0.72 under the wall top); `gateA` keeps the
+  jambs and drops the lintel (`frameTop`). `shaar_tadi.geometry.notes` states the two
+  readings of Middot 2:3's שתי אבנים מוטות זו על גב זו: the gable (Rambam's diagram,
+  Tiferes Yisrael) that is built, and the Rash's two hollowed blocks set one on the other
+  (Tosafos Yom Tov), which would have a lintel. Pitch and thickness are a reconstruction.
+- **Ulam steps** (`HeichalBuilder.buildMaalosUlam`): `marbleW` (Marble021, a near-uniform
+  white with flat normals) rendered the twelve 0.25 m steps as one grey slope; they are now
+  `stoneFine` dressed limestone with an instanced shaded riser facing (`stoneRiser`, a
+  polygon offset). Middot 3:6 gives count and sizes only; Sukkah 51b / Bava Basra 4a's
+  shaisha and marmara describe Herod's wall courses, not floors or flights, so the material
+  is a reconstruction and the Ulam floor keeps its (equally unsourced) white marble.
+- **Gazis benches** (`AzaraBuilder.buildLishkasHagazis`): three `blockA` tiers, a LIP over
+  the floor (0.8, 0.55, 0.3 m; the top blocks, the lower two are stepped onto). The comment
+  no longer claims a "half-circle facing east" from Sanhedrin 4:3, which gives only the
+  half-circle "like half a round threshing floor" with no direction and no tiers; the
+  straight tiers stand in for it (three rows before the judges, Sanhedrin 4:4; no sitting
+  in the Azarah, Yoma 25a).
+- **Kiyor rim** (`KeilimBuilder.buildKiyor`): the 0.12 m cistern kerb is a walkable floor,
+  widened to 1.7 r so the centre can reach it past the laver's solid. Yoma 3:10 names only
+  the muchni; the wheel that sank the laver is Yoma 37a, the cistern Bartenura; the kerb is
+  a reconstruction (`kiyor.geometry.notes` corrected likewise).
+- **HUD**: the compass named south when facing north (a positive yaw turns the camera
+  toward -x); the quadrants run W, S, E, N.
+
+Reviewer findings applied: the rim route's south leg had ended outside the rim (the
+harness's `minY` accepts feet 0.5 m under the mass, so it cannot tell a 0.12 m kerb from
+the floor; `HeichalKeilim.test.js` now walks the approaches with the controller);
+`gableGeom` throws above 45°; tests read `TADI_GABLE_RISE`, `TADI_STONE_T` and `LIP` from
+the builders. Noted for the backlog: at (-27, -65) on the court `collides()` is already
+true (a knee-high mass, the muchni, within the player radius), reachable only by `?cam=`.
+
+Verification: `npm run lint` (the one pre-existing warning), 253 tests, `npm run build`,
+196 refs verified; all 72 routes walked in five batches (three concurrent, then the two
+outside batches): `azarah_hug_avtinas` failed three steps in the 22-route batch and
+passed alone (load flake); `cheil_ring` failed at the foot of the twelve steps in the
+batch and alone, a route flaw (its corner waypoint was reached 1.2 m short, inside the
+flight's span) fixed with a tight reach. Fuzz 40 starts × 3 walks on all eight areas,
+0 failing. Screenshots on the final build: `hero` 943 draw calls (budget 1200),
+`ulam_steps_altar`, `ulam_steps_low`, `kiyor_east`, `gazis_benches`, `gazis_well`,
+`tadi_outside`, `tadi_gable`, `tadi_inside`, `hills_east/north/south/west`, `ridge_se`,
+`corner_se_outside`, `shushan_outside`, `mizbeach_kevesh`, all read.
+
 ### 2026-09-05 — GEO-D (the Cheil stairs)
 
 The PW1 walker found Beis HaMoked's Cheil gate and Lishkas HaGazis' chol door opening

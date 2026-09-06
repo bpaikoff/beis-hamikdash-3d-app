@@ -31,6 +31,10 @@ stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
   a draw call); `ulam_facade` (`?at=maalos_ulam`) spawns on the altar top, so that view
   never shows the steps (`ulam_steps_altar` and `ulam_steps_low` do); the `?at=` back-off
   in `TempleGame` could stand beside the altar instead.
+- Standing at (-27, -65) amos on the court, west of the laver, `PlayerController.collides()`
+  is already true (the muchni's post within the player radius), so the controller refuses
+  every move; reachable only by `?cam=`. A half-amah nudge of the post or a smaller solid
+  would clear it.
 - Beis HaMoked's vestibule floor runs past flight A's outer wall into a dead-end pocket
   under the hall floor (x 68.5..75.75, z -5.25..-3); open, no drop, harmless.
 

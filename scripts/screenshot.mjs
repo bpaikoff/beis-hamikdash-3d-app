@@ -47,6 +47,10 @@ const VIEWS = [
   // the Ulam steps low from the court's south lane beside the kiyor (their risers in profile).
   { name: 'gazis_benches', cam: '-34.75,9.8,-37,17,-8' },
   { name: 'ulam_steps_low', cam: '-13,9.25,-18,-56,-6' },
+  // The flight from the altar's west edge (its top at 12.55 m; the top rovad is 1.5 m lower),
+  // looking down-west at the risers: `ulam_facade` (?at=maalos_ulam) stands on the altar too but
+  // level, so the steps are under its frame and it sees the altar top and the Ulam only.
+  { name: 'ulam_steps_altar', cam: '0,14.25,-17.5,0,-24' },
   { name: 'slaughter_south', cam: '20,10.5,-5,-49,-8' },
   { name: 'avtinas_storey', cam: '31.9,20.5,-16.6,0,-6' },
   { name: 'madichin_stair', cam: '28,9.75,-40,-53,5' }, // the stair to the terrace from inside the Madichin, with its balustrade

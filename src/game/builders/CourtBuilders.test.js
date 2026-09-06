@@ -6,6 +6,7 @@ import { HarHaBayisBuilder } from './HarHaBayisBuilder.js';
 import { levelWorldY, byId, worldPos } from '../../content/index.js';
 import { toWorld, AMAH } from '../../content/units.js';
 import { CONFIG } from '../../config.js';
+import { PlayerController } from '../PlayerController.js';
 
 const MAT_KEYS = ['stone', 'stonePolished', 'gold', 'goldEng', 'copper', 'copperP', 'cedar', 'acacia', 'marbleW', 'marbleR', 'paroches', 'ground', 'floor', 'mosaic', 'water', 'altar'];
 
@@ -336,20 +337,151 @@ describe('court builders', () => {
     expect(meshes + instanced).toBeLessThan(900);
   });
 
-  it("stands Tadi's leaning stones proud of both faces of the north wall, over the opening", () => {
-    // Middot 2:3: no lintel, two stones leaning on each other. The wall (x 197.5 .. 203.5)
-    // is built over the opening, so the stones must show on its faces or they are buried.
-    const g = built.scene.children.find((o) => o.userData.entryId === 'shaar_tadi' && o.userData.part === 'leaning stones');
-    expect(g).toBeTruthy();
-    const box = new THREE.Box3().setFromObject(g);
+  /** Tadi: the opening's top (y 6.5), the ridge of the stones' undersides and of their tops, in world metres. */
+  function tadiLevels() {
+    const gate = byId.shaar_tadi;
+    const top = gate.position.y + gate.geometry.h; // 6.5
+    const rise = 3.1; // TADI_GABLE_RISE (HarHaBayisBuilder)
+    const theta = Math.atan2(rise, gate.geometry.w / 2);
+    const y = (a) => toWorld({ x: 0, y: a, z: 0 })[1];
+    return { top: y(top), ridge: y(top + rise), ridgeTop: y(top + rise + 1 / Math.cos(theta)), wallTop: y(11.5), theta };
+  }
+
+  /** Every visible mesh of the mount's wall and Tadi (the groups tagged har_habayis wall / shaar_tadi). */
+  function tadiMeshes() {
+    const groups = built.scene.children.filter((o) => o.userData.entryId === 'shaar_tadi' || (o.userData.entryId === 'har_habayis' && o.userData.part === 'wall'));
+    const meshes = [];
+    for (const g of groups) g.traverse((o) => { if (o.isMesh) meshes.push(o); });
+    return meshes;
+  }
+
+  /**
+   * Every face a downward ray at content (x, z) crosses, from `fromY` metres, nearest
+   * first. Undersides count too (the raycaster culls back faces for a FrontSide material,
+   * so the materials are double-sided for the cast).
+   */
+  function hitsDown(meshes, x, z, fromY) {
+    const [wx, wz] = xz(x, z);
+    ray.set(new THREE.Vector3(wx, fromY, wz), down);
+    ray.far = fromY + 100;
+    const sides = meshes.map((m) => [m.material, m.material.side]);
+    for (const m of meshes) m.material.side = THREE.DoubleSide;
+    try {
+      return ray.intersectObjects(meshes, false).map((h) => ({ y: h.point.y, name: h.object.name }));
+    } finally {
+      for (const [m, side] of sides) m.side = side;
+    }
+  }
+
+  it("leaves Tadi's opening clear up to the two leaning stones, with no lintel (Middot 2:3)", () => {
+    // In the wall's plane (x 200.5, the middle of the 6-thick north wall) at the gate's
+    // centre and 3 amos to each side, the first thing under a ray from above the wall top
+    // is a stone's top, and nothing spans the opening between its top and the underside
+    // of the stones: the old box from y 6.5 to the wall top is gone.
+    const L = tadiLevels();
+    const meshes = tadiMeshes();
+    const gate = byId.shaar_tadi;
+    for (const dz of [0, -3, 3]) {
+      const hits = hitsDown(meshes, 200.5, gate.position.z + dz, L.wallTop + 2);
+      const stones = hits.filter((h) => /leaning stone/.test(h.name));
+      const rest = hits.filter((h) => !/leaning stone/.test(h.name));
+      expect(stones.length, `no stone over Tadi at dz ${dz}`).toBeGreaterThan(0);
+      // Underside of the stones over this point (the inverted V) and their top, one slab up.
+      const under = L.top + (L.ridge - L.top) * (1 - Math.abs(dz) / (gate.geometry.w / 2));
+      const over = under + (L.ridgeTop - L.ridge);
+      expect(Math.max(...stones.map((h) => h.y)), `stone top at dz ${dz}`).toBeCloseTo(over, 2);
+      expect(Math.min(...stones.map((h) => h.y)), `stone underside at dz ${dz}`).toBeCloseTo(under, 2);
+      // The wall's own faces (its top and the notch) all stay above the stones' undersides:
+      // the notch is cut to the stones' tops, so the wall never reaches into the opening.
+      const wallAbove = rest.filter((h) => h.y > L.top + 0.02); // below the opening lie its threshold and the wall's footing
+      expect(Math.min(...wallAbove.map((h) => h.y)), `wall reaching under the stones at dz ${dz}`).toBeGreaterThan(over - 0.05);
+      const inOpening = hits.filter((h) => h.y > L.top + 0.02 && h.y < under - 0.02);
+      expect(inOpening, `mesh inside the gable void at dz ${dz}: ${JSON.stringify(inOpening)}`).toEqual([]);
+      expect(rest.some((h) => Math.abs(h.y - L.top) < 0.02), `a lintel at the opening's top at dz ${dz}`).toBe(false);
+    }
+    // The wall over the gable is one non-colliding piece; the notch is not a collider either.
+    const gableWall = meshes.filter((m) => m.name === 'gable wall');
+    expect(gableWall).toHaveLength(1);
+    expect(gableWall[0].userData.isWall).toBeUndefined();
+    expect(built.walls).not.toContain(gableWall[0]);
+  });
+
+  it("builds Tadi's two stones proud of both faces, meeting at the ridge under the wall top", () => {
+    const L = tadiLevels();
+    const g = built.scene.children.find((o) => o.userData.entryId === 'shaar_tadi');
+    const stones = [];
+    g.traverse((o) => { if (o.isMesh && /leaning stone/.test(o.name)) stones.push(o); });
+    expect(stones).toHaveLength(2);
     const [inner] = toWorld({ x: 197.5, y: 0, z: 0 });
     const [outer] = toWorld({ x: 203.5, y: 0, z: 0 });
-    expect(box.min.x).toBeLessThan(inner - 0.2);
-    expect(box.max.x).toBeGreaterThan(outer + 0.2);
-    const gate = byId.shaar_tadi;
-    expect(box.min.y).toBeGreaterThan(toWorld({ x: 0, y: gate.position.y + gate.geometry.h, z: 0 })[1] - 0.01); // above the opening
-    const [, , gz] = worldPos(gate);
-    expect((box.min.z + box.max.z) / 2).toBeCloseTo(gz, 1); // centred on the gate
+    const [, , gz] = worldPos(byId.shaar_tadi);
+    const boxes = stones.map((s) => new THREE.Box3().setFromObject(s));
+    for (const box of boxes) {
+      expect(box.min.x).toBeLessThan(inner - 0.2); // TADI_STONE_PROUD out of the inner face
+      expect(box.max.x).toBeGreaterThan(outer + 0.2); // and of the outer face
+      expect(box.max.y).toBeCloseTo(L.ridgeTop, 2); // both peak at the ridge of the tops
+      expect(box.max.y).toBeLessThan(L.wallTop - 0.25 * AMAH); // >= half an amah under WALL_TOP
+      expect(box.min.y).toBeGreaterThan(L.top - 0.02); // feet at the jamb tops
+    }
+    // One from each side, both overrunning the centre line so they overlap at the ridge.
+    const [a, b] = boxes.sort((p, q) => p.min.z - q.min.z);
+    expect(a.min.z).toBeLessThan(gz - 2);
+    expect(b.max.z).toBeGreaterThan(gz + 2);
+    expect(a.max.z).toBeGreaterThan(gz - 1e-3);
+    expect(b.min.z).toBeLessThan(gz + 1e-3);
+    // The tops meet at the ridge: from above the centre both stones are hit at the same height.
+    const hits = hitsDown(stones, 200.5, byId.shaar_tadi.position.z, L.wallTop + 2).filter((h) => h.y > L.ridge);
+    expect(new Set(hits.map((h) => h.name.length && h.y.toFixed(2))).size).toBe(1);
+    expect(hits[0].y).toBeCloseTo(L.ridgeTop, 2);
+    // And under the ridge the void is the opening: the undersides meet at `ridge`.
+    const under = hitsDown(stones, 200.5, byId.shaar_tadi.position.z, L.ridge - 0.01);
+    expect(under.filter((h) => h.y > L.top + 0.02)).toEqual([]);
+  });
+
+  it('drops the frame lintel over Tadi and keeps it on the other four gates of the mount', () => {
+    const frames = Object.fromEntries(['shaar_tadi', 'shaar_shushan', 'shaar_kiponus', 'chuldah_gate_west', 'chuldah_gate_east'].map((id) => {
+      const g = built.scene.children.find((o) => o.userData.entryId === id);
+      let frame;
+      g.traverse((o) => { if (o.isMesh && o.name === `${id} frame`) frame = o; });
+      expect(frame, `${id} frame`).toBeTruthy();
+      return [id, new THREE.Box3().setFromObject(frame)];
+    }));
+    const y = (a) => toWorld({ x: 0, y: a, z: 0 })[1];
+    const tadi = byId.shaar_tadi;
+    expect(frames.shaar_tadi.max.y).toBeCloseTo(y(tadi.position.y + tadi.geometry.h), 3); // jambs only
+    for (const id of ['shaar_shushan', 'shaar_kiponus', 'chuldah_gate_west', 'chuldah_gate_east']) {
+      const e = byId[id];
+      expect(frames[id].max.y, id).toBeCloseTo(y(e.position.y + e.geometry.h + 1), 3); // + FRAME_T lintel
+    }
+  });
+
+  it('walks the player through Tadi both ways at the mount level', () => {
+    // The real controller over the court builders' floors and walls: from the threshold's
+    // outer end (x 203, no ground plane outside the mount here) onto the plaza and back.
+    const hb = levelWorldY('har_habayis');
+    const H = CONFIG.PLAYER_HEIGHT;
+    const camera = new THREE.PerspectiveCamera();
+    const player = new PlayerController(camera, built.floors, built.walls, { bounds: { minX: -200, maxX: 200, minZ: -200, maxZ: 200 } });
+    player.isLocked = true;
+    const go = (from, to) => {
+      const [sx, sz] = xz(...from);
+      const [tx, tz] = xz(...to);
+      camera.position.set(sx, hb + H, sz);
+      player.verticalVelocity = 0;
+      player.moveF = true;
+      for (let f = 0; f < 60 * 20; f++) {
+        const c = camera.position;
+        camera.rotation.set(0, Math.atan2(-(tx - c.x), -(tz - c.z)), 0, 'YXZ');
+        player.euler.setFromQuaternion(camera.quaternion, 'YXZ');
+        player.update(1 / 60);
+        expect(c.y - H, `feet at (${c.x.toFixed(2)}, ${c.z.toFixed(2)})`).toBeCloseTo(hb, 1);
+        if (Math.hypot(tx - c.x, tz - c.z) < 0.5) return true;
+      }
+      return false;
+    };
+    const z = byId.shaar_tadi.position.z;
+    expect(go([203, z], [188, z]), 'in through Tadi').toBe(true);
+    expect(go([188, z], [203, z]), 'out through Tadi').toBe(true);
   });
 
   it('places the gate groups on their content positions', () => {

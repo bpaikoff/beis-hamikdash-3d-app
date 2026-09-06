@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { CHEIL_LIP, CourtBuilder, GROUND, SLAB, WALL_T } from './CourtBuilder.js';
 import { instance } from '../instanced.js';
 import { AMAH } from '../../content/units.js';
@@ -19,6 +18,16 @@ const MERLON_PITCH = 4;
 const POST_PITCH = 1;
 /** How far Tadi's leaning stones stand out of each face of the wall, amos. */
 const TADI_STONE_PROUD = 0.5;
+/** Thickness of each of Tadi's two leaning stones, amos: a slab, not a plank (not given in Middot). */
+const TADI_STONE_T = 1;
+/**
+ * Rise of Tadi's gable, amos: the stones' undersides climb from the opening's top corners
+ * (y 6.5, the gate being 20 high on the mount at -13.5) to a ridge 3.1 higher, a slope of
+ * atan(3.1 / 5) = 31.8 deg over the 10-wide opening. Their tops peak 1 / cos(31.8 deg) = 1.18
+ * above that, at 10.78, which keeps the whole gable 0.72 under WALL_TOP (11.5) and clear
+ * of the merlons. Middot 2:3 gives the two stones, not their pitch.
+ */
+const TADI_GABLE_RISE = 3.1;
 /** Cheek walls beside the twelve steps: thickness and height over the top tread, amos. */
 const CHEEK_T = 0.5;
 const CHEEK_H = 1.2;
@@ -49,6 +58,15 @@ export class HarHaBayisBuilder extends CourtBuilder {
     };
   }
 
+  /**
+   * Shaar Tadi has no lintel: two stones lean one on the other over the opening (Middot
+   * 2:3). wallRunA's `gable` builds them as slabs from the jamb tops meeting at the ridge,
+   * the wall's thickness plus TADI_STONE_PROUD beyond each face, under a notched wall.
+   */
+  tadiGate() {
+    return { ...this.gate('shaar_tadi', 'z'), gable: { rise: TADI_GABLE_RISE, t: TADI_STONE_T, proud: TADI_STONE_PROUD } };
+  }
+
   /** The wall around the mount, 6 thick outside the 500 x 500, with merlons along its top. */
   buildOuterWall() {
     const b = this.area.bounds;
@@ -60,34 +78,11 @@ export class HarHaBayisBuilder extends CourtBuilder {
     this.group('har_habayis', () => {
       // South (two Chuldah gates), north (Tadi), west (Kiponus), east (Shushan, lower).
       this.wallRunA({ along: 'z', across: [x1, b.minX], from: z1, to: z2, y1: GROUND, y2: WALL_TOP, mat: m, openings: [this.gate('chuldah_gate_west', 'z'), this.gate('chuldah_gate_east', 'z')] });
-      this.wallRunA({ along: 'z', across: [b.maxX, x2], from: z1, to: z2, y1: GROUND, y2: WALL_TOP, mat: m, openings: [this.gate('shaar_tadi', 'z')] });
+      this.wallRunA({ along: 'z', across: [b.maxX, x2], from: z1, to: z2, y1: GROUND, y2: WALL_TOP, mat: m, openings: [this.tadiGate()] });
       this.wallRunA({ along: 'x', across: [z1, b.minZ], from: b.minX, to: b.maxX, y1: GROUND, y2: WALL_TOP, mat: m, openings: [this.gate('shaar_kiponus', 'x')] });
       this.wallRunA({ along: 'x', across: [b.maxZ, z2], from: b.minX, to: b.maxX, y1: GROUND, y2: EAST_WALL_TOP, mat: m, openings: [this.gate('shaar_shushan', 'x')] });
-      this.buildTadiStones();
       this.buildMerlons(x1, x2, z1, z2, b);
     }, { part: 'wall' });
-  }
-
-  /**
-   * Shaar Tadi has two leaning stones instead of a lintel (Middot 2:3). The wall over the
-   * opening is built like the rest of the run, so the stones stand TADI_STONE_PROUD out
-   * of each face of it as a gable in relief; a wall's thickness of stone would be buried.
-   */
-  buildTadiStones() {
-    const t = this.entry('shaar_tadi');
-    const b = this.area.bounds;
-    const { w, h } = t.geometry;
-    const top = t.position.y + h;
-    const len = (w / 2 + 1.5) / Math.cos(Math.PI / 5);
-    this.group('shaar_tadi', () => {
-      for (const s of [-1, 1]) {
-        const stone = new THREE.Mesh(this.box((WALL_T + 2 * TADI_STONE_PROUD) * AMAH, 1 * AMAH, len * AMAH, this.mat.stone), this.mat.stone);
-        stone.position.set(...this.pt(b.maxX + WALL_T / 2, top + Math.sin(Math.PI / 5) * len / 2 + 0.5, t.position.z + s * (w / 4 + 0.75)));
-        stone.rotation.x = s * (Math.PI / 5);
-        stone.castShadow = true;
-        this.scene.add(stone);
-      }
-    }, { part: 'leaning stones' });
   }
 
   buildMerlons(x1, x2, z1, z2, b) {

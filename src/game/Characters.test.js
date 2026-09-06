@@ -3,7 +3,10 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { CharacterSystem, CHARACTER_FILES, CLIPS, LIMITS, ANIMATE_RADIUS, templePlacements, makeWalker } from './CharacterSystem.js';
+import {
+  CharacterSystem, CHARACTER_FILES, CLIPS, LIMITS, ANIMATE_RADIUS, LOD, FIGURE_RADIUS,
+  templePlacements, makeWalker, figureTier, lodK, skinBounds, paintHuman, textureUrl,
+} from './CharacterSystem.js';
 import { PlayerController } from './PlayerController.js';
 import { TempleBuilder } from './TempleBuilder.js';
 import { CONFIG } from '../config.js';
@@ -90,9 +93,15 @@ describe('CharacterSystem', () => {
     const meshes = (g) => { const m = []; g.traverse((o) => { if (o.isSkinnedMesh) m.push(o); }); return m; };
     const c = sys.createKohen(4, 0, 0);
     expect(meshes(a)[0].geometry).toBe(meshes(c)[0].geometry);
-    expect(meshes(a)[0].material).toBe(meshes(c)[0].material);
+    // The body draws its two groups with [skin, garment]; both materials shared per role.
+    expect(meshes(a)[0].material).toHaveLength(2);
+    expect(meshes(a)[0].material[0]).toBe(meshes(c)[0].material[0]);
+    expect(meshes(a)[0].material[1]).toBe(meshes(c)[0].material[1]);
+    expect(meshes(a)[0].material[0]).toBe(meshes(b)[0].material[0]);
+    expect(meshes(a)[0].material[1]).not.toBe(meshes(b)[0].material[1]);
     expect(meshes(a)[0].geometry).not.toBe(meshes(b)[0].geometry);
     expect(meshes(a)[0].geometry.attributes.color).toBeTruthy();
+    expect(meshes(a)[0].geometry.groups.map((g) => g.materialIndex)).toEqual([0, 1]);
     expect(b.name).toBe('kohenGadol');
     // The Kohen Gadol wears the gold; a kohen the migba'as.
     const names = (g) => { const n = []; g.traverse((o) => { if (o.isMesh && !o.isSkinnedMesh) n.push(o.geometry.userData.key); }); return n.sort(); };
@@ -144,6 +153,143 @@ describe('CharacterSystem', () => {
     sys.dispose();
     expect(scene.children.length).toBe(before - (LIMITS.animals + LIMITS.doves + placements.filter((p) => p.kind === 'human').length));
     expect(sys.humans).toHaveLength(0);
+  });
+
+  it('splits the body into skin and garment groups at the neck and the wrists of the rig', async () => {
+    sys = new CharacterSystem(scene, stubTex, { loader: diskLoader });
+    await sys.load();
+    const { skin } = sys.models.kohen;
+    const head = sys.models.kohen.scene.getObjectByName('Head').getWorldPosition(new THREE.Vector3());
+    const hand = sys.models.kohen.scene.getObjectByName('hand_l').getWorldPosition(new THREE.Vector3());
+    expect(skin.headY).toBeCloseTo(head.y - 0.03, 5);
+    expect(skin.wrists).toHaveLength(2);
+    expect(skin.wrists[0].origin.x).toBeCloseTo(hand.x, 5);
+    expect(skin.wrists[0].axis.x).toBeCloseTo(1, 3);
+    expect(skin.wrists[1].axis.x).toBeCloseTo(-1, 3);
+    for (const [, g] of sys.models.kohen.roles.kohen) {
+      const [skinGroup, garmentGroup] = g.groups;
+      expect(skinGroup.start).toBe(0);
+      expect(skinGroup.count + garmentGroup.count).toBe(g.index.count);
+      expect(skinGroup.count % 3).toBe(0);
+      // Every skin triangle's vertices are (mostly) above the neck or past a wrist; every
+      // garment triangle's mostly below and between.
+      const pos = g.attributes.position;
+      const above = (i) => pos.getY(i) > skin.headY || Math.abs(pos.getX(i)) > hand.x - 0.01;
+      for (let t = 0; t < g.index.count / 3; t++) {
+        const votes = [0, 1, 2].filter((k) => above(g.index.getX(t * 3 + k))).length;
+        expect(votes >= 2, `triangle ${t}`).toBe(t * 3 < skinGroup.count);
+      }
+    }
+    sys.dispose();
+  });
+
+  it('textures come from the manifest with a cache-buster, sRGB for colour, and are optional', async () => {
+    const urls = [];
+    const fakeLoader = { load: (url) => { urls.push(url); return new THREE.Texture(); } };
+    const textures = {
+      'kohen_skin.jpg': { sha256: 'abcdef0123456789' }, 'kohen_skin_normal.jpg': { sha256: '1111111122222222' },
+      'kohen_skin_rough.jpg': { sha256: '3333333344444444' }, 'kohen_hair.jpg': { sha256: '5555555566666666' }, 'kohen_eyes.png': { sha256: '7777777788888888' },
+    };
+    expect(textureUrl('kohen_skin.jpg', textures)).toBe('/assets/characters/kohen_skin.jpg?v=abcdef01');
+    expect(textureUrl('kohen_skin.jpg', {})).toBeNull();
+    sys = new CharacterSystem(scene, stubTex, { loader: diskLoader, textureLoader: fakeLoader, textures });
+    await sys.load();
+    sys.createKohen(0, 0, 0, { role: 'yisrael' });
+    const [skin, garment] = sys.materials.get('skin') ? [sys.materials.get('skin'), sys.materials.get('garment:yisrael')] : [];
+    expect(skin.map.colorSpace).toBe(THREE.SRGBColorSpace);
+    expect(skin.map.flipY).toBe(false);
+    expect(skin.normalMap.colorSpace).not.toBe(THREE.SRGBColorSpace);
+    expect(skin.roughnessMap).toBeTruthy();
+    expect(skin.roughness).toBe(0.9);
+    expect(skin.color.getHex()).toBe(0xffffff);
+    expect(garment.vertexColors).toBe(true);
+    expect(urls).toEqual([
+      '/assets/characters/kohen_skin.jpg?v=abcdef01', '/assets/characters/kohen_skin_normal.jpg?v=11111111', '/assets/characters/kohen_skin_rough.jpg?v=33333333',
+    ]);
+    // The mannequin has no Hair/Eyes meshes, so those materials are never made and nothing breaks.
+    expect(sys.materials.has('eyes')).toBe(false);
+    sys.dispose();
+    expect(sys.loadedTextures).toHaveLength(0);
+
+    // Without a `textures` map (today's manifest): a flat skin colour, no maps, no loads.
+    sys = new CharacterSystem(scene, stubTex, { loader: diskLoader, textureLoader: fakeLoader, textures: {} });
+    await sys.load();
+    sys.createKohen(0, 0, 0);
+    const plain = sys.materials.get('skin');
+    expect(plain.map).toBeNull();
+    expect(plain.normalMap).toBeNull();
+    expect(plain.color.getHex()).toBe(0xd9a878);
+    expect(urls).toHaveLength(3);
+    sys.dispose();
+  });
+
+  it('paintHuman groups a non-indexed geometry too', () => {
+    const g = new THREE.BufferGeometry();
+    // Two triangles: one high (head), one low (torso).
+    g.setAttribute('position', new THREE.Float32BufferAttribute([0, 1.7, 0, 0.1, 1.7, 0, 0, 1.8, 0, 0, 1, 0, 0.1, 1, 0, 0, 1.1, 0], 3));
+    const out = paintHuman(g, 'kohen', { headY: 1.6, wrists: [] });
+    expect(out.groups).toEqual([{ start: 0, count: 3, materialIndex: 0 }, { start: 3, count: 3, materialIndex: 1 }]);
+    expect(Array.from(out.index.array)).toEqual([0, 1, 2, 3, 4, 5]);
+    expect(skinBounds(new THREE.Group()).headY).toBe(1.56);
+  });
+
+  it('hides figures by projected size and their small parts before that', async () => {
+    sys = new CharacterSystem(scene, stubTex, { loader: diskLoader });
+    await sys.load();
+    const camera = new THREE.PerspectiveCamera(CONFIG.FOV);
+    const k = lodK(CONFIG.FOV, 720);
+    // fov 62 on 720 px: a 1 m radius is 4 px at ~300 m and 40 px at ~30 m.
+    expect(k * FIGURE_RADIUS.human).toBeGreaterThan(290);
+    expect(k * FIGURE_RADIUS.human).toBeLessThan(300);
+    expect(figureTier(k * 1 + 0.01, 1, k)).toBe('hidden');
+    expect(figureTier(k * 1 - 0.01, 1, k)).toBe('body');
+    expect(figureTier(k * (LOD.minPixels / LOD.partsPixels) + 0.01, 1, k)).toBe('body');
+    expect(figureTier(k * (LOD.minPixels / LOD.partsPixels) - 0.01, 1, k)).toBe('full');
+    expect(figureTier(35, 1.2, k)).toBe('full'); // an animal's radius 1.2 keeps its parts to ~36 m
+    expect(figureTier(40, 1.2, k)).toBe('body');
+    expect(figureTier(35, 1, k)).toBe('body');
+    expect(figureTier(25, 1, k)).toBe('full');
+
+    const kohen = sys.createKohen(0, 0, 0);
+    const gadol = sys.createKohen(0, 0, 2, true);
+    const sheep = sys.createAnimal('sheep', 0, 0, 4);
+    const walker = sys.createKohen(0, 0, 6, { path: [[0, 6], [0, 60]], speed: 1 });
+    const parts = (g) => { const p = []; g.traverse((o) => { if (o.userData?.lodPart) p.push(o); }); return p; };
+    expect(parts(kohen).map((p) => p.geometry.userData.key)).toEqual(['migbaas']);
+    expect(parts(gadol)).toHaveLength(5);
+    for (const p of parts(gadol)) expect(p.userData.noCull).toBe(true);
+    const visibleParts = (g) => parts(g).filter((p) => p.visible).length;
+
+    camera.position.set(300, 1.7, 0);
+    sys.update(1 / 60, camera, 720);
+    for (const g of [kohen, gadol, walker]) expect(g.visible, g.name).toBe(false);
+    expect(sheep.visible).toBe(true); // radius 1.2: 4 px until ~360 m
+    expect(sheep.userData.tier).toBe('body');
+    camera.position.set(400, 1.7, 0);
+    sys.update(1 / 60, camera, 720);
+    for (const g of [kohen, gadol, sheep, walker]) expect(g.visible, g.name).toBe(false);
+    const s0 = walker.userData.walker.s;
+    for (let i = 0; i < 60; i++) sys.update(1 / 60, camera, 720);
+    expect(walker.userData.walker.s - s0).toBeCloseTo(1, 3); // still walking while hidden
+    expect(walker.visible).toBe(false);
+
+    camera.position.set(80, 1.7, 0);
+    sys.update(1 / 60, camera, 720);
+    for (const g of [kohen, gadol, sheep, walker]) expect(g.visible, g.name).toBe(true);
+    expect(visibleParts(kohen)).toBe(0);
+    expect(visibleParts(gadol)).toBe(0);
+    expect(kohen.userData.tier).toBe('body');
+
+    camera.position.set(5, 1.7, 0);
+    sys.update(1 / 60, camera, 720);
+    expect(visibleParts(kohen)).toBe(1);
+    expect(visibleParts(gadol)).toBe(5);
+    expect(sheep.userData.tier).toBe('full');
+    // A smaller viewport hides sooner: at 5 px per metre of radius, 80 m is already gone.
+    camera.position.set(80, 1.7, 0);
+    sys.update(1 / 60, camera, 60);
+    expect(kohen.visible).toBe(false);
+    sys.dispose();
   });
 
   it('does not exceed the human limit', async () => {

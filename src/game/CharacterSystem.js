@@ -16,15 +16,36 @@ import manifest from '../../public/assets/characters/manifest.json';
  *
  * Model files are loaded once each through the shared LoadingManager (the one
  * TextureFactory uses), then every instance is a clone. Geometry and materials are shared
- * per role, so a figure costs its skinned draw calls (2 for the human, 2-3 per animal)
- * and nothing else.
+ * per role. A human's body draws in two groups, `skin` (the photographic maps from
+ * manifest.textures, when present) and `garment` (vertex-coloured linen or wool), split
+ * per triangle at the neck and the wrists of the rig's rest pose; the `Eyes` and `Hair`
+ * meshes (on the base body the latter is the eyebrows) and the hat or gold are the small
+ * parts. Per figure that is 5 draw calls (4 for a Yisrael), and `update` drops the small parts
+ * beyond LOD.partsPixels and the whole figure beyond LOD.minPixels of projected size, the
+ * way DistanceCuller does for plain meshes (it skips SkinnedMesh).
  */
 
 export const CHARACTERS_PATH = '/assets/characters/';
 export const CHARACTER_FILES = manifest.files;
+/** Texture files (skin, hair, eyes) with bytes + sha256; absent until scripts/fetch_assets.mjs writes them. */
+export const CHARACTER_TEXTURES = manifest.textures ?? {};
 export const LIMITS = { humans: 20, animals: 14, doves: 12 };
 export const MIXER_HZ = 30;
 export const ANIMATE_RADIUS = 80;
+/**
+ * Skinned LOD: a figure is hidden once a sphere of its radius would cover fewer than
+ * `minPixels` on screen, and loses its small parts (eyes, brows, hat, gold) below
+ * `partsPixels`. With the 62 deg camera on a 720 px viewport that is ~300 m and ~30 m for
+ * a human (radius 1), ~360 m and ~36 m for an animal (1.2).
+ */
+export const LOD = { minPixels: 4, partsPixels: 40 };
+export const FIGURE_RADIUS = { human: 1, animal: 1.2 };
+/** How far above the neck_01 joint the skin starts (the collar sits at the neck), metres. */
+const NECK_MARGIN = 0.03;
+/** How far before the hand joint, along the forearm, the sleeve ends, metres. */
+const WRIST_MARGIN = 0.01;
+/** How far above the foot (ankle) joint the hem ends: everyone on Har HaBayis is barefoot (Berachos 54a). */
+const ANKLE_MARGIN = 0.02;
 /** Ground speed (m/s) at which each walk clip's feet do not slide; the mixer's timeScale follows speed / this. */
 export const CLIP_SPEED = { kohen: 1.25, bull: 1.0 };
 /** Clip names in the files (scripts/fetch_assets.mjs keeps exactly these). */
@@ -36,7 +57,7 @@ export const CLIPS = {
 
 const SKIN = 0xd9a878;
 const LINEN = 0xf2eee4;
-const WOOL = 0xcdbfa3;
+const WOOL = 0xa89c86; // undyed wool, grey enough not to read as skin on the muscular base body
 const TECHEILES = 0x1f3f8f;
 const AVNET = 0x7a2e3e;
 const GOLD = 0xd4a83a;
@@ -47,21 +68,95 @@ export function modelUrl(name) {
   return `${CHARACTERS_PATH}${name}.glb${f ? `?v=${f.sha256.slice(0, 8)}` : ''}`;
 }
 
+/** Texture url with the same cache-buster, or null when the manifest does not list the file. */
+export function textureUrl(file, textures = CHARACTER_TEXTURES) {
+  const f = textures[file];
+  return f ? `${CHARACTERS_PATH}${file}?v=${f.sha256.slice(0, 8)}` : null;
+}
+
 /**
- * Colour a human's vertices by where they sit in the bind (T) pose: the head and hands
- * are skin, the rest the garment. The Kohen Gadol's techeiles meil covers the torso down
- * to the knees but has no sleeves, so the white kesones shows on the arms and at the hem.
+ * `k` for figureTier, as DistanceCuller computes it: a sphere of radius r is LOD.minPixels
+ * tall on screen at distance r * k.
  */
-function paintHuman(geometry, role) {
+export function lodK(fov, viewportHeight) {
+  return viewportHeight / (LOD.minPixels * Math.tan(THREE.MathUtils.degToRad(fov) / 2));
+}
+
+/**
+ * The LOD tier of a figure whose bounding sphere has `radius`, `distance` metres from the
+ * camera: 'hidden' below LOD.minPixels of projected diameter, 'body' (no small parts) below
+ * LOD.partsPixels, else 'full'.
+ * @returns {'hidden' | 'body' | 'full'}
+ */
+export function figureTier(distance, radius, k) {
+  const far = radius * k;
+  if (distance > far) return 'hidden';
+  if (distance > far * (LOD.minPixels / LOD.partsPixels)) return 'body';
+  return 'full';
+}
+
+/**
+ * Where the skin ends in the rig's rest pose, from the bones rather than the mesh: skin is
+ * everything above `headY` (the neck_01 joint plus NECK_MARGIN), everything below `ankleY`
+ * (the higher foot joint plus ANKLE_MARGIN: bare feet) and, per arm, everything past the
+ * wrist plane through the hand joint, normal to the forearm (so the split does not care
+ * whether the rest pose is a T or an A). Falls back to the UAL mannequin's numbers when a
+ * bone is missing.
+ * @param {THREE.Object3D} scene the loaded model, matrices up to date
+ */
+export function skinBounds(scene) {
+  const v = new THREE.Vector3();
+  const neck = scene.getObjectByName('neck_01');
+  const head = scene.getObjectByName('Head');
+  const headY = neck ? neck.getWorldPosition(v).y + NECK_MARGIN : head ? head.getWorldPosition(v).y - 0.05 : 1.56;
+  const feet = ['foot_l', 'foot_r'].map((n) => scene.getObjectByName(n)).filter(Boolean);
+  const ankleY = feet.length ? Math.max(...feet.map((f) => f.getWorldPosition(v).y)) + ANKLE_MARGIN : 0.12;
+  const wrists = [];
+  for (const side of ['l', 'r']) {
+    const hand = scene.getObjectByName(`hand_${side}`);
+    const forearm = scene.getObjectByName(`lowerarm_${side}`);
+    if (!hand) continue;
+    const origin = hand.getWorldPosition(new THREE.Vector3());
+    const axis = forearm ? origin.clone().sub(forearm.getWorldPosition(v)).normalize() : new THREE.Vector3(Math.sign(origin.x) || 1, 0, 0);
+    wrists.push({ origin, axis });
+  }
+  if (!wrists.length) {
+    for (const sx of [1, -1]) wrists.push({ origin: new THREE.Vector3(sx * 0.78, 1.44, 0), axis: new THREE.Vector3(sx, 0, 0) });
+  }
+  return { headY, ankleY, wrists };
+}
+
+/** Whether a bind-pose vertex is skin (head, hand or foot) by `bounds` from skinBounds. */
+function isSkin(x, y, z, bounds, tmp) {
+  if (y > bounds.headY || y < bounds.ankleY) return true;
+  for (const w of bounds.wrists) {
+    if (tmp.set(x, y, z).sub(w.origin).dot(w.axis) > -WRIST_MARGIN) return true;
+  }
+  return false;
+}
+
+/**
+ * A per-role copy of a human body geometry: vertex colours for the garment (the Kohen
+ * Gadol's techeiles meil covers the torso down to the knees but has no sleeves, so the
+ * white kesones shows on the arms and at the hem) and the index reordered into two
+ * groups, 0 = skin and 1 = garment, each triangle going with the majority of its three
+ * vertices. The skin group takes material 0 (the textured skin), the garment group
+ * material 1 (linen or wool with vertexColors).
+ */
+export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infinity, wrists: [] }) {
   const pos = geometry.attributes.position;
   const colors = new Float32Array(pos.count * 3);
+  const skin = new Uint8Array(pos.count);
   const c = new THREE.Color();
+  const tmp = new THREE.Vector3();
   const garment = role === 'yisrael' ? WOOL : LINEN;
   for (let i = 0; i < pos.count; i++) {
-    const x = Math.abs(pos.getX(i)), y = pos.getY(i);
+    const px = pos.getX(i), y = pos.getY(i), x = Math.abs(px);
     let hex = garment;
-    if (y > 1.56 || x > 0.78) hex = SKIN;
-    else if (role === 'kohenGadol' && x < 0.3 && y > 0.5 && y < 1.5) hex = TECHEILES;
+    if (isSkin(px, y, pos.getZ(i), bounds, tmp)) {
+      hex = SKIN;
+      skin[i] = 1;
+    } else if (role === 'kohenGadol' && x < 0.3 && y > 0.5 && y < 1.5) hex = TECHEILES;
     else if (role !== 'yisrael' && x < 0.32 && y > 0.98 && y < 1.06) hex = AVNET;
     c.setHex(hex);
     colors[i * 3] = c.r;
@@ -70,6 +165,21 @@ function paintHuman(geometry, role) {
   }
   const g = geometry.clone();
   g.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  // Split the triangles: skin first, then garment, as two groups over one index buffer.
+  const src = geometry.index ? geometry.index.array : Uint32Array.from({ length: pos.count }, (_, i) => i);
+  const tris = src.length / 3;
+  const skinTris = [], garmentTris = [];
+  for (let t = 0; t < tris; t++) {
+    const a = src[t * 3], b = src[t * 3 + 1], d = src[t * 3 + 2];
+    (skin[a] + skin[b] + skin[d] >= 2 ? skinTris : garmentTris).push(a, b, d);
+  }
+  const index = pos.count > 65535 ? new Uint32Array(src.length) : new Uint16Array(src.length);
+  index.set(skinTris, 0);
+  index.set(garmentTris, skinTris.length);
+  g.setIndex(new THREE.BufferAttribute(index, 1));
+  g.clearGroups();
+  g.addGroup(0, skinTris.length, 0);
+  g.addGroup(skinTris.length, garmentTris.length, 1);
   g.computeBoundingSphere();
   return g;
 }
@@ -103,12 +213,17 @@ export class CharacterSystem {
    * @param {{get?: (name: string) => THREE.Texture | null, manager?: THREE.LoadingManager}} tex
    *   TextureFactory (or a stub): `get` supplies the linen/wool/hide maps, `manager` the
    *   shared LoadingManager so the start screen's progress counts the model files.
-   * @param {{loader?: {load: Function}, path?: string}} [opts] a loader stand-in for tests.
+   * @param {{loader?: {load: Function}, textureLoader?: {load: Function}, textures?: object}} [opts]
+   *   loader stand-ins for tests (node has no Image); `textures` replaces manifest.textures.
    */
   constructor(scene, tex, opts = {}) {
     this.scene = scene;
     this.tex = tex;
     this.loader = opts.loader ?? new GLTFLoader(tex?.manager);
+    // No default loader without a DOM (tests): ImageLoader needs `document`.
+    this.textureLoader = opts.textureLoader ?? (typeof document === 'undefined' ? null : new THREE.TextureLoader(tex?.manager));
+    this.textures = opts.textures ?? CHARACTER_TEXTURES;
+    this.loadedTextures = []; // the skin/hair/eye maps, disposed with the system
     this.models = {}; // name -> { scene, animations, bones? } (the source; instances are clones)
     this.humans = [];
     this.animals = [];
@@ -161,10 +276,22 @@ export class CharacterSystem {
       }
     });
     if (name === 'kohen') {
+      // Body meshes (anything skinned that is not the Hair or Eyes) get the painted, grouped
+      // copy per role; Hair and Eyes keep their geometry and only swap materials.
+      model.skin = skinBounds(gltf.scene);
+      // The crown of the head in the rest pose, where the hats sit (1.83 mannequin, 1.81 base body).
+      let top = -Infinity;
+      gltf.scene.traverse((o) => {
+        if (o.isSkinnedMesh && !isPartMesh(o)) {
+          o.geometry.computeBoundingBox();
+          top = Math.max(top, o.geometry.boundingBox.max.y);
+        }
+      });
+      model.headTop = Number.isFinite(top) ? top : 1.83;
       for (const role of ['kohen', 'kohenGadol', 'yisrael']) {
         const geoms = new Map();
         gltf.scene.traverse((o) => {
-          if (o.isSkinnedMesh) geoms.set(o.geometry.uuid, paintHuman(o.geometry, role));
+          if (o.isSkinnedMesh && !isPartMesh(o)) geoms.set(o.geometry.uuid, paintHuman(o.geometry, role, model.skin));
         });
         for (const g of geoms.values()) this.geometries.push(g);
         model.roles[role] = geoms;
@@ -180,10 +307,65 @@ export class CharacterSystem {
     return this.materials.get(key);
   }
 
-  humanMaterial(role) {
-    return this.material(`human:${role}`, () => {
+  /**
+   * A character texture from manifest.textures through the shared manager (null when the
+   * manifest has no such file). Colour maps are sRGB; glTF UVs need flipY off. On a failed
+   * load `onFail` runs so the material can drop the slot instead of drawing a black surface.
+   */
+  loadTexture(file, { srgb = false } = {}, onFail = null) {
+    const url = textureUrl(file, this.textures);
+    if (!url || !this.textureLoader) return null;
+    const tex = this.textureLoader.load(url, undefined, undefined, () => {
+      console.warn(`CharacterSystem: ${url} failed to load`);
+      onFail?.();
+    });
+    if (!tex) return null;
+    tex.flipY = false;
+    if (srgb) tex.colorSpace = THREE.SRGBColorSpace;
+    this.loadedTextures.push(tex);
+    return tex;
+  }
+
+  /** The body's material array: [skin, garment] for the two geometry groups. */
+  humanMaterials(role) {
+    return [this.skinMaterial(), this.garmentMaterial(role)];
+  }
+
+  /** Photographic skin when the manifest lists the maps, else a flat skin colour. */
+  skinMaterial() {
+    return this.material('skin', () => {
+      const mat = new THREE.MeshStandardMaterial({ roughness: 0.9, metalness: 0 });
+      const drop = (slot) => () => { mat[slot] = null; mat.needsUpdate = true; };
+      mat.map = this.loadTexture('kohen_skin.jpg', { srgb: true }, drop('map'));
+      mat.normalMap = this.loadTexture('kohen_skin_normal.jpg', {}, drop('normalMap'));
+      mat.roughnessMap = this.loadTexture('kohen_skin_rough.jpg', {}, drop('roughnessMap'));
+      mat.color.setHex(mat.map ? 0xffffff : SKIN);
+      return mat;
+    });
+  }
+
+  garmentMaterial(role) {
+    return this.material(`garment:${role}`, () => {
       const map = this.tex?.get?.('whiteLinen') ?? null;
       return new THREE.MeshStandardMaterial({ map, vertexColors: true, roughness: 0.85, metalness: 0 });
+    });
+  }
+
+  hairMaterial() {
+    return this.material('hair', () => {
+      const mat = new THREE.MeshStandardMaterial({ color: 0x3a2a1c, roughness: 0.8, metalness: 0 });
+      mat.map = this.loadTexture('kohen_hair.jpg', { srgb: true }, () => { mat.map = null; mat.needsUpdate = true; });
+      if (mat.map) mat.color.setHex(0xffffff);
+      return mat;
+    });
+  }
+
+  eyesMaterial() {
+    return this.material('eyes', () => {
+      const mat = new THREE.MeshStandardMaterial({ color: 0x2a1c12, roughness: 0.4, metalness: 0 });
+      mat.map = this.loadTexture('kohen_eyes.png', { srgb: true }, () => { mat.map = null; mat.needsUpdate = true; });
+      if (mat.map) mat.color.setHex(0xffffff);
+      return mat;
     });
   }
 
@@ -223,6 +405,8 @@ export class CharacterSystem {
     mesh.position.copy(bone.worldToLocal(this._v.copy(worldPoint)));
     mesh.quaternion.copy(bone.getWorldQuaternion(new THREE.Quaternion()).invert());
     mesh.castShadow = true;
+    mesh.userData.lodPart = true; // hidden at the 'body' tier
+    mesh.userData.noCull = true; // this system's LOD owns `visible`, not DistanceCuller
     bone.add(mesh);
   }
 
@@ -245,11 +429,18 @@ export class CharacterSystem {
     const root = this.instantiate('kohen');
     if (!root) return null;
     const model = this.models.kohen;
-    const mat = this.humanMaterial(role);
+    const mats = this.humanMaterials(role);
     root.traverse((m) => {
-      if (m.isSkinnedMesh) {
+      if (!m.isSkinnedMesh) return;
+      if (m.name === 'Hair') {
+        m.material = this.hairMaterial();
+        m.userData.lodPart = true;
+      } else if (m.name === 'Eyes') {
+        m.material = this.eyesMaterial();
+        m.userData.lodPart = true;
+      } else {
         m.geometry = model.roles[role].get(m.geometry.uuid) ?? m.geometry;
-        m.material = mat;
+        m.material = mats;
       }
     });
     this.dress(root, role);
@@ -267,7 +458,7 @@ export class CharacterSystem {
       action.time = Math.random() * clip.duration; // desynchronise the crowd
       action.play();
     }
-    g.userData = { type: 'human', role, mixer, action, baseY: y };
+    g.userData = { type: 'human', role, mixer, action, baseY: y, parts: lodParts(root), tier: 'full' };
     if (o.path && o.path.length >= 2) {
       const speed = o.speed ?? 1.1;
       g.userData.walker = makeWalker(o.path, o.closed ?? false, speed);
@@ -278,21 +469,26 @@ export class CharacterSystem {
     return g;
   }
 
-  /** Head covering and, for the Kohen Gadol, the golden garments. */
+  /**
+   * Head covering and, for the Kohen Gadol, the golden garments. The hats hang from the
+   * crown measured in prepare (model.headTop): the migba'as cylinder is centred 3 cm above
+   * it (its 20 cm height reaches 7 cm down the skull), the mitznefes dome starts 5 cm below
+   * it and the tzitz sits 9 cm below on the forehead.
+   */
   dress(root, role) {
     const linen = this.material('hat:linen', () => new THREE.MeshStandardMaterial({ color: LINEN, map: this.tex?.get?.('whiteLinen') ?? null, roughness: 0.9 }));
     const gold = this.material('gold', () => new THREE.MeshStandardMaterial({ color: GOLD, map: this.tex?.get?.('goldEngraved') ?? null, roughness: 0.35, metalness: 0.85 }));
-    const headTop = new THREE.Vector3(-0.02, 1.86, 0.01);
+    const top = this.models.kohen?.headTop ?? 1.83;
     if (role === 'kohen') {
       // Migba'as: a tall cap.
       const hat = new THREE.Mesh(this.geometry('migbaas', () => new THREE.CylinderGeometry(0.1, 0.135, 0.2, 14)), linen);
-      this.attachToBone(root, 'Head', hat, headTop);
+      this.attachToBone(root, 'Head', hat, new THREE.Vector3(-0.02, top + 0.03, 0.01));
     } else if (role === 'kohenGadol') {
       // Mitznefes: a wound turban, wider and lower than the migba'as.
       const turban = new THREE.Mesh(this.geometry('mitznefes', () => new THREE.SphereGeometry(0.17, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.75, 1)), linen);
-      this.attachToBone(root, 'Head', turban, new THREE.Vector3(-0.02, 1.78, 0.01));
+      this.attachToBone(root, 'Head', turban, new THREE.Vector3(-0.02, top - 0.05, 0.01));
       const tzitz = new THREE.Mesh(this.geometry('tzitz', () => new THREE.BoxGeometry(0.16, 0.045, 0.012)), gold);
-      this.attachToBone(root, 'Head', tzitz, new THREE.Vector3(-0.02, 1.74, 0.13));
+      this.attachToBone(root, 'Head', tzitz, new THREE.Vector3(-0.02, top - 0.09, 0.13));
       const ephod = new THREE.Mesh(this.geometry('ephod', () => new THREE.BoxGeometry(0.34, 0.36, 0.035)), gold);
       this.attachToBone(root, 'spine_03', ephod, new THREE.Vector3(0, 1.3, 0.13));
       const choshen = new THREE.Mesh(this.geometry('choshen', () => new THREE.BoxGeometry(0.22, 0.24, 0.02)), gold);
@@ -344,7 +540,7 @@ export class CharacterSystem {
       action.time = Math.random() * clip.duration;
       action.play();
     }
-    g.userData = { type: 'animal', animalType: type, mixer, action };
+    g.userData = { type: 'animal', animalType: type, mixer, action, parts: lodParts(root), tier: 'full' };
     this.scene.add(g);
     this.animals.push(g);
     return g;
@@ -391,15 +587,18 @@ export class CharacterSystem {
   // ------------------------------------------------------------------ per frame
 
   /**
-   * Advance walkers and doves every frame; tick the mixers at MIXER_HZ for figures within
-   * ANIMATE_RADIUS of `camera` (others hold their pose; the renderer culls them anyway).
+   * Advance walkers and doves every frame (walkers keep moving while hidden); set each
+   * figure's LOD tier from its projected size; tick the mixers at MIXER_HZ for figures
+   * within ANIMATE_RADIUS of `camera` (others hold their pose).
+   * @param {number} viewportHeight CSS pixels, the same value DistanceCuller gets
    */
-  update(delta, camera = null) {
+  update(delta, camera = null, viewportHeight = 720) {
     this.time += delta;
     for (const h of this.humans) {
       const w = h.userData.walker;
       if (w) w.step(delta, h);
     }
+    if (camera) this.applyLod(camera, viewportHeight);
     for (const d of this.doves) {
       const u = d.userData;
       const t = this.time * u.speed + u.phase;
@@ -421,7 +620,24 @@ export class CharacterSystem {
     }
   }
 
-  /** Stop the mixers and free everything this system created (clones, painted geometry, materials). */
+  /** Hide figures below LOD.minPixels and their small parts below LOD.partsPixels. */
+  applyLod(camera, viewportHeight) {
+    const k = lodK(camera.fov ?? 60, viewportHeight);
+    const cam = camera.position;
+    for (const list of [this.humans, this.animals]) {
+      const radius = list === this.humans ? FIGURE_RADIUS.human : FIGURE_RADIUS.animal;
+      for (const g of list) {
+        const tier = figureTier(g.position.distanceTo(cam), radius, k);
+        if (tier === g.userData.tier) continue;
+        g.userData.tier = tier;
+        g.visible = tier !== 'hidden';
+        const full = tier === 'full';
+        for (const p of g.userData.parts) p.visible = full;
+      }
+    }
+  }
+
+  /** Stop the mixers and free everything this system created (clones, painted geometry, materials, textures). */
   dispose() {
     for (const g of [...this.humans, ...this.animals]) {
       g.userData.mixer?.stopAllAction();
@@ -434,6 +650,7 @@ export class CharacterSystem {
     for (const d of this.doves) this.scene.remove(d);
     for (const g of this.geometries) g.dispose();
     for (const m of this.materials.values()) m.dispose();
+    for (const t of this.loadedTextures) t.dispose();
     for (const model of Object.values(this.models)) {
       model?.scene.traverse((o) => {
         if (o.isMesh) o.geometry.dispose();
@@ -445,8 +662,23 @@ export class CharacterSystem {
     this.doves = [];
     this.geometries = [];
     this.materials.clear();
+    this.loadedTextures = [];
     this.models = {};
   }
+}
+
+/** The glb meshes that are small parts rather than the body (kept as-is, only re-materialed). */
+function isPartMesh(mesh) {
+  return mesh.name === 'Hair' || mesh.name === 'Eyes';
+}
+
+/** Every mesh under `root` tagged `userData.lodPart` (hats, gold, eyes, brows) that starts visible. */
+function lodParts(root) {
+  const parts = [];
+  root.traverse((o) => {
+    if (o.userData?.lodPart && o.visible) parts.push(o);
+  });
+  return parts;
 }
 
 /** A figure moving along a polyline of [x, z] at `speed`, turning toward its direction of travel. */

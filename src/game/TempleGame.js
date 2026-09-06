@@ -463,7 +463,7 @@ export class TempleGame {
     const delta = this.fixedStep || Math.min(this.clock.getDelta(), 0.1);
     if (this.tour?.active) this.tour.update(delta);
     else this.player.update(delta);
-    this.characters.update(delta, this.camera);
+    this.characters.update(delta, this.camera, this.container.clientHeight || 720);
     this.particles.update(delta, this.camera);
     this.checkLocation();
     if (this.sky) this.sky.position.copy(this.camera.position);

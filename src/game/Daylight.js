@@ -7,20 +7,48 @@ import { daylight, DEFAULT_TIME, saturate, skyBand } from './sun.js';
  * The image-based lighting rendered from the sky (`scene.environment`).
  *
  * `exposure` scales the dome's radiance for the environment only (the visible dome keeps
- * SUN[time].exposure): a Preetham sky at the dome's exposure is a fifth as bright as the
- * RoomEnvironment it replaced and the PBR gold went dull, so the environment's copy is
- * brighter. `saturation` is the environment copy's colour boost (1 = the model's own
- * grey-blue; the visible dome uses SUN[time].saturation; below 1 keeps the sky's blue
- * from greying the gold). `ground` is the share of the horizon band's radiance, per
- * channel (a sand albedo), that the ground hemisphere below the horizon shows: undersides
- * and interiors are lit from a warm floor, not from black, and at dawn and dusk the walls
- * take the horizon's orange from below. `sigma` is the PMREM blur (radians).
+ * SUN[time].exposure; SUN[time].envExposure overrides this default per time): a smooth
+ * dome anywhere near the panels' (ENV_PANELS) level flattens the gold's reflection, so
+ * by day it stays well below them and the map is panel-dominated, while with the sun on
+ * the horizon the panels are dim and the dome is raised. `saturation` is the environment
+ * copy's colour boost (1 = the model's own grey-blue; the visible dome uses
+ * SUN[time].saturation; below 1 keeps the sky's blue from greying the gold). `ground` is
+ * the share of the horizon band's radiance at `groundExposure`, per channel (a dark sand
+ * albedo), that the ground hemisphere below the horizon shows: undersides and interiors are
+ * lit from a warm floor, not from black, and at dawn and dusk the walls take the horizon's
+ * orange from below, while it stays dark enough that a vertical gold face keeps its
+ * bright-above / dark-below gradient. `sigma` is the PMREM blur (radians); `panelSun`
+ * the sunIntensity at which the panels show their listed radiance.
  */
-export const ENV = { exposure: 2.5, saturation: 0.85, ground: [0.66, 0.6, 0.5], sigma: 0.04 };
+export const ENV = { exposure: 0.8, saturation: 0.85, groundExposure: 2.5, ground: [0.3, 0.27, 0.23], sigma: 0.04, panelSun: 1.6 };
 
-/** The offscreen sky's scale and the ground hemisphere's radius, inside fromScene's far plane (100). */
+/**
+ * Bright panels in the environment scene around the sun: a smooth sky gives the burnished
+ * gold a flat reflection, so, as the RoomEnvironment's light boxes did, a few small, very
+ * bright emissive quads put gradient highlights on it (the normal map's burnish only shows
+ * where the reflected direction crosses a bright/dark edge). Azimuth is degrees from the
+ * sun's bearing, elevation above the horizon, width/height in scene units at
+ * ENV_PANEL_RADIUS (6 wide = ~17 degrees), and `radiance` the linear value at a full sun
+ * (`ENV.panelSun`): every `set(time)` scales it by the time's sunIntensity / panelSun and
+ * tints it by the sun's colour, so the highlights dim and redden at dawn and dusk with the
+ * map. They sit low (12-15 degrees): a vertical wall seen from eye level reflects the band
+ * within ~20 degrees of the horizon, and the ring of azimuths gives every wall orientation
+ * one to catch; the panel opposite the sun is a dim rim light.
+ */
+export const ENV_PANELS = [
+  { azimuth: 0, elevation: 15, width: 5, height: 3, radiance: 45 },
+  { azimuth: -45, elevation: 12, width: 5, height: 3, radiance: 20 },
+  { azimuth: 45, elevation: 12, width: 5, height: 3, radiance: 20 },
+  { azimuth: -100, elevation: 12, width: 5, height: 3, radiance: 10 },
+  { azimuth: 100, elevation: 12, width: 5, height: 3, radiance: 10 },
+  { azimuth: 180, elevation: 15, width: 6, height: 3, radiance: 8 },
+];
+
+/** The offscreen sky's scale, the ground hemisphere's and the panels' radii, inside fromScene's far plane (100). */
 const ENV_SKY_SCALE = 40;
 const ENV_GROUND_RADIUS = 30;
+const ENV_PANEL_RADIUS = 20;
+const DEG = Math.PI / 180;
 
 /**
  * The sky dome and the lights that follow the sun.
@@ -77,7 +105,26 @@ export class Daylight {
     ground.name = 'envGround';
     ground.frustumCulled = false;
     scene.add(ground);
-    return { scene, sky, ground };
+    const panels = ENV_PANELS.map((spec, i) => {
+      const panel = new THREE.Mesh(
+        new THREE.PlaneGeometry(spec.width, spec.height),
+        new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, fog: false, toneMapped: false })
+      );
+      panel.name = `envPanel${i}`;
+      panel.userData.spec = spec;
+      panel.frustumCulled = false;
+      panel.renderOrder = 1; // over the dome and the ground (no depth buffer)
+      scene.add(panel);
+      return panel;
+    });
+    return { scene, sky, ground, panels };
+  }
+
+  /** Unit direction of a panel for the sun direction `dir` (scene frame: +y up). */
+  static panelDirection(spec, dir) {
+    const a = Math.atan2(dir.z, dir.x) + spec.azimuth * DEG;
+    const el = spec.elevation * DEG;
+    return new THREE.Vector3(Math.cos(a) * Math.cos(el), Math.sin(el), Math.sin(a) * Math.cos(el));
   }
 
   /**
@@ -134,9 +181,9 @@ export class Daylight {
     return d;
   }
 
-  /** The ground hemisphere's linear radiance for `d`: the horizon band under the environment's exposure. */
+  /** The ground hemisphere's linear radiance for `d`: the horizon band at the ground's exposure, per-channel share. */
   static groundColor(d) {
-    const scale = (d.spec.exposure ?? 1) * ENV.exposure;
+    const scale = (d.spec.exposure ?? 1) * ENV.groundExposure;
     return saturate(skyBand(d.direction, d.spec, 1.5), ENV.saturation).map((c, i) => c * scale * ENV.ground[i]);
   }
 
@@ -158,9 +205,16 @@ export class Daylight {
       u.mieCoefficient.value = d.spec.mieCoefficient;
       u.mieDirectionalG.value = d.spec.mieDirectionalG;
     }
-    u.skyExposure.value = (d.spec.exposure ?? 1) * ENV.exposure;
+    u.skyExposure.value = (d.spec.exposure ?? 1) * (d.spec.envExposure ?? ENV.exposure);
     u.skySaturation.value = ENV.saturation;
     ground.material.color.setRGB(...Daylight.groundColor(d));
+    const sunScale = d.sunIntensity / ENV.panelSun;
+    for (const panel of this.env.panels) {
+      const spec = panel.userData.spec;
+      panel.position.copy(Daylight.panelDirection(spec, d.direction)).multiplyScalar(ENV_PANEL_RADIUS);
+      panel.lookAt(0, 0, 0);
+      panel.material.color.setRGB(...d.sunColor.map((c) => c * spec.radiance * sunScale));
+    }
   }
 
   /**
@@ -197,6 +251,10 @@ export class Daylight {
       this.env.sky.material.dispose();
       this.env.ground.geometry.dispose();
       this.env.ground.material.dispose();
+      for (const panel of this.env.panels) {
+        panel.geometry.dispose();
+        panel.material.dispose();
+      }
       this.env = null;
     }
     if (this.ownsPmrem) this.pmrem?.dispose();

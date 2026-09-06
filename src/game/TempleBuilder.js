@@ -70,8 +70,10 @@ export class TempleBuilder {
       // Gold keeps the painted albedo (the engraving pattern is the point of goldEng); the
       // metal set supplies the burnish (normal + roughness). Metal048C's roughness averages
       // 0.28: x1.5 lands near the 0.38 that kept the environment's panels from blooming.
-      gold: pbr('gold', { albedo: 'goldPolished', roughness: 1.5, metalness: 0.9, envMapIntensity: 0.6, fallback: { map: 'goldPolished' }, fallbackProps: { roughness: 0.38, metalness: 0.9, envMapIntensity: 0.6 } }),
-      goldEng: pbr('gold', { albedo: 'goldEngraved', roughness: 1.7, metalness: 0.88, envMapIntensity: 0.5, fallback: { map: 'goldEngraved' }, fallbackProps: { roughness: 0.45, metalness: 0.88, envMapIntensity: 0.5 } }),
+      // envMapIntensity: the environment is the sky (Daylight ENV, brighter on the sides
+      // than the RoomEnvironment it replaced); 0.5 / 0.42 keep the Heichal's walls deep gold.
+      gold: pbr('gold', { albedo: 'goldPolished', roughness: 1.5, metalness: 0.9, envMapIntensity: 0.5, fallback: { map: 'goldPolished' }, fallbackProps: { roughness: 0.38, metalness: 0.9, envMapIntensity: 0.5 } }),
+      goldEng: pbr('gold', { albedo: 'goldEngraved', roughness: 1.7, metalness: 0.88, envMapIntensity: 0.42, fallback: { map: 'goldEngraved' }, fallbackProps: { roughness: 0.45, metalness: 0.88, envMapIntensity: 0.42 } }),
       copper: new THREE.MeshStandardMaterial({ map: this.tex.get('copper'), roughness: 0.35, metalness: 0.85 }),
       copperP: new THREE.MeshStandardMaterial({ map: this.tex.get('copperPatina'), roughness: 0.5, metalness: 0.7 }),
       cedar: pbr('cedar', { roughness: 1.6, metalness: 0, fallback: { map: 'cedarWood' }, fallbackProps: { roughness: 0.7, metalness: 0.05 } }),

@@ -27,6 +27,12 @@ describe('sun position (scene frame: +y up, east +z, west -z, south -x)', () => 
     expect(sunDirection('afternoon').y).toBeGreaterThan(sunDirection('dawn').y);
   });
 
+  it('raises the environment dome only when the sun is on the horizon', () => {
+    for (const t of TIMES_OF_DAY) expect(SUN[t].envExposure).toBeGreaterThan(0);
+    expect(SUN.dawn.envExposure).toBeGreaterThan(SUN.morning.envExposure);
+    expect(SUN.dusk.envExposure).toBeGreaterThan(SUN.afternoon.envExposure);
+  });
+
   it('parses ?time= and falls back to morning', () => {
     expect(DEFAULT_TIME).toBe('morning');
     expect(parseTimeOfDay('?time=dusk')).toBe('dusk');

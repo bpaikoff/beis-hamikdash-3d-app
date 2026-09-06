@@ -21,12 +21,16 @@ export const DEFAULT_TIME = 'morning';
  * dome's radiance before tone mapping (Preetham with a high sun is near white under the
  * scene's ACES exposure of 0.85; 0.18 leaves a mid blue zenith and a pale horizon) and
  * `saturation` pulls the model's grey-blue day sky toward the deep blue of a dry morning.
+ * `envExposure` scales the dome's radiance again in the environment map only (Daylight):
+ * with a high sun the map's bright sun-side panels carry the light and the dome stays low
+ * so the gold keeps its burnish; with the sun on the horizon the panels are dim and the
+ * dome is the only light, so it is raised to keep the stone from going black.
  */
 export const SUN = {
-  dawn: { elevation: 5, bearing: 98, turbidity: 2.5, rayleigh: 2, mieCoefficient: 0.005, mieDirectionalG: 0.82, exposure: 0.3, saturation: 1.25 },
-  morning: { elevation: 38, bearing: 125, turbidity: 2, rayleigh: 2.5, mieCoefficient: 0.004, mieDirectionalG: 0.8, exposure: 0.18, saturation: 1.5 },
-  afternoon: { elevation: 42, bearing: 232, turbidity: 2.5, rayleigh: 2.5, mieCoefficient: 0.005, mieDirectionalG: 0.8, exposure: 0.18, saturation: 1.5 },
-  dusk: { elevation: 4, bearing: 276, turbidity: 2.5, rayleigh: 2, mieCoefficient: 0.006, mieDirectionalG: 0.84, exposure: 0.3, saturation: 1.25 },
+  dawn: { elevation: 5, bearing: 98, turbidity: 2.5, rayleigh: 2, mieCoefficient: 0.005, mieDirectionalG: 0.82, exposure: 0.3, saturation: 1.25, envExposure: 1.6 },
+  morning: { elevation: 38, bearing: 125, turbidity: 2, rayleigh: 2.5, mieCoefficient: 0.004, mieDirectionalG: 0.8, exposure: 0.18, saturation: 1.5, envExposure: 0.8 },
+  afternoon: { elevation: 42, bearing: 232, turbidity: 2.5, rayleigh: 2.5, mieCoefficient: 0.005, mieDirectionalG: 0.8, exposure: 0.18, saturation: 1.5, envExposure: 0.8 },
+  dusk: { elevation: 4, bearing: 276, turbidity: 2.5, rayleigh: 2, mieCoefficient: 0.006, mieDirectionalG: 0.84, exposure: 0.3, saturation: 1.25, envExposure: 1.6 },
 };
 
 /** Scale a linear colour's chroma about its luminance (1 = unchanged), as the dome shader does. */

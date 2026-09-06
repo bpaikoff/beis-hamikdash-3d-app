@@ -296,12 +296,12 @@ describe('court builders', () => {
     expect(solidAt(-62, -5, -103)).toBe(true);
     expect(solidAt(75, -5, -14)).toBe(false);
     expect(solidAt(-72, -5, -103)).toBe(false);
-    const lower = walk([[80, -14], [74.5, -15], [74.5, -7], [72, -6.75], [72, -13], [70, -15], [69.5, -13], [69.5, -10]], 0.25, underFloor);
+    const lower = walk([[80, -14], [74.5, -15], [74.5, -7], [72, -6.75], [72, -13], [72, -14.75], [69.5, -14.75], [69.5, -13], [69.5, -10]], 0.25, underFloor);
     near(lower.first, cheil + 0.09 * AMAH, 'vestibule');
     const upper = walk([[69.5, -10], [69.5, -7], [66, -7], [66, -14], [56, -14]]);
     near(upper.first, lower.last, 'seam of the two casts');
     near(upper.last, koh, 'the court');
-    const gLower = walk([[-75, -113], [-75, -101], [-75, -90.25], [-72, -90.25], [-72, -96.5], [-70.5, -98.5], [-69.5, -96.5], [-69.5, -93.5]], 0.25, underFloor);
+    const gLower = walk([[-75, -113], [-75, -101], [-75, -90.25], [-72, -90.25], [-72, -96.5], [-72, -98.25], [-69.5, -98.25], [-69.5, -96.5], [-69.5, -93.5]], 0.25, underFloor);
     near(gLower.first, cheil + 0.09 * AMAH, 'gazis vestibule');
     near(walk([[-69.5, -93.5], [-69.5, -90.5], [-66, -90.5], [-66, -103], [-60, -103]]).last, koh + 0.05 * AMAH, 'the kodesh half, at its court door (the court west of z -54 is HeichalBuilder\'s)');
   });

@@ -33,6 +33,7 @@ const ROUTES = {};
 const routesDir = new URL('./walk-routes/', import.meta.url);
 for (const f of readdirSync(routesDir).filter((n) => n.endsWith('.mjs')).sort()) {
   const mod = await import(pathToFileURL(new URL(f, routesDir).pathname).href);
+  for (const k of Object.keys(mod.routes)) if (k in ROUTES) throw new Error(`route ${k} in ${f} is already defined by another file`);
   Object.assign(ROUTES, mod.routes);
 }
 
@@ -225,7 +226,9 @@ try {
       const pos = await page.evaluate(() => { const c = window.__mikdash.camera.position; return [c.x, c.y - 1.7, c.z].map((v) => Number(v.toFixed(2))); });
       if (wp.expect === 'blocked') {
         // A closed gate: the leg must end against the leaves, without clipping or falling.
-        if (result === 'stuck') { result = 'ok'; detail = `blocked, ${detail}`; }
+        // A minY on the leg still applies: jammed at the bottom of a drop is not "blocked".
+        if (result === 'stuck' && wp.minY != null && pos[1] < (target.level ?? 0) + wp.minY - 0.5) { result = 'low'; detail = `blocked but feet ${pos[1].toFixed(2)} (expected >= ${((target.level ?? 0) + wp.minY).toFixed(2)})`; }
+        else if (result === 'stuck') { result = 'ok'; detail = `blocked, ${detail}`; }
         else if (result === 'ok') { result = 'passed'; detail = 'walked through where the player should be stopped'; }
       }
       const step = { to: label, result, detail, pos, seconds: Number(((Date.now() - t0) / 1000).toFixed(1)) };

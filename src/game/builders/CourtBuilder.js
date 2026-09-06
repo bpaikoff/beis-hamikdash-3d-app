@@ -193,8 +193,9 @@ export class CourtBuilder extends BaseBuilder {
    * Avtinas tower; `eWall` closes flight A's outer side and `nWall` L1's far end (pass
    * false where a room wall already stands there). Treads and rises are half an amah.
    *
-   * Flight C's two side walls go on above the ceiling to `top + 1.5`, as thin walls
-   * hidden inside the upper floor's slab and the well parapet ({@link wellParapetA}):
+   * Flight C's two side walls go on above the ceiling to `top + 1.5`, as invisible
+   * colliders inside the upper floor's slab and the well parapet ({@link wellParapetA}),
+   * invisible because their faces would be coplanar with the parapet's and flicker:
    * the parapet is a mass, which stops the player's centre only, and a player who
    * walked into the well less than a body's radius from its side would otherwise be
    * wedged in the band wall below the ceiling on the way down. They stop a body's
@@ -225,17 +226,20 @@ export class CourtBuilder extends BaseBuilder {
     this.flightA({ axis: 'z', span: xB, from: zA1, to: zFoot, yBase: yB, bottom, steps: nB, rise, mat: m, name: `${name} stair` });
     this.blockA(xC[0], xB[1], zL2, zFoot, bottom, yC, m, `${name} landing`);
     this.flightA({ axis: 'z', span: xC, from: zFoot, to: zFoot + nC * rise, yBase: yC, bottom, steps: nC, rise, mat: m, name: `${name} stair` });
-    // Walls: L2's outer end; between A and B (to an amah short of L1); between B and C
-    // (from an amah short of L2, along L1's inner side); L1's far end; A's outer side.
+    // Walls: L2's outer end; between A and B (the whole way to L1); between B and C
+    // (from L2's edge along L1's inner side); L1's far end; A's outer side. The band
+    // walls run the full length: the half-amah gap columns between the bands are open
+    // to the vestibule floor, so a wall stopping an amah short would leave a shaft a
+    // walker could drop into from the landing's edge and never climb out of.
     this.wallA(xC[0], xA[0], zL2 - bt, zL2, floor, ceiling, wm);
-    this.wallA(xB[1], xA[0], zL2, zA1 - 1, floor, ceiling, wm);
-    this.wallA(xC[1], xB[0], zFoot + 1, zL1, floor, ceiling, wm);
+    this.wallA(xB[1], xA[0], zL2, zA1, floor, ceiling, wm);
+    this.wallA(xC[1], xB[0], zFoot, zL1, floor, ceiling, wm);
     if (nWall) this.wallA(xC[1], xA[1] + (eWall ? sx * bt : 0), zL1, zL1 + bt, floor, ceiling, wm);
     if (eWall) this.wallA(xA[1], xA[1] + sx * bt, zFoot, zL1 + bt, floor, ceiling, wm);
     const zTop = zFoot + nC * rise;
     const zRail = zTop - 0.9;
-    this.wallA(xC[0] - sx * bt, xC[0], zFoot, zRail, ceiling, top + 1.5, wm);
-    this.wallA(xC[1], xC[1] + sx * bt, zFoot, zRail, ceiling, top + 1.5, wm);
+    this.colliderA(xC[0] - sx * bt, xC[0], zFoot, zRail, ceiling, top + 1.5);
+    this.colliderA(xC[1], xC[1] + sx * bt, zFoot, zRail, ceiling, top + 1.5);
     const [wx1, wx2] = [Math.min(...xC), Math.max(...xC)];
     return { well: { x1: wx1, x2: wx2, z1: zFoot, z2: zTop } };
   }

@@ -294,7 +294,7 @@ export class AzaraBuilder extends CourtBuilder {
         x1: X_IN, x2, z1, z2, floor: yPav, h: under - yPav, base: GROUND, floorMat: this.mat.floor, wallMat: this.mat.stone, roof: false, name: 'beis_hamoked vestibule',
         doors: [{ face: 'n', at: zc, w: 5, h: 8, frame: this.mat.cedar, name: 'beis_hamoked cheil door' }],
       });
-      const { well } = this.switchbackA({ x0: X_IN + ROOM_WALL_T, sx: 1, zFoot: zc + 0.5, floor: yPav + LIP, top: floor + LIP, ceiling: under, name: 'beis_hamoked' });
+      const { well } = this.switchbackA({ x0: X_IN + ROOM_WALL_T, sx: 1, zFoot: zc + 0.5, floor: yPav + LIP, top: floor + LIP, ceiling: under + LIP, name: 'beis_hamoked' });
       this.floorWithWellA(x1, x2, z1, z2, well, floor + LIP, this.mat.floor, 'beis_hamoked');
       this.wellParapetA(well, floor + LIP, this.mat.stonePolished, 'beis_hamoked well parapet');
       // The kodesh / chol line (Yoma 25a), inlaid across the hall floor.
@@ -363,7 +363,7 @@ export class AzaraBuilder extends CourtBuilder {
       });
       // Flight A runs along the outer wall, so it is 3 wide and needs no wall of its own;
       // landing L1 ends against the chamber's east wall.
-      const { well } = this.switchbackA({ x0: -X_IN - t, sx: -1, zFoot: z2 - t - 8, floor: yPav + LIP, top: floor + LIP, ceiling: under, wA: 3, eWall: false, nWall: false, name: 'lishkas_hagazis' });
+      const { well } = this.switchbackA({ x0: -X_IN - t, sx: -1, zFoot: z2 - t - 8, floor: yPav + LIP, top: floor + LIP, ceiling: under + LIP, wA: 3, eWall: false, nWall: false, name: 'lishkas_hagazis' });
       this.floorWithWellA(x1, x2, z1, z2, well, floor + LIP, this.mat.marbleW, 'lishkas_hagazis');
       this.wellParapetA(well, floor + LIP, this.mat.stonePolished, 'lishkas_hagazis well parapet');
       this.decoA(-X_IN - LINE_W / 2, -X_IN + LINE_W / 2, z1 + t, z2 - t, floor + LIP, floor + LIP + LINE_H, this.mat.marbleR);
@@ -422,7 +422,8 @@ export class AzaraBuilder extends CourtBuilder {
       const tread = (wellZ[1] - wellZ[0]) / steps;
       for (let k = 2; k < steps; k++) {
         const za = wellZ[0] + k * tread;
-        this.blockA(wellX[0] - 0.5, wellX[0], za + tread, za, mad.floor + LIP, mad.floor + (k + 1) * rise + 1.5, this.mat.stonePolished, 'lishkas_hamadichin stair parapet');
+        // Capped under the roof slab: the roof's own well parapet fences the top treads.
+        this.blockA(wellX[0] - 0.5, wellX[0], za + tread, za, mad.floor + LIP, Math.min(mad.floor + (k + 1) * rise + 1.5, roofY - SLAB), this.mat.stonePolished, 'lishkas_hamadichin stair parapet');
       }
       this.wallA(wellX[1], mad.x2, wellZ[1], wellZ[0], mad.floor - SLAB, roofY, this.mat.stone);
       // Parapet around the terrace (court edge, east and west ends): 1.5 amos, a solid

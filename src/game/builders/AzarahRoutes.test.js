@@ -136,8 +136,12 @@ function walkTo(wp) {
   const c = camera.position;
   const pos = [c.x, c.y - H, c.z].map((v) => Number(v.toFixed(2)));
   if (wp.expect === 'blocked') {
-    // The leg must end against something (a closed gate) without clipping or falling.
-    if (result === 'stuck') result = 'ok';
+    // The leg must end against something (a closed gate) without clipping or falling;
+    // a minY still applies, so jamming at the bottom of a drop does not count as blocked.
+    if (result === 'stuck' && wp.minY != null && pos[1] < (target.level ?? 0) + wp.minY - 0.5) {
+      result = 'low';
+      detail = `blocked but feet ${pos[1]} (expected >= ${((target.level ?? 0) + wp.minY).toFixed(2)})`;
+    } else if (result === 'stuck') result = 'ok';
     else if (result === 'ok') {
       result = 'passed';
       detail = `walked through to ${pos.join(', ')}`;
@@ -371,17 +375,19 @@ describe('Cheil stair landing edges and band-wall gaps', () => {
       expect(wallAt(xBC, c.y, c.zL1[1] - 0.5)).toBe(true);
     });
 
-    it(`${c.name}: across the amah gaps at the band walls' ends the next flight is at most 1.5 amos lower`, () => {
-      // A/B wall: ends an amah short of L1 (z zA1 - 1 .. zA1 open).
+    it(`${c.name}: the band walls run to the landings (no open shaft column) and the flights meet at the turns`, () => {
+      // A/B wall: the whole way to L1's edge; the gap column beside it is closed.
       expect(wallAt(xAB, -10, zA1 - 1.25)).toBe(true);
-      expect(wallAt(xAB, -10, zA1 - 0.75)).toBe(false);
+      expect(wallAt(xAB, -10, zA1 - 0.75)).toBe(true);
+      expect(wallAt(xAB, -10, zA1 - 0.1)).toBe(true);
       expect(hA(xA, zA1 - 0.75, CEIL)).toBeCloseTo(-8.45, 2);
       expect(hA(xB, zA1 - 0.75, CEIL)).toBeCloseTo(-6.95, 2); // B's second tread: 1.5 amos over A's tenth
       expect(hA(xA, zA1 - 0.25, CEIL)).toBeCloseTo(-7.95, 2);
       expect(hA(xB, zA1 - 0.25, CEIL)).toBeCloseTo(-7.45, 2); // half an amah
-      // B/C wall: starts an amah past the foot (z zFoot .. zFoot + 1 open).
+      // B/C wall: from L2's edge the whole way; the gap column beside the foot is closed.
       expect(wallAt(xBC, -3, c.zFoot + 1.25)).toBe(true);
-      expect(wallAt(xBC, -3, c.zFoot + 0.75)).toBe(false);
+      expect(wallAt(xBC, -3, c.zFoot + 0.75)).toBe(true);
+      expect(wallAt(xBC, -3, c.zFoot + 0.1)).toBe(true);
       expect(hA(xC, c.zFoot + 0.75, CEIL)).toBeCloseTo(-1.45, 2);
       expect(hA(xB, c.zFoot + 0.75, CEIL)).toBeCloseTo(-2.95, 2); // B's tenth tread: 1.5 amos under C's second
       expect(hA(xC, c.zFoot + 0.25, CEIL)).toBeCloseTo(-1.95, 2);

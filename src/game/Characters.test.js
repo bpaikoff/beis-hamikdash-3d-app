@@ -90,7 +90,7 @@ describe('CharacterSystem', () => {
     expect(skel(a)).not.toBe(skel(sys.models.kohen.scene));
     expect(a.userData.mixer).not.toBe(b.userData.mixer);
     // Same painted geometry per role, different roles differ; materials shared per role.
-    const meshes = (g) => { const m = []; g.traverse((o) => { if (o.isSkinnedMesh) m.push(o); }); return m; };
+    const meshes = (g) => { const m = []; g.traverse((o) => { if (o.isSkinnedMesh && o.name !== 'Hair' && o.name !== 'Eyes') m.push(o); }); return m; }; // body meshes
     const c = sys.createKohen(4, 0, 0);
     expect(meshes(a)[0].geometry).toBe(meshes(c)[0].geometry);
     // The body draws its two groups with [skin, garment]; both materials shared per role.
@@ -159,9 +159,11 @@ describe('CharacterSystem', () => {
     sys = new CharacterSystem(scene, stubTex, { loader: diskLoader });
     await sys.load();
     const { skin } = sys.models.kohen;
-    const head = sys.models.kohen.scene.getObjectByName('Head').getWorldPosition(new THREE.Vector3());
+    const neck = sys.models.kohen.scene.getObjectByName('neck_01').getWorldPosition(new THREE.Vector3());
     const hand = sys.models.kohen.scene.getObjectByName('hand_l').getWorldPosition(new THREE.Vector3());
-    expect(skin.headY).toBeCloseTo(head.y - 0.03, 5);
+    expect(skin.headY).toBeCloseTo(neck.y + 0.03, 5);
+    expect(sys.models.kohen.headTop).toBeGreaterThan(1.78);
+    expect(sys.models.kohen.headTop).toBeLessThan(1.86);
     expect(skin.wrists).toHaveLength(2);
     expect(skin.wrists[0].origin.x).toBeCloseTo(hand.x, 5);
     expect(skin.wrists[0].axis.x).toBeCloseTo(1, 3);
@@ -203,11 +205,18 @@ describe('CharacterSystem', () => {
     expect(skin.roughness).toBe(0.9);
     expect(skin.color.getHex()).toBe(0xffffff);
     expect(garment.vertexColors).toBe(true);
-    expect(urls).toEqual([
+    // The Hair (eyebrows) and Eyes materials exist only when the glb has those meshes (the
+    // mannequin has neither, the base body both); nothing breaks either way.
+    const hasMesh = (n) => Boolean(sys.models.kohen.scene.getObjectByName(n));
+    expect(sys.materials.has('eyes')).toBe(hasMesh('Eyes'));
+    expect(sys.materials.has('hair')).toBe(hasMesh('Hair'));
+    if (hasMesh('Eyes')) expect(sys.materials.get('eyes').map.colorSpace).toBe(THREE.SRGBColorSpace);
+    expect(urls.slice().sort()).toEqual([
       '/assets/characters/kohen_skin.jpg?v=abcdef01', '/assets/characters/kohen_skin_normal.jpg?v=11111111', '/assets/characters/kohen_skin_rough.jpg?v=33333333',
-    ]);
-    // The mannequin has no Hair/Eyes meshes, so those materials are never made and nothing breaks.
-    expect(sys.materials.has('eyes')).toBe(false);
+      ...(hasMesh('Hair') ? ['/assets/characters/kohen_hair.jpg?v=55555555'] : []),
+      ...(hasMesh('Eyes') ? ['/assets/characters/kohen_eyes.png?v=77777777'] : []),
+    ].sort());
+    const loaded = urls.length;
     sys.dispose();
     expect(sys.loadedTextures).toHaveLength(0);
 
@@ -219,7 +228,7 @@ describe('CharacterSystem', () => {
     expect(plain.map).toBeNull();
     expect(plain.normalMap).toBeNull();
     expect(plain.color.getHex()).toBe(0xd9a878);
-    expect(urls).toHaveLength(3);
+    expect(urls).toHaveLength(loaded);
     sys.dispose();
   });
 
@@ -255,9 +264,11 @@ describe('CharacterSystem', () => {
     const sheep = sys.createAnimal('sheep', 0, 0, 4);
     const walker = sys.createKohen(0, 0, 6, { path: [[0, 6], [0, 60]], speed: 1 });
     const parts = (g) => { const p = []; g.traverse((o) => { if (o.userData?.lodPart) p.push(o); }); return p; };
-    expect(parts(kohen).map((p) => p.geometry.userData.key)).toEqual(['migbaas']);
-    expect(parts(gadol)).toHaveLength(5);
-    for (const p of parts(gadol)) expect(p.userData.noCull).toBe(true);
+    // Attached parts (hat, gold) plus the glb's Eyes/Hair meshes when it has them.
+    const attached = (g) => parts(g).filter((p) => !p.isSkinnedMesh).map((p) => p.geometry.userData.key).sort();
+    expect(attached(kohen)).toEqual(['migbaas']);
+    expect(attached(gadol)).toEqual(['choshen', 'ephod', 'mitznefes', 'stones', 'tzitz']);
+    for (const p of parts(gadol)) if (!p.isSkinnedMesh) expect(p.userData.noCull).toBe(true);
     const visibleParts = (g) => parts(g).filter((p) => p.visible).length;
 
     camera.position.set(300, 1.7, 0);
@@ -282,8 +293,8 @@ describe('CharacterSystem', () => {
 
     camera.position.set(5, 1.7, 0);
     sys.update(1 / 60, camera, 720);
-    expect(visibleParts(kohen)).toBe(1);
-    expect(visibleParts(gadol)).toBe(5);
+    expect(visibleParts(kohen)).toBe(parts(kohen).length);
+    expect(visibleParts(gadol)).toBe(parts(gadol).length);
     expect(sheep.userData.tier).toBe('full');
     // A smaller viewport hides sooner: at 5 px per metre of radius, 80 m is already gone.
     camera.position.set(80, 1.7, 0);

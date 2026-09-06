@@ -182,6 +182,8 @@ export class HeichalBuilder extends BaseBuilder {
   // so the flight reads as stone.
   // --------------------------------------------------------------------------
   buildMaalosUlam() {
+    /** How far each riser's facing stands proud of the step's face (amos: 1 cm). */
+    const RISER_PROUD = 0.02;
     const e = byId.maalos_ulam;
     const g = tagEntry(new THREE.Group(), e);
     const { K } = LEVEL;
@@ -191,14 +193,24 @@ export class HeichalBuilder extends BaseBuilder {
     const zStart = byId.mizbeach.position.z - byId.mizbeach.geometry.d / 2; // -54
     const landings = [3, 3, 4];
     const perGroup = 4;
+    // Material: Middot 3:6 gives the steps' count and sizes, not their stone, so this is
+    // a reconstruction: dressed limestone (stoneFine, as the altar and the gate frames),
+    // not the Ulam floor's white marble. The Marble021 colour map is a near-uniform
+    // white (mean 243, deviation 6, flat normals), so twelve 0.25 m steps in it rendered
+    // as one grey slope in every view; the travertine has a visible grain and takes the
+    // light. Each riser carries a shaded facing (one instanced draw, 1 cm proud, not a
+    // collider) so the treads' edges read from the court.
+    const mat = this.mat.stoneFine;
     let z = zStart;
     let y = K;
     let n = 0;
+    const risers = [];
     for (let group = 0; group < landings.length; group++) {
       for (let s = 0; s < perGroup; s++) {
+        risers.push([this.F.x(0), yAmos(y + rise / 2), this.F.z(z + RISER_PROUD / 2)]);
         y += rise;
         n++;
-        const step = this.block(g, { x: [-half, half], y: [K - FT, y], z: [z, z - tread] }, this.mat.marbleW, {
+        const step = this.block(g, { x: [-half, half], y: [K - FT, y], z: [z, z - tread] }, mat, {
           floor: true,
           name: `maalos-ulam-${n}`,
         });
@@ -206,12 +218,14 @@ export class HeichalBuilder extends BaseBuilder {
         z -= tread;
       }
       const d = landings[group];
-      this.block(g, { x: [-half, half], y: [K - FT, y], z: [z, z - d] }, this.mat.marbleW, {
+      this.block(g, { x: [-half, half], y: [K - FT, y], z: [z, z - d] }, mat, {
         floor: true,
         name: `maalos-ulam-rovad-${group + 1}`,
       });
       z -= d;
     }
+    const riserGeo = this.box(2 * half * A, rise * A, RISER_PROUD * A, this.mat.stoneRiser);
+    g.add(instancePositions(riserGeo, this.mat.stoneRiser, risers, { name: 'maalos-ulam-risers' }));
     g.userData.steps = n;
     g.userData.topZ = z; // -76
     this.scene.add(g);

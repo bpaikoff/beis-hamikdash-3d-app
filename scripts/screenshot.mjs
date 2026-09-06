@@ -43,6 +43,10 @@ const VIEWS = [
   // tables and pillars (z -27 .. -51) from the south beside the rings, and the Beis
   // Avtinas storey through its door from the top landing of the stair tower.
   { name: 'kiyor_east', cam: '-14,9.75,-17,-15,-6' },
+  // Round 4: the Sanhedrin's bench tiers from the Gazis well looking west-south-west, and
+  // the Ulam steps low from the court's south lane beside the kiyor (their risers in profile).
+  { name: 'gazis_benches', cam: '-34.75,9.8,-37,17,-8' },
+  { name: 'ulam_steps_low', cam: '-13,9.25,-18,-56,-6' },
   { name: 'slaughter_south', cam: '20,10.5,-5,-49,-8' },
   { name: 'avtinas_storey', cam: '31.9,20.5,-16.6,0,-6' },
   { name: 'madichin_stair', cam: '28,9.75,-40,-53,5' }, // the stair to the terrace from inside the Madichin, with its balustrade

@@ -11,7 +11,7 @@ import { PlayerController } from '../PlayerController.js';
 /** Map-like texture stub: no textures headless, every material is built without maps (null keeps three quiet). */
 const stubTex = { get: () => null };
 
-let scene, floors, walls, groups, player;
+let scene, floors, walls, groups, player, mat;
 
 /** Height of the highest walkable surface under world (x, z), like PlayerController.getFloorHeight. */
 function floorY(x, z) {
@@ -30,7 +30,7 @@ function xz(xa, za) {
 beforeAll(() => {
   scene = new THREE.Scene();
   const tb = new TempleBuilder(scene, stubTex);
-  ({ floors, walls } = tb);
+  ({ floors, walls, mat } = tb);
   const args = [scene, stubTex, tb.mat, floors, walls];
   new HeichalBuilder(...args).build();
   new KeilimBuilder(...args).build();
@@ -299,5 +299,57 @@ describe('solids', () => {
     // the court strip north of the wing behind the Ulam is at the Kohanim level, not inside the foundation
     const p = player.probe(x + 45 * AMAH, z - 12 * AMAH, K() + CONFIG.STEP_HEIGHT + 0.05);
     expect(p.inside).toBe(false);
+  });
+});
+
+describe('Ulam steps material (round 4)', () => {
+  it('the twelve steps and three rovadim are dressed limestone (stoneFine), not the white marble', () => {
+    const steps = [];
+    groups.maalos_ulam.traverse((m) => { if (m.isMesh && /^maalos-ulam-(\d+|rovad-\d)$/.test(m.name)) steps.push(m); });
+    expect(steps).toHaveLength(15);
+    for (const m of steps) {
+      expect(m.material, m.name).toBe(mat.stoneFine);
+      expect(m.material, m.name).not.toBe(mat.marbleW);
+      expect(m.userData.isFloor, m.name).toBe(true);
+    }
+    expect(steps.filter((m) => m.userData.isStep)).toHaveLength(12);
+  });
+
+  it('every step has one shaded riser facing, instanced, in the riser shade of the same stone', () => {
+    const risers = groups.maalos_ulam.getObjectByName('maalos-ulam-risers');
+    expect(risers?.isInstancedMesh).toBe(true);
+    expect(risers.count).toBe(12);
+    expect(risers.material).toBe(mat.stoneRiser);
+    expect(mat.stoneRiser).not.toBe(mat.stoneFine);
+    expect(mat.stoneRiser.userData.tileMetres).toBe(mat.stoneFine.userData.tileMetres);
+    // Not a collider: the facings stand 1 cm proud of the risers only for the eye.
+    expect(floors).not.toContain(risers);
+    expect(walls).not.toContain(risers);
+  });
+});
+
+describe('kiyor cistern rim (round 4)', () => {
+  const K = () => levelWorldY('azaras_kohanim');
+
+  it('is a walkable floor 0.12 m over the court, and the court is level just beyond it', () => {
+    const rim = groups.kiyor.getObjectByName('kiyor-rim');
+    expect(rim?.userData.isFloor).toBe(true);
+    expect(floors).toContain(rim);
+    const [x, , z] = worldPos(byId.kiyor);
+    const R = rim.geometry.parameters.radiusTop;
+    for (const [dx, dz] of [[R - 0.05, 0], [-(R - 0.05), 0], [0, R - 0.05], [0, -(R - 0.05)], [0.7 * R, 0.7 * R]]) {
+      expect(player.getFloorHeight(x + dx, z + dz, 200), `${dx},${dz}`).toBeCloseTo(K() + 0.12, 2);
+    }
+    for (const [dx, dz] of [[R + 0.1, 0], [0, -(R + 0.1)]]) {
+      expect(player.getFloorHeight(x + dx, z + dz, 200), `${dx},${dz}`).toBeCloseTo(K(), 2);
+    }
+  });
+
+  it('reaches beyond the laver\'s solid by more than the player radius, so it can be stood on', () => {
+    const rim = groups.kiyor.getObjectByName('kiyor-rim');
+    const solid = walls.find((w) => w.userData?.name === 'kiyor-solid');
+    const half = solid.geometry.parameters.width / 2;
+    expect(rim.geometry.parameters.radiusTop - half).toBeGreaterThan(CONFIG.PLAYER_RADIUS + 0.1);
+    expect(rim.geometry.parameters.height).toBeLessThan(CONFIG.STEP_HEIGHT);
   });
 });

@@ -8,6 +8,7 @@ import { AMAH, toWorld } from '../../content/units.js';
 import { routes } from '../../../scripts/walk-routes/azarah.mjs';
 import { routes as stairRoutes } from '../../../scripts/walk-routes/stairs.mjs';
 import { routes as r3Routes } from '../../../scripts/walk-routes/azarah_r3.mjs';
+import { routes as r4Routes } from '../../../scripts/walk-routes/r4.mjs';
 
 /**
  * Walks every Azarah route of scripts/walk-routes/azarah.mjs with the real
@@ -396,8 +397,51 @@ describe('Cheil stair landing edges and band-wall gaps', () => {
   }
 });
 
-describe('Azarah walking routes (scripts/walk-routes/azarah.mjs, stairs.mjs, azarah_r3.mjs)', () => {
-  for (const [name, waypoints] of [...Object.entries(routes), ...Object.entries(stairRoutes), ...Object.entries(r3Routes)]) {
+/**
+ * Round 4: the Sanhedrin's benches in Lishkas HaGazis are solid tiers (blockA), the
+ * highest (0.8 m) against the south wall (x -77.5 .. -76.5 is the wall) and the lowest
+ * (0.3 m) toward the room. A visitor on the chamber floor walking west beside the well
+ * is stopped by the top tier's east end at floor level, and steps up onto the low tier.
+ */
+describe('Lishkas HaGazis benches (round 4)', () => {
+  const K = 'azaras_kohanim';
+  const KY = () => levelWorldY(K);
+  const legTo = (x, z, o) => walkTo({ x: xz(x, z)[0], z: xz(x, z)[1], level: K, ...o });
+  const standAt = (x, z) => {
+    const [wx, wz] = xz(x, z);
+    teleport(wx, KY() + H, wz);
+    for (let i = 0; i < 10; i++) player.update(DT);
+  };
+
+  it('the three tiers are walkable masses at 0.8, 0.55 and 0.3 m over the chamber floor', () => {
+    const floor = KY() + 0.025; // the chamber floor is a LIP over the court level
+    expect(player.getFloorHeight(...xz(-75.9, -107), 200) - floor).toBeCloseTo(0.8, 2);
+    expect(player.getFloorHeight(...xz(-74.6, -107), 200) - floor).toBeCloseTo(0.55, 2);
+    expect(player.getFloorHeight(...xz(-73.4, -107), 200) - floor).toBeCloseTo(0.3, 2);
+    expect(player.getFloorHeight(...xz(-72, -107), 200) - floor).toBeCloseTo(0, 2);
+  });
+
+  it('walking west into the top tier from the floor is blocked at its east end, at floor level', () => {
+    standAt(-75.9, -95);
+    const r = legTo(-75.9, -108, { expect: 'blocked', reach: 0.3, minY: 0 });
+    expect(r.result, r.detail).toBe('ok');
+    expect(r.pos[1] - KY()).toBeLessThan(0.1); // still on the floor, not on the tier
+    expect(r.pos[2]).toBeGreaterThan(xz(-75.9, -99)[1] - 0.05); // stopped east of the tier's end (z -99)
+  });
+
+  it('walking west onto the low tier steps up 0.3 m, then up the tiers to the top', () => {
+    standAt(-73.4, -95);
+    let r = legTo(-73.4, -108, { reach: 0.4, minY: 0.3 });
+    expect(r.result, r.detail).toBe('ok');
+    expect(r.pos[1] - KY() - 0.025).toBeCloseTo(0.3, 1); // walkTo rounds to 2 decimals
+    r = legTo(-75.9, -108, { reach: 0.4, minY: 0.8 });
+    expect(r.result, r.detail).toBe('ok');
+    expect(r.pos[1] - KY() - 0.025).toBeCloseTo(0.8, 1);
+  });
+});
+
+describe('Azarah walking routes (scripts/walk-routes/azarah.mjs, stairs.mjs, azarah_r3.mjs, r4.mjs)', () => {
+  for (const [name, waypoints] of [...Object.entries(routes), ...Object.entries(stairRoutes), ...Object.entries(r3Routes), ...Object.entries(r4Routes)]) {
     it(name, () => {
       const failures = walkRoute(waypoints);
       expect(failures, failures.join('\n')).toEqual([]);

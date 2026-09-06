@@ -265,9 +265,19 @@ export class KeilimBuilder extends BaseBuilder {
     const g = this.groupFor(e);
     const r = (e.geometry.w / 2) * A; // 0.75 m
     const h = e.geometry.h * A; // 1 m
-    // Cistern rim flush with the floor (the muchni's shaft)
-    const rim = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.4, r * 1.4, 0.12, 24), this.mat.stone);
+    // Cistern rim round the muchni's shaft (a reconstruction; Yoma 3:10 gives no kerb): a
+    // 0.12 m stone step, walkable (userData.isFloor, in this.floors like the yesod; the
+    // floor BVH takes the group's transform), so feet stand on it instead of passing
+    // through. Its radius clears the laver's solid (half-width r + 0.05) by more than
+    // PLAYER_RADIUS, or the player's centre could never reach it (HeichalKeilim.test.js).
+    // Under STEP_HEIGHT and only 0.12 m tall, so no probe ever starts inside it and it
+    // needs no LIP over the court floor.
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.7, r * 1.7, 0.12, 24), this.mat.stone);
     rim.position.y = 0.06;
+    rim.name = 'kiyor-rim';
+    rim.receiveShadow = true;
+    rim.userData = { isFloor: true, name: 'kiyor-rim' };
+    this.floors.push(rim);
     g.add(rim);
     const stand = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.45, r * 0.6, h * 0.5, 16), this.mat.copper);
     stand.position.y = 0.12 + h * 0.25;

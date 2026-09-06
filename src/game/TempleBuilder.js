@@ -58,6 +58,13 @@ export class TempleBuilder {
         pbr('limestone', { roughness: 0.8, metalness: 0, roughnessMap: false, fallback: { map: 'jerusalemStone', normalMap: 'normalMap' }, fallbackProps: { roughness: 0.8, metalness: 0.05 } }),
         { userData: { tileMetres: 1.25 } }
       ),
+      // stoneFine's maps under a shade, for the risers of dressed-stone steps: a lit tread
+      // over a darker riser is what separates one step from the next at a distance (the
+      // Ulam steps are 20 m wide and 0.25 m high; in one tone they merge into a slope).
+      stoneRiser: Object.assign(
+        pbr('limestone', { color: 0xc4b9a8, roughness: 0.8, metalness: 0, roughnessMap: false, fallback: { map: 'jerusalemStone', normalMap: 'normalMap' }, fallbackProps: { color: 0xc4b9a8, roughness: 0.8, metalness: 0.05 } }),
+        { userData: { tileMetres: 1.25 } }
+      ),
       // Gold keeps the painted albedo (the engraving pattern is the point of goldEng); the
       // metal set supplies the burnish (normal + roughness). Metal048C's roughness averages
       // 0.28: x1.5 lands near the 0.38 that kept the environment's panels from blooming.

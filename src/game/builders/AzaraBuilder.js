@@ -367,8 +367,12 @@ export class AzaraBuilder extends CourtBuilder {
       this.floorWithWellA(x1, x2, z1, z2, well, floor + LIP, this.mat.marbleW, 'lishkas_hagazis');
       this.wellParapetA(well, floor + LIP, this.mat.stonePolished, 'lishkas_hagazis well parapet');
       this.decoA(-X_IN - LINE_W / 2, -X_IN + LINE_W / 2, z1 + t, z2 - t, floor + LIP, floor + LIP + LINE_H, this.mat.marbleR);
-      // Seats of the Sanhedrin in a half-circle facing east (Sanhedrin 4:3): three tiers of benches, west of the stair head.
-      for (let k = 0; k < 3; k++) this.decoA(x1 + 2 + k * 1.5, x1 + 3 + k * 1.5, z1 + 3 + k, well.z1 - 2 - k, floor + LIP + k * 0.5, floor + LIP + k * 0.5 + 0.6, this.mat.cedar);
+      // Seats of the Sanhedrin in a half-circle facing east (Sanhedrin 4:3), a reconstruction: three
+      // stepped tiers of cedar benches west of the stair head, the highest (0.8 m) against the south
+      // wall, each 1.25 amos deep and half an amah lower toward the room. Solid masses (blockA, a LIP
+      // over the floor as solidA explains): the top tier is over STEP_HEIGHT, so from the floor it
+      // blocks; the lower two are stepped onto, and feet no longer pass through them.
+      for (let k = 0; k < 3; k++) this.blockA(x1 + t + k * 1.25, x1 + t + (k + 1) * 1.25, z1 + 3 + k, well.z1 - 2 - k, floor + 2 * LIP, floor + LIP + 0.6 + (2 - k) * 0.5, this.mat.cedar, 'lishkas_hagazis benches');
       // The court wall continues above the chamber.
       this.decoA(-X_OUT, -X_IN, z1, z2, floor + h + 1, WALL_TOP, this.mat.stone);
     });

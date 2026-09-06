@@ -4,6 +4,7 @@ import { TempleBuilder } from '../TempleBuilder.js';
 import { PlayerController } from '../PlayerController.js';
 import { areas, byId, worldBounds, worldPos, levelWorldY } from '../../content/index.js';
 import { CONFIG } from '../../config.js';
+import { LIP } from './CourtBuilder.js';
 import { AMAH, toWorld } from '../../content/units.js';
 import { routes } from '../../../scripts/walk-routes/azarah.mjs';
 import { routes as stairRoutes } from '../../../scripts/walk-routes/stairs.mjs';
@@ -414,7 +415,7 @@ describe('Lishkas HaGazis benches (round 4)', () => {
   };
 
   it('the three tiers are walkable masses at 0.8, 0.55 and 0.3 m over the chamber floor', () => {
-    const floor = KY() + 0.025; // the chamber floor is a LIP over the court level
+    const floor = KY() + LIP * AMAH; // the chamber floor is a LIP over the court level
     expect(player.getFloorHeight(...xz(-75.9, -107), 200) - floor).toBeCloseTo(0.8, 2);
     expect(player.getFloorHeight(...xz(-74.6, -107), 200) - floor).toBeCloseTo(0.55, 2);
     expect(player.getFloorHeight(...xz(-73.4, -107), 200) - floor).toBeCloseTo(0.3, 2);
@@ -433,10 +434,10 @@ describe('Lishkas HaGazis benches (round 4)', () => {
     standAt(-73.4, -95);
     let r = legTo(-73.4, -108, { reach: 0.4, minY: 0.3 });
     expect(r.result, r.detail).toBe('ok');
-    expect(r.pos[1] - KY() - 0.025).toBeCloseTo(0.3, 1); // walkTo rounds to 2 decimals
+    expect(r.pos[1] - KY() - LIP * AMAH).toBeCloseTo(0.3, 1); // walkTo rounds to 2 decimals
     r = legTo(-75.9, -108, { reach: 0.4, minY: 0.8 });
     expect(r.result, r.detail).toBe('ok');
-    expect(r.pos[1] - KY() - 0.025).toBeCloseTo(0.8, 1);
+    expect(r.pos[1] - KY() - LIP * AMAH).toBeCloseTo(0.8, 1);
   });
 });
 

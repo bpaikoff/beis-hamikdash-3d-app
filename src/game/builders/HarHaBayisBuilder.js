@@ -19,7 +19,7 @@ const POST_PITCH = 1;
 /** How far Tadi's leaning stones stand out of each face of the wall, amos. */
 const TADI_STONE_PROUD = 0.5;
 /** Thickness of each of Tadi's two leaning stones, amos: a slab, not a plank (not given in Middot). */
-const TADI_STONE_T = 1;
+export const TADI_STONE_T = 1;
 /**
  * Rise of Tadi's gable, amos: the stones' undersides climb from the opening's top corners
  * (y 6.5, the gate being 20 high on the mount at -13.5) to a ridge 3.1 higher, a slope of
@@ -29,7 +29,7 @@ const TADI_STONE_T = 1;
  * Tiferes Yisrael's reading of them (the Rash's, two hollowed blocks stacked, is noted in
  * temple.json shaar_tadi.geometry.notes).
  */
-const TADI_GABLE_RISE = 3.1;
+export const TADI_GABLE_RISE = 3.1;
 /** Cheek walls beside the twelve steps: thickness and height over the top tread, amos. */
 const CHEEK_T = 0.5;
 const CHEEK_H = 1.2;

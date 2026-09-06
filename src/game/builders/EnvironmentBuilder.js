@@ -56,10 +56,10 @@ export function hillPlacements(walkable = walkableBounds()) {
     let dist = 180 + rand() * 40;
     const height = 15 + rand() * 25;
     const radius = 30 + rand() * 20;
-    const rotation = rand() * Math.PI;
+    rand(); // the cones' rotation once; kept so the seeded sequence positions the later hills
     while (rectGap(Math.cos(angle) * dist, Math.sin(angle) * dist, walkable) < radius + HILL_CLEARANCE) dist += 5;
     const ridge = i === 2 ? { stretchX: 3.2 } : null;
-    hills.push({ x: Math.cos(angle) * dist, z: Math.sin(angle) * dist, dist, height, radius, rotation, ridge });
+    hills.push({ x: Math.cos(angle) * dist, z: Math.sin(angle) * dist, dist, height, radius, ridge });
   }
   return hills;
 }

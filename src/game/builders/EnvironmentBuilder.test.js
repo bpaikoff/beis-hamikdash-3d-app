@@ -27,7 +27,8 @@ describe('environment', () => {
     expect(hills).toHaveLength(8);
     for (const h of hills) {
       expect(gap(h.x, h.z, walkable), `hill at (${h.x.toFixed(0)}, ${h.z.toFixed(0)}) r ${h.radius.toFixed(0)}`).toBeGreaterThanOrEqual(h.radius + 10);
-      expect(h.dist + h.radius, 'inside the far plane').toBeLessThan(CONFIG.RENDER_DISTANCE);
+      // The visible foot is HILL_FOOT (1.6) radii, and the east ridge is stretched 3.2 x along x.
+      expect(h.dist + h.radius * 1.6 * (h.ridge?.stretchX ?? 1), 'the foot inside the far plane').toBeLessThan(CONFIG.RENDER_DISTANCE);
     }
     expect(hills.filter((h) => h.ridge)).toEqual([east]);
     expect(Math.abs(east.x)).toBeLessThan(1e-9);

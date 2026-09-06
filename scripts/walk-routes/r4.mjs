@@ -53,7 +53,7 @@ export const routes = {
     h(-21.2, -65, K), // and off
     h(-21.2, -70, K),
     h(-24, -70, K),
-    on(-24, -67.7, 0.12), // onto the rim from the south (the centre stops at z -67.2)
+    on(-24, -66.8, 0.12), // onto the rim from the south (the body stops the centre at z -67.2; the rim's edge is at -67.55)
     h(-24, -70, K), // and off
     h(-21.2, -70, K),
     h(-21.2, -58, K),

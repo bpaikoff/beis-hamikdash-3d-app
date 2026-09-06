@@ -352,4 +352,39 @@ describe('kiyor cistern rim (round 4)', () => {
     expect(rim.geometry.parameters.radiusTop - half).toBeGreaterThan(CONFIG.PLAYER_RADIUS + 0.1);
     expect(rim.geometry.parameters.height).toBeLessThan(CONFIG.STEP_HEIGHT);
   });
+
+  it('is stood on by the controller walking in against the laver from the north, east and west', () => {
+    // The route harness accepts feet >= level + minY - 0.5, so a leg's `minY` cannot tell the
+    // rim (0.12 m) from the court; this walks each approach with the real controller and
+    // reads the feet. The laver's solid (half 0.8 m) stops the centre 1.1 m out, inside the
+    // rim's 1.275 m; the muchni post stands on the south side, so that approach is skipped.
+    const rim = groups.kiyor.getObjectByName('kiyor-rim');
+    const [x, , z] = worldPos(byId.kiyor);
+    const H = CONFIG.PLAYER_HEIGHT;
+    const cam = player.camera;
+    for (const [dx, dz] of [[1, 0], [0, 1], [0, -1]]) {
+      const [sx, sz] = [x + dx * 2.8 * AMAH, z + dz * 2.8 * AMAH];
+      const [tx, tz] = [x + dx * 1.8 * AMAH, z + dz * 1.8 * AMAH];
+      cam.position.set(sx, K() + H, sz);
+      cam.rotation.set(0, Math.atan2(-(tx - sx), -(tz - sz)), 0, 'YXZ');
+      player.isLocked = true;
+      player.moveF = true;
+      player.onGround = true;
+      player.verticalVelocity = 0;
+      let last = Infinity;
+      for (let f = 0; f < 600; f++) {
+        player.update(1 / 60);
+        const d = Math.hypot(tx - cam.position.x, tz - cam.position.z);
+        if (f % 30 === 29) {
+          if (d > last - 0.01) break; // stopped against the body
+          last = d;
+        }
+      }
+      player.moveF = false;
+      player.isLocked = false;
+      const feet = cam.position.y - H;
+      expect(feet - K(), `approach ${dx},${dz} ended at (${cam.position.x.toFixed(2)}, ${cam.position.z.toFixed(2)})`).toBeCloseTo(0.12, 2);
+      expect(Math.hypot(cam.position.x - x, cam.position.z - z)).toBeLessThan(rim.geometry.parameters.radiusTop);
+    }
+  });
 });

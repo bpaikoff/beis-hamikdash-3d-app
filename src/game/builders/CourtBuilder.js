@@ -372,6 +372,9 @@ export class CourtBuilder extends BaseBuilder {
   /** Slope, slab thickness and extents shared by the two halves of a gable. */
   gableGeom({ lo, hi, at, top, rise, t = GABLE_T }) {
     const half = (hi - lo) / 2;
+    // Each slab's end face is buried in the other only below 45 deg (gableStonesA); steeper,
+    // a slit opens at the ridge above and below.
+    if (rise >= half) throw new Error(`gable rise ${rise} must be less than the half-span ${half} (the slabs' ends are buried only under 45 deg)`);
     const theta = Math.atan2(rise, half); // slope of the slabs from the opening's top corners
     // Vertical thickness of a slab of t leaning at theta: its top edge runs t / cos(theta)
     // above its underside at every point along the run.

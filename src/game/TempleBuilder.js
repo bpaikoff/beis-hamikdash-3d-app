@@ -60,9 +60,11 @@ export class TempleBuilder {
       ),
       // stoneFine's maps under a shade, for the risers of dressed-stone steps: a lit tread
       // over a darker riser is what separates one step from the next at a distance (the
-      // Ulam steps are 20 m wide and 0.25 m high; in one tone they merge into a slope).
+      // Ulam steps are 20 m wide and 0.25 m high; in one tone they merge into a slope). The
+      // facing stands 1 cm proud of the step's face, within the depth buffer's resolution past
+      // ~120 m, so it is drawn with a polygon offset toward the camera.
       stoneRiser: Object.assign(
-        pbr('limestone', { color: 0xa89b88, roughness: 0.8, metalness: 0, roughnessMap: false, fallback: { map: 'jerusalemStone', normalMap: 'normalMap' }, fallbackProps: { color: 0xa89b88, roughness: 0.8, metalness: 0.05 } }),
+        pbr('limestone', { color: 0xa89b88, roughness: 0.8, metalness: 0, roughnessMap: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1, fallback: { map: 'jerusalemStone', normalMap: 'normalMap' }, fallbackProps: { color: 0xa89b88, roughness: 0.8, metalness: 0.05, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 } }),
         { userData: { tileMetres: 1.25 } }
       ),
       // Gold keeps the painted albedo (the engraving pattern is the point of goldEng); the

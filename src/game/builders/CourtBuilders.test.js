@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import * as THREE from 'three';
 import { AzaraBuilder } from './AzaraBuilder.js';
 import { EzrasNashimBuilder } from './EzrasNashimBuilder.js';
-import { HarHaBayisBuilder } from './HarHaBayisBuilder.js';
+import { HarHaBayisBuilder, TADI_GABLE_RISE, TADI_STONE_T } from './HarHaBayisBuilder.js';
 import { levelWorldY, byId, worldPos } from '../../content/index.js';
 import { toWorld, AMAH } from '../../content/units.js';
 import { CONFIG } from '../../config.js';
@@ -341,10 +341,10 @@ describe('court builders', () => {
   function tadiLevels() {
     const gate = byId.shaar_tadi;
     const top = gate.position.y + gate.geometry.h; // 6.5
-    const rise = 3.1; // TADI_GABLE_RISE (HarHaBayisBuilder)
+    const rise = TADI_GABLE_RISE;
     const theta = Math.atan2(rise, gate.geometry.w / 2);
     const y = (a) => toWorld({ x: 0, y: a, z: 0 })[1];
-    return { top: y(top), ridge: y(top + rise), ridgeTop: y(top + rise + 1 / Math.cos(theta)), wallTop: y(11.5), theta };
+    return { top: y(top), ridge: y(top + rise), ridgeTop: y(top + rise + TADI_STONE_T / Math.cos(theta)), wallTop: y(11.5), theta };
   }
 
   /** Every visible mesh of the mount's wall and Tadi (the groups tagged har_habayis wall / shaar_tadi). */

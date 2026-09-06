@@ -44,6 +44,8 @@ export const FIGURE_RADIUS = { human: 1, animal: 1.2 };
 const NECK_MARGIN = 0.03;
 /** How far before the hand joint, along the forearm, the sleeve ends, metres. */
 const WRIST_MARGIN = 0.01;
+/** How far above the foot (ankle) joint the hem ends: everyone on Har HaBayis is barefoot (Berachos 54a). */
+const ANKLE_MARGIN = 0.02;
 /** Ground speed (m/s) at which each walk clip's feet do not slide; the mixer's timeScale follows speed / this. */
 export const CLIP_SPEED = { kohen: 1.25, bull: 1.0 };
 /** Clip names in the files (scripts/fetch_assets.mjs keeps exactly these). */
@@ -55,7 +57,7 @@ export const CLIPS = {
 
 const SKIN = 0xd9a878;
 const LINEN = 0xf2eee4;
-const WOOL = 0xcdbfa3;
+const WOOL = 0xa89c86; // undyed wool, grey enough not to read as skin on the muscular base body
 const TECHEILES = 0x1f3f8f;
 const AVNET = 0x7a2e3e;
 const GOLD = 0xd4a83a;
@@ -95,8 +97,9 @@ export function figureTier(distance, radius, k) {
 
 /**
  * Where the skin ends in the rig's rest pose, from the bones rather than the mesh: skin is
- * everything above `headY` (the neck_01 joint plus NECK_MARGIN) and, per arm, everything past
- * the wrist plane through the hand joint, normal to the forearm (so the split does not care
+ * everything above `headY` (the neck_01 joint plus NECK_MARGIN), everything below `ankleY`
+ * (the higher foot joint plus ANKLE_MARGIN: bare feet) and, per arm, everything past the
+ * wrist plane through the hand joint, normal to the forearm (so the split does not care
  * whether the rest pose is a T or an A). Falls back to the UAL mannequin's numbers when a
  * bone is missing.
  * @param {THREE.Object3D} scene the loaded model, matrices up to date
@@ -106,6 +109,8 @@ export function skinBounds(scene) {
   const neck = scene.getObjectByName('neck_01');
   const head = scene.getObjectByName('Head');
   const headY = neck ? neck.getWorldPosition(v).y + NECK_MARGIN : head ? head.getWorldPosition(v).y - 0.05 : 1.56;
+  const feet = ['foot_l', 'foot_r'].map((n) => scene.getObjectByName(n)).filter(Boolean);
+  const ankleY = feet.length ? Math.max(...feet.map((f) => f.getWorldPosition(v).y)) + ANKLE_MARGIN : 0.12;
   const wrists = [];
   for (const side of ['l', 'r']) {
     const hand = scene.getObjectByName(`hand_${side}`);
@@ -118,12 +123,12 @@ export function skinBounds(scene) {
   if (!wrists.length) {
     for (const sx of [1, -1]) wrists.push({ origin: new THREE.Vector3(sx * 0.78, 1.44, 0), axis: new THREE.Vector3(sx, 0, 0) });
   }
-  return { headY, wrists };
+  return { headY, ankleY, wrists };
 }
 
-/** Whether a bind-pose vertex is skin (head or hand) by `bounds` from skinBounds. */
+/** Whether a bind-pose vertex is skin (head, hand or foot) by `bounds` from skinBounds. */
 function isSkin(x, y, z, bounds, tmp) {
-  if (y > bounds.headY) return true;
+  if (y > bounds.headY || y < bounds.ankleY) return true;
   for (const w of bounds.wrists) {
     if (tmp.set(x, y, z).sub(w.origin).dot(w.axis) > -WRIST_MARGIN) return true;
   }
@@ -138,7 +143,7 @@ function isSkin(x, y, z, bounds, tmp) {
  * vertices. The skin group takes material 0 (the textured skin), the garment group
  * material 1 (linen or wool with vertexColors).
  */
-export function paintHuman(geometry, role, bounds = { headY: 1.56, wrists: [] }) {
+export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infinity, wrists: [] }) {
   const pos = geometry.attributes.position;
   const colors = new Float32Array(pos.count * 3);
   const skin = new Uint8Array(pos.count);

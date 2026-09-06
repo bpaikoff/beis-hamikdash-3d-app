@@ -60,6 +60,16 @@ const VIEWS = [
   { name: 'tour_5', tour: 'tamid', stop: 5 },   // the ma'aracha from the kevesh
   { name: 'tour_9', tour: 'tamid', stop: 9 },   // the limbs on the kevesh, from the south-west
   { name: 'tour_13', tour: 'tamid', stop: 13 }, // the Levites' song, the Duchan from the Ezras Yisrael
+  // Round 5, the rigged humans up close. `kohanim_close`: the kohen templePlacements() puts
+  // at (mizbeach x 0 + 14, azaras_kohanim 8.05, mizbeach z -11 - 2) facing south, 6 m north of
+  // the altar's north face (x 8); the camera stands 3.5 m to his north-west at head height
+  // (floor + 1.6) looking south-east (yaw 135) so the altar is behind him and the slaughter
+  // tables' label stays out of the frame. `yisrael_close`: the talking Yisrael at
+  // (nicanor x 0 + 8, azaras_yisrael 6.8, nicanor z 8 - 3) facing south; the camera 3.2 m to
+  // his south-east at (5.2, 8.4, 6.6) looks north-north-west (yaw -60) so the Yisrael at
+  // (6.4, 4.6) stays at the frame's edge instead of in front of him.
+  { name: 'kohanim_close', cam: '16.5,9.65,-15.5,135,-3' },
+  { name: 'yisrael_close', cam: '5.2,8.4,6.6,-60,-6' },
   // The mount's gates from the ground outside its wall (Middot 1:3). The player is clamped
   // to the `outside` ring (TempleGame), so each stands inside it, diagonally off the gate.
   { name: 'shushan_outside', cam: '20,1.75,166,50,6' },      // the east wall (low, Middot 2:4) and Shushan

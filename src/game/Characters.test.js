@@ -162,6 +162,8 @@ describe('CharacterSystem', () => {
     const neck = sys.models.kohen.scene.getObjectByName('neck_01').getWorldPosition(new THREE.Vector3());
     const hand = sys.models.kohen.scene.getObjectByName('hand_l').getWorldPosition(new THREE.Vector3());
     expect(skin.headY).toBeCloseTo(neck.y + 0.03, 5);
+    const foot = sys.models.kohen.scene.getObjectByName('foot_l').getWorldPosition(new THREE.Vector3());
+    expect(skin.ankleY).toBeCloseTo(foot.y + 0.02, 5);
     expect(sys.models.kohen.headTop).toBeGreaterThan(1.78);
     expect(sys.models.kohen.headTop).toBeLessThan(1.86);
     expect(skin.wrists).toHaveLength(2);
@@ -176,7 +178,7 @@ describe('CharacterSystem', () => {
       // Every skin triangle's vertices are (mostly) above the neck or past a wrist; every
       // garment triangle's mostly below and between.
       const pos = g.attributes.position;
-      const above = (i) => pos.getY(i) > skin.headY || Math.abs(pos.getX(i)) > hand.x - 0.01;
+      const above = (i) => pos.getY(i) > skin.headY || pos.getY(i) < skin.ankleY || Math.abs(pos.getX(i)) > hand.x - 0.01;
       for (let t = 0; t < g.index.count / 3; t++) {
         const votes = [0, 1, 2].filter((k) => above(g.index.getX(t * 3 + k))).length;
         expect(votes >= 2, `triangle ${t}`).toBe(t * 3 < skinGroup.count);
@@ -236,7 +238,7 @@ describe('CharacterSystem', () => {
     const g = new THREE.BufferGeometry();
     // Two triangles: one high (head), one low (torso).
     g.setAttribute('position', new THREE.Float32BufferAttribute([0, 1.7, 0, 0.1, 1.7, 0, 0, 1.8, 0, 0, 1, 0, 0.1, 1, 0, 0, 1.1, 0], 3));
-    const out = paintHuman(g, 'kohen', { headY: 1.6, wrists: [] });
+    const out = paintHuman(g, 'kohen', { headY: 1.6, ankleY: 0.1, wrists: [] });
     expect(out.groups).toEqual([{ start: 0, count: 3, materialIndex: 0 }, { start: 3, count: 3, materialIndex: 1 }]);
     expect(Array.from(out.index.array)).toEqual([0, 1, 2, 3, 4, 5]);
     expect(skinBounds(new THREE.Group()).headY).toBe(1.56);

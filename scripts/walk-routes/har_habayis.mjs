@@ -182,7 +182,10 @@ export const routes = {
   cheil_ring: [
     amos(0, 165, HB),
     amos(0, 155, CH), // in opposite the Ezras Nashim gate
-    amos(11.3, 153.8, CH), // round the foot of the twelve steps and their cheek wall
+    // Round the foot of the twelve steps and their cheek wall. Reached tight: counted 1.2 m
+    // short the player is still at x ~9, inside the flight's 20-amah span, and the next leg
+    // slides it up the steps along the cheek (the round-4 walk found it 8 risers up).
+    amos(11.3, 153.8, { ...CH, reach: 0.3 }),
     amos(11.3, 147.8, CH),
     amos(75, 147.8, { ...CH, reach: 0.3 }), // the courts' north-east corner
     amos(74.3, -1.2, CH), // north strip, to the Beis HaMoked's east wall

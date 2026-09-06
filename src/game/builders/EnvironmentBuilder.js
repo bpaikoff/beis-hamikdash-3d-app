@@ -172,10 +172,14 @@ export function gridCoords(half, fineReach) {
   return out;
 }
 
-/** Colours the terrain is tinted with (multiplying the sand map): the flat ring, scrub, and the higher rocky ground. */
+/**
+ * Colours the terrain is tinted with (multiplying the sand map): white keeps the ring's
+ * sand; scrub is the dark olive of the Judean hills' brush; rock the paler grey-brown of
+ * their steeper, higher ground.
+ */
 const SAND_TINT = new THREE.Color(1, 1, 1);
-const SCRUB_TINT = new THREE.Color().setHSL(0.11, 0.3, 0.5);
-const ROCK_TINT = new THREE.Color().setHSL(0.09, 0.18, 0.66);
+const SCRUB_TINT = new THREE.Color().setHSL(0.13, 0.28, 0.4);
+const ROCK_TINT = new THREE.Color().setHSL(0.08, 0.14, 0.58);
 
 // ============================================================================
 // ENVIRONMENT BUILDER - Sky and the terrain (the ground and the distant hills)
@@ -206,24 +210,14 @@ export class EnvironmentBuilder extends BaseBuilder {
 
     const positions = new Float32Array(n * n * 3);
     const uvs = new Float32Array(n * n * 2);
-    const colors = new Float32Array(n * n * 3);
-    const tint = new THREE.Color();
     const reps = 1 / TILE_METRES.ground;
     for (let iz = 0; iz < n; iz++) {
       for (let ix = 0; ix < n; ix++) {
         const i = iz * n + ix;
         const x = coords[ix];
         const z = coords[iz];
-        const y = terrainHeight(x, z, hills, walkable);
-        positions.set([x, y, z], i * 3);
+        positions.set([x, terrainHeight(x, z, hills, walkable), z], i * 3);
         uvs.set([x * reps, z * reps], i * 2);
-        // Sand on the flat ring; scrub as the ground rises; rock on the upper slopes.
-        // A little noise mottles the tint so the 8 m sand tile does not repeat on the hills.
-        const rise = smoothstep(y / 8);
-        const upper = smoothstep((y - 10) / 20);
-        const mottle = 1 + 0.12 * groundNoise(x + 500, z - 500, 23);
-        tint.copy(SAND_TINT).lerp(SCRUB_TINT, rise).lerp(ROCK_TINT, upper).multiplyScalar(rise > 0 ? mottle : 1);
-        colors.set([tint.r, tint.g, tint.b], i * 3);
       }
     }
     const index = new Uint32Array((n - 1) * (n - 1) * 6);
@@ -242,9 +236,9 @@ export class EnvironmentBuilder extends BaseBuilder {
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     geo.setIndex(new THREE.BufferAttribute(index, 1));
     geo.computeVertexNormals();
+    geo.setAttribute('color', new THREE.BufferAttribute(this.terrainColors(geo), 3));
     geo.computeBoundingSphere();
 
     const mat = this.mat.ground.clone();
@@ -255,6 +249,29 @@ export class EnvironmentBuilder extends BaseBuilder {
     ground.userData = { isFloor: true, noCull: true };
     this.scene.add(ground);
     this.floors.push(ground);
+  }
+
+  /**
+   * Vertex colours from the displaced, normalled grid: sand-white on the flat ring, scrub
+   * as soon as the ground rises, rock on the steeper and higher slopes, with a little
+   * noise mottling so the 8 m sand tile does not repeat across a hillside.
+   */
+  terrainColors(geo) {
+    const pos = geo.attributes.position;
+    const nrm = geo.attributes.normal;
+    const colors = new Float32Array(pos.count * 3);
+    const tint = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const z = pos.getZ(i);
+      const rise = smoothstep(y / 4);
+      const upper = Math.max(smoothstep((y - 8) / 22), smoothstep((1 - nrm.getY(i)) / 0.3));
+      const mottle = rise > 0 ? 1 + 0.15 * groundNoise(x + 500, z - 500, 23) : 1;
+      tint.copy(SAND_TINT).lerp(SCRUB_TINT, rise).lerp(ROCK_TINT, upper * rise).multiplyScalar(mottle);
+      colors.set([tint.r, tint.g, tint.b], i * 3);
+    }
+    return colors;
   }
 
   buildSky() {

@@ -59,9 +59,14 @@ stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
   point must be level ground within a step of the entry's base (no more standing on a
   slaughter table, a Gazis bench, the small kevesh or the kevesh foot) and never inside
   another chamber, and the Nicanor gate is seen from the axis over the Maalos Shir landing.
-  Still open: `?at=beis_avtinas` and `?at=taim` have no standing point in the ring (the
-  storey is 21.5 amos up, the ta'im are sealed cells) and fall back to the old rule, which
-  drops the player onto the court below / beside the building; `?at=lishkas_haetz` stands
+  The code reviewer found the old-rule fallback dropped `?at=taim` 11 m into the undercroft
+  under the Heichal and `?at=beis_avtinas` onto the court; `pickSpawn` now runs four passes
+  (level with sight; a step up with sight; any depth below with sight, so the Avtinas storey
+  is looked up at from the Har HaBayis plaza; near the level without sight, so the sealed
+  ta'im are seen from the Heichal floor) before that rule. Still open: `?at=pesach_haheichal`
+  stands inside the Heichal facing the doorway from behind (the front candidate on the Ulam
+  flight is a step off level and the sides fail sight); a hand `cam` would restore the view
+  from the steps. `?at=lishkas_haetz` stands
   on the south strip and sees only the Gazis' and Golah's back walls (the Etz has no face
   on the court); Bechoros, Delek and Nitzotz are seen 30 degrees off their axis (the kevesh
   foot and the Ulam's wings take the axis points).

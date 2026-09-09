@@ -27,7 +27,7 @@ Useful URLs while developing:
 
 | URL | What it does |
 |---|---|
-| `/?at=mizbeach` | spawn just east of a content entry, facing it, with its card open |
+| `/?at=mizbeach` | spawn beside a content entry (east of it when the ground there allows; `src/game/spawn.js`), facing it, with its card open |
 | `/?cam=x,y,z,yaw,pitch` | spawn at scene coordinates (metres, degrees) |
 | `/?autostart=1` | skip the start screen |
 | `/?shadows=0`, `/?bloom=0`, `/?bake=0` | disable shadows / bloom / baked textures |

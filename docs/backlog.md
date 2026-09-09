@@ -26,15 +26,19 @@ stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
   (`EnvironmentBuilder.terrainHeight`, the east hill stretched into a north-south ridge for
   Har HaMishcha, fog to 534 m), Tadi is a gable of two leaning stones with no lintel
   (`wallRunA` `gable` option), the Ulam steps are dressed limestone with shaded risers,
-  the Gazis benches are solid tiers and the kiyor's rim is a walkable kerb. Left open:
-  the near hills carry the sand normal map's ripple (a second material without it costs
-  a draw call); `ulam_facade` (`?at=maalos_ulam`) spawns on the altar top, so that view
-  never shows the steps (`ulam_steps_altar` and `ulam_steps_low` do); the `?at=` back-off
-  in `TempleGame` could stand beside the altar instead.
-- Standing at (-27, -65) amos on the court, west of the laver, `PlayerController.collides()`
-  is already true (the muchni's post within the player radius), so the controller refuses
-  every move; reachable only by `?cam=`. A half-amah nudge of the post or a smaller solid
-  would clear it.
+  the Gazis benches are solid tiers and the kiyor's rim is a walkable kerb.
+- Round 6 (2026-09-09) closed the round-4 leftovers: the ground material fades its normal
+  map with camera distance in the shader (`EnvironmentBuilder.fadeNormalMapWithDistance`,
+  full within 25 m, gone past 60 m; one material, no extra draw call), so the hills no
+  longer carry the sand ripple; `?at=` (`src/game/spawn.js`) tries a ring of standing
+  points round the entry (front first, then 30-degree steps, at 1x / 1.5x / 2x the
+  distance) and keeps the first on a floor near the entry's base, outside every mass and
+  wall, with an open line of sight, so `ulam_facade` stands north-east of the steps on the
+  court at (29.1, -48.2) amos and shows them; the muchni post moved half an amah toward
+  the laver (x -26.05 amos) with a 0.12 m solid, so (-27, -65) is walkable. Still open:
+  the `ulam_facade` view sees the Ulam front at a grazing angle (the altar's north-east
+  quadrant blocks every bearing nearer the axis); a hand-placed `cam` view would frame the
+  facade square-on.
 - Beis HaMoked's vestibule floor runs past flight A's outer wall into a dead-end pocket
   under the hall floor (x 68.5..75.75, z -5.25..-3); open, no drop, harmless.
 

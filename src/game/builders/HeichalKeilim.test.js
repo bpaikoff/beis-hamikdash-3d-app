@@ -272,7 +272,7 @@ describe('solids', () => {
 
   it('the kiyor, menorah, shulchan and golden altar are solid', () => {
     // [id, level, a free spot 2 m away]: south of the kiyor (its body is an amah from the
-    // Ulam steps on the north, the muchni post on its south at 2.55 amos), east of the Heichal vessels (the menorah and shulchan stand 2.5 amos from the walls)
+    // Ulam steps on the north, the muchni post on its south at 2.05 amos), east of the Heichal vessels (the menorah and shulchan stand 2.5 amos from the walls)
     for (const [id, level, dx, dz] of [
       ['kiyor', K(), -2, 0],
       ['menorah', H(), 0, 2],
@@ -351,6 +351,24 @@ describe('kiyor cistern rim (round 4)', () => {
     const half = solid.geometry.parameters.width / 2;
     expect(rim.geometry.parameters.radiusTop - half).toBeGreaterThan(CONFIG.PLAYER_RADIUS + 0.1);
     expect(rim.geometry.parameters.height).toBeLessThan(CONFIG.STEP_HEIGHT);
+  });
+
+  it('the muchni post blocks at x -26.05 amos and leaves (-27, -65), a body south of it, walkable', () => {
+    // Round 6: the post's solid is the post's own 0.12 m and stands half an amah inside the
+    // rim's edge; before, at x -26.55 with a 0.16 m solid, collides() was already true at
+    // (-27, -65) (backlog "Player and builders"), so the controller refused every move there.
+    const post = walls.find((w) => w.userData?.name === 'muchni-solid');
+    expect(post.geometry.parameters.width).toBeCloseTo(0.12, 6);
+    expect(post.geometry.parameters.depth).toBeCloseTo(0.12, 6);
+    const box = new THREE.Box3().setFromObject(post);
+    const [px] = xz(-26.05, -65);
+    expect((box.min.x + box.max.x) / 2).toBeCloseTo(px, 6);
+    const eye = (xa, za) => new THREE.Vector3(...(([x, z]) => [x, K() + CONFIG.PLAYER_HEIGHT, z])(xz(xa, za)));
+    expect(player.collides(eye(-27, -65))).toBe(false);
+    expect(player.collides(eye(-27.4, -65))).toBe(false);
+    expect(player.collides(eye(-26.05, -65))).toBe(true); // the post itself
+    expect(player.collides(eye(-26.6, -65))).toBe(true); // a body's width from it still touches
+    expect(blockedAt(...(([x, z]) => [x, K(), z])(xz(-27, -65)))).toBe(false);
   });
 
   it('is stood on by the controller walking in against the laver from the north, east and west', () => {

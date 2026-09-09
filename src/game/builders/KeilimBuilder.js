@@ -304,17 +304,21 @@ export class KeilimBuilder extends BaseBuilder {
     g.add(instance(spoutGeo, this.mat.copper, spouts, { name: 'kiyor-spouts' }));
     // Muchni: a cedar wheel on a post beside the laver, on its south side, away from
     // the Ulam steps (their south end at x -20 is an amah north of the laver's body).
+    // The post stands half an amah inside the rim's edge (x -26.05 amos, 1.025 m from the
+    // laver's axis) so that a player at (-27, -65) amos, a body's width south of it, is
+    // not already inside its collision box (its solid is the post's own 0.12 m).
+    const postX = -(r * 1.7 - A / 2);
     const post = new THREE.Mesh(new THREE.BoxGeometry(0.12, h * 1.2, 0.12), this.mat.cedar);
-    post.position.set(-r * 1.7, h * 0.6, 0);
+    post.position.set(postX, h * 0.6, 0);
     g.add(post);
     const wheel = new THREE.Mesh(new THREE.TorusGeometry(h * 0.45, 0.05, 8, 24), this.mat.cedar);
-    wheel.position.set(-r * 1.7 - 0.1, h * 1.05, 0);
+    wheel.position.set(postX - 0.1, h * 1.05, 0);
     wheel.rotation.y = Math.PI / 2;
     wheel.name = 'muchni';
     g.add(wheel);
     // The laver and the muchni post are solid
     this.solid(g, { w: 2 * r + 0.1, h: 0.12 + h, d: 2 * r + 0.1, name: 'kiyor-solid' });
-    this.solid(g, { x: -r * 1.7, w: 0.16, h: h * 1.2, d: 0.16, name: 'muchni-solid' });
+    this.solid(g, { x: postX, w: 0.12, h: h * 1.2, d: 0.12, name: 'muchni-solid' });
     g.traverse((m) => {
       if (m.isMesh && m !== water) m.castShadow = true;
     });

@@ -170,7 +170,7 @@ export const routes = {
   // The kiyor and the Heichal vessels are solid: go around each, hugging it.
   keilim: [
     // The kiyor's centre is 4 amos south of the Ulam steps' end (x -20; its body reaches
-    // x -22.5); the muchni post is on its south side (1.3 m out), so it is passed on the
+    // x -22.5); the muchni post is on its south side (1.025 m out), so it is passed on the
     // south side of the post: slide round and back.
     at('kiyor', { dz: 3, level: K }),
     at('kiyor', { dx: -2.4, dz: -3, level: K }), // clear of the muchni post

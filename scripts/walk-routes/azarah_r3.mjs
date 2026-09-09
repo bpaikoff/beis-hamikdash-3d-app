@@ -32,7 +32,7 @@ const S = (x, z, o = {}) => p(x, z, K, { reach: 0.4, minY: 10, ...o });
  * centre only; walls (room walls, the band walls of the stairs) stop the 0.3 m body.
  */
 export const routes = {
-  // (a) The kiyor (body x -25.6 .. -22.4, z -66.6 .. -63.4; the muchni post at x -26.55,
+  // (a) The kiyor (body x -25.6 .. -22.4, z -66.6 .. -63.4; the muchni post at x -26.05,
   // z -65) on all four sides, twice along the 2.4-amah lane between its body and the Ulam
   // steps' south end (x -20), and into it from each side, into the post, and into the
   // steps' south end from the lane.
@@ -41,7 +41,7 @@ export const routes = {
     h(-21.2, -58, K),
     h(-21.2, -70, K), // the lane between the body (x -22.4) and the steps' south end (x -20), east to west
     h(-28, -70, K),
-    h(-28, -58, K), // past the post's south side (x -26.55)
+    h(-28, -58, K), // past the post's south side (x -26.05; its solid 0.12 m, x -26.17 .. -25.93)
     h(-21.2, -58, K),
     h(-21.2, -65, K),
     p(-24, -65, K, blocked), // into the body from the lane (east)
@@ -53,7 +53,7 @@ export const routes = {
     p(-24, -64, K, blocked), // into the body from the west, clear of the post
     h(-28, -64, K),
     h(-30, -65, K),
-    p(-26.5, -65, K, blocked), // into the muchni post
+    p(-26.05, -65, K, blocked), // into the muchni post (the body's face stops the centre at x -26.77)
     h(-30, -65, K),
     h(-28, -67.4, K),
     h(-21.2, -67.4, K), // the body's south face

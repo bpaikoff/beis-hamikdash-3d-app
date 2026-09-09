@@ -528,7 +528,7 @@ Object.assign(routes, {
     h(-35 - HUG, -92 - HUG, K), // the south ta'im wall
     hc(-50 - HUG, -92 - HUG, K),
     hc(-50 - HUG, -76 + HUG, K), // the south wing's end wall
-    h(-27.6, -76 + HUG, K), // the Ulam front to the kiyor (x -24, its solid x -25.6 .. -22.4, the muchni post on its south at x -26.5)
+    h(-27.6, -76 + HUG, K), // the Ulam front to the kiyor (x -24, its solid x -25.6 .. -22.4, the muchni post on its south at x -26.05)
     h(-27.6, -62.4, K), // past the post's south side
     h(-20 - HUG, -62.4, K),
     h(-20 - HUG, -54.6, K), // the flight's south end
@@ -536,7 +536,7 @@ Object.assign(routes, {
   ]),
 
   // (d) The altar zone: a loop round the kiyor and its muchni (the body x -25.6 .. -22.4,
-  // z -66.6 .. -63.4, the post on its south at x -26.5; an amah of court between it and
+  // z -66.6 .. -63.4, the post on its south at x -26.05; an amah of court between it and
   // the flight's south end at x -20), the yesod's west face along the first Ulam tread, the yesod's
   // north face, the sovev's east and south faces, the kevesh's north flank, its foot, its
   // south flank clear of the small western kevesh's shelf; then the slaughter furniture:

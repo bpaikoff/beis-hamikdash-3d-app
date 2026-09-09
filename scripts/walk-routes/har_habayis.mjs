@@ -132,6 +132,8 @@ export const routes = {
     amos(78.5, -58, CH),
     amos(90, -58, HB), // out opposite Shaar HaKorban
     amos(78.5, -58, CH),
+    amos(82.4, -56, { ...CH, reach: 0.4 }), // round the bath-house of the Middot 1:9 passage (round 6: x to 81.5, z -52 .. -42) by the lane along the Soreg
+    amos(82.4, -38, { ...CH, reach: 0.4 }),
     amos(78.5, -36, CH),
     amos(90, -36, HB), // out opposite Shaar HaNashim
     amos(90, -14, HB),

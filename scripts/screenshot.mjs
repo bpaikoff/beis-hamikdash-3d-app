@@ -35,7 +35,9 @@ const VIEWS = [
   { name: 'altar_fire', cam: '-22,9.75,0,-63,9', bloom: true },
   // The Cheil stairs (GEO-D): each vestibule from inside its door, looking at the flights,
   // and each stair well from the chamber floor above.
-  { name: 'moked_vestibule', cam: '40,1.8,-4,151,3' },
+  // (round 6: the vestibule's west bay is now the Tevilah stair, so this view stands at the
+  // switchback's foot, x 74.5, z -15 amos, and looks east up flight A.)
+  { name: 'moked_vestibule', cam: '37.25,1.8,0.5,180,8' },
   { name: 'moked_well', cam: '32,9.8,5,-48,-15' },
   { name: 'gazis_vestibule', cam: '-35,1.8,-50,165,3' },
   { name: 'gazis_well', cam: '-31,9.8,-42,126,-15' },
@@ -92,6 +94,16 @@ const VIEWS = [
   { name: 'hero_dawn', at: 'ezras_nashim_gate', time: 'dawn' },
   { name: 'hero_dusk', at: 'ezras_nashim_gate', time: 'dusk' },
   { name: 'altar_fire_dusk', cam: '-22,9.75,0,-63,9', bloom: true, time: 'dusk' },
+  // Round 6: the Middot 1:9 passage and Shaar HaNitzotz's opening to the Cheil. The well in
+  // the Tevilah chamber from the step-off floor at its open end (x 78.9, z -21.75 amos, eye at
+  // the hall floor + 1.7 m, looking south down the flight),
+  // the vaulted passage looking west from inside the bay's door (x 75, z -27.5, on the Cheil
+  // pavement), the bath-house's pool from its door (x 75, z -43.5, floor 2 amos up), and
+  // the stair tower's east face with the wicket from the Cheil in front of the gate.
+  { name: 'tevilah_well', cam: '39.45,9.78,-2.875,90,-35' },
+  { name: 'tevilah_passage', cam: '37.5,1.8,-5.75,0,-4' },
+  { name: 'tevilah_mikveh', cam: '37.5,2.8,-13.75,-38,-12' },
+  { name: 'nitzotz_wicket', cam: '39.5,1.8,-30,4,-2' },
 ];
 
 // Hard watchdog: SwiftShader can wedge a renderer so that even browser.close() never

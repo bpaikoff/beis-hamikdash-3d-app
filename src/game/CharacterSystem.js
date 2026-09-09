@@ -56,6 +56,17 @@ const ANKLE_MARGIN = 0.02;
 const TUBE_WEIGHT = 0.75;
 const GARMENT_PUFF = 0.03;
 const GARMENT_BLEND = 0.03;
+/**
+ * The garment's fold map (TextureFactory `clothFolds`, tangent space, one tile =
+ * FOLD_TILE metres of cloth) samples a second UV set: `uv1` is a cylindrical unwrap per
+ * limb frame, u going round the torso / arm / leg (a whole number of tiles, so the seam
+ * at the back is invisible) and v running up the limb in metres / FOLD_TILE, with the
+ * tangent (+u) written per vertex so the folds run along the limb whatever the atlas UVs
+ * do. FOLD_TILES: tiles round the torso, an arm, a leg. FOLD_SCALE is the normalScale.
+ */
+const FOLD_TILE = 0.25;
+const FOLD_TILES = { torso: 4, arm: 1, leg: 2 };
+export const FOLD_SCALE = 0.9;
 /** The belt band (avnet / a Yisrael's belt) above the pelvis joint, metres, and how tall the hem band is. */
 const WAIST_BAND = [0.03, 0.11];
 const HEM_BAND = 0.12;
@@ -195,6 +206,37 @@ function tubeNormal(x, y, z, limbs, out) {
   return out.normalize();
 }
 
+const _e1 = new THREE.Vector3(), _e2 = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
+
+/**
+ * The fold map's cylindrical `uv1` and tangent (+u, round the limb) at a bind-pose vertex:
+ * the arm frame beyond the shoulder (above the hip), the leg frame below the crotch, else
+ * the torso frame (the same tests as tubeNormal, without the cross-fade: a uv cannot be
+ * blended across a seam, and the shoulder / crotch is where a sleeve or a skirt is sewn on).
+ * Writes u, v into `uv` and the tangent into `tan`.
+ */
+function garmentUv(x, y, z, limbs, uv, tan) {
+  const arm = y > limbs.hipY && Math.abs(x) >= limbs.shoulderX ? limbs.arms[x > 0 ? 0 : 1] : null;
+  if (arm) {
+    // Frame round the bone axis: e1 = up x axis, e2 = axis x e1.
+    _e1.crossVectors(_up, arm.axis).normalize();
+    _e2.crossVectors(arm.axis, _e1).normalize();
+    _limb.set(x, y, z).sub(arm.origin);
+    const along = _limb.dot(arm.axis);
+    const angle = Math.atan2(_limb.dot(_e1), _limb.dot(_e2));
+    uv.set((angle / (2 * Math.PI)) * FOLD_TILES.arm, along / FOLD_TILE);
+    // +u: the angle's increasing direction, cos * e1 - sin * e2.
+    tan.copy(_e1).multiplyScalar(Math.cos(angle)).addScaledVector(_e2, -Math.sin(angle));
+    return;
+  }
+  const leg = y < limbs.crotchY;
+  const cx = leg ? (x > 0 ? limbs.thighX[0] : limbs.thighX[1]) : 0;
+  const tiles = leg ? FOLD_TILES.leg : FOLD_TILES.torso;
+  const angle = Math.atan2(x - cx, z); // 0 at the front (+z), the seam at the back
+  uv.set((angle / (2 * Math.PI)) * tiles, y / FOLD_TILE);
+  tan.set(Math.cos(angle), 0, -Math.sin(angle));
+}
+
 /** Distance from a garment vertex to the nearest skin boundary (neck, ankle, wrist planes). */
 function skinDistance(x, y, z, bounds, tmp) {
   let d = Math.min(bounds.headY - y, y - bounds.ankleY);
@@ -233,6 +275,15 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
   const limbs = bounds.limbs;
   const waist = limbs?.waist ?? [0.98, 1.06];
   const hemY = bounds.ankleY + HEM_BAND;
+  // The fold map's uv1 + tangent: atlas tangents for everything (the skin's own normal map
+  // reads them), then the cylindrical frame per garment vertex. Needs index, normal and uv.
+  const folds = Boolean(limbs && nor && g.index && g.attributes.uv);
+  if (folds) {
+    g.computeTangents();
+    g.setAttribute('uv1', g.attributes.uv.clone());
+  }
+  const uv1 = g.attributes.uv1, tangent = g.attributes.tangent;
+  const uv = new THREE.Vector2(), tan = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {
     const px = pos.getX(i), y = pos.getY(i), pz = pos.getZ(i), x = Math.abs(px);
     let hex;
@@ -252,6 +303,13 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
         nor.setXYZ(i, n.x, n.y, n.z);
         const puff = GARMENT_PUFF * Math.min(1, skinDistance(px, y, pz, bounds, tmp) / GARMENT_BLEND);
         pos.setXYZ(i, px + n.x * puff, y + n.y * puff, pz + n.z * puff);
+      }
+      if (folds) {
+        garmentUv(px, y, pz, limbs, uv, tan);
+        uv1.setXY(i, uv.x, uv.y);
+        // Keep the tangent perpendicular to the flattened normal; handedness +1.
+        tan.addScaledVector(n, -tan.dot(n)).normalize();
+        tangent.setXYZW(i, tan.x, tan.y, tan.z, 1);
       }
     }
     c.setHex(hex);
@@ -444,10 +502,16 @@ export class CharacterSystem {
     });
   }
 
+  /**
+   * The garment: the linen weave (atlas uv) times the vertex colour, with the fold normal
+   * map on the cylindrical `uv1` (see FOLD_TILE) when the TextureFactory has it.
+   */
   garmentMaterial(role) {
     return this.material(`garment:${role}`, () => {
       const map = this.tex?.get?.('whiteLinen') ?? null;
-      return new THREE.MeshStandardMaterial({ map, vertexColors: true, roughness: 0.85, metalness: 0 });
+      const normalMap = this.tex?.get?.('clothFolds') ?? null;
+      if (normalMap) normalMap.channel = 1;
+      return new THREE.MeshStandardMaterial({ map, normalMap, normalScale: new THREE.Vector2(FOLD_SCALE, FOLD_SCALE), vertexColors: true, roughness: 0.85, metalness: 0 });
     });
   }
 

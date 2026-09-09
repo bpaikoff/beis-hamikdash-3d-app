@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {
   CharacterSystem, CHARACTER_FILES, CLIPS, LIMITS, ANIMATE_RADIUS, LOD, FIGURE_RADIUS,
-  templePlacements, makeWalker, figureTier, lodK, skinBounds, paintHuman, textureUrl,
+  templePlacements, makeWalker, figureTier, lodK, skinBounds, paintHuman, textureUrl, FOLD_SCALE,
 } from './CharacterSystem.js';
 import { PlayerController } from './PlayerController.js';
 import { TempleBuilder } from './TempleBuilder.js';
@@ -304,6 +304,88 @@ describe('CharacterSystem', () => {
     const beltI = [...Array(p0.count).keys()].find((i) => Math.abs(p0.getX(i)) < 0.1 && p0.getY(i) > pelvis.y + 0.05 && p0.getY(i) < pelvis.y + 0.09);
     expect(hexAt(kc, beltI)).toBe(0x7a2e3e);
     expect(hexAt(gc, beltI)).toBe(0x1f3f8f);
+    sys.dispose();
+  });
+
+  it('writes a cylindrical uv1 and a tangent round each limb for the fold map, skin tangents from the atlas', async () => {
+    sys = new CharacterSystem(scene, stubTex, { loader: diskLoader });
+    await sys.load();
+    const { skin: bounds, scene: src } = sys.models.kohen;
+    const hand = src.getObjectByName('hand_l').getWorldPosition(new THREE.Vector3());
+    const upperarm = src.getObjectByName('upperarm_l').getWorldPosition(new THREE.Vector3());
+    let body;
+    src.traverse((o) => { if (o.isSkinnedMesh && o.name !== 'Hair' && o.name !== 'Eyes' && !body) body = o; });
+    const painted = sys.models.kohen.roles.kohen.get(body.geometry.uuid);
+    const p0 = body.geometry.attributes.position, uv0 = body.geometry.attributes.uv;
+    const { uv1, tangent, normal } = painted.attributes;
+    expect(uv1.itemSize).toBe(2);
+    expect(tangent.itemSize).toBe(4);
+    expect(uv1.count).toBe(p0.count);
+    // The unpainted geometry's own tangents, for the skin comparison.
+    const ref = body.geometry.clone();
+    ref.computeTangents();
+    const refTan = ref.attributes.tangent;
+    const v = new THREE.Vector3(), t = new THREE.Vector3(), n = new THREE.Vector3(), radial = new THREE.Vector3();
+    let torso = 0, arm = 0, leg = 0, skinN = 0;
+    for (let i = 0; i < p0.count; i++) {
+      v.fromBufferAttribute(p0, i);
+      const skinV = v.y > bounds.headY || v.y < bounds.ankleY || Math.abs(v.x) > hand.x - 0.01;
+      if (skinV) {
+        // Skin keeps the atlas uv in uv1 and the atlas tangent.
+        expect(uv1.getX(i)).toBe(uv0.getX(i));
+        expect(uv1.getY(i)).toBe(uv0.getY(i));
+        expect(tangent.getX(i)).toBe(refTan.getX(i));
+        skinN++;
+        continue;
+      }
+      t.fromBufferAttribute(tangent, i);
+      n.fromBufferAttribute(normal, i);
+      expect(t.length()).toBeCloseTo(1, 4);
+      expect(Math.abs(t.dot(n)), `tangent ${i} not on the surface`).toBeLessThan(1e-4);
+      expect(tangent.getW(i)).toBe(1);
+      const u = uv1.getX(i), vv = uv1.getY(i);
+      if (Math.abs(v.x) < 0.12 && v.y > 1.15 && v.y < 1.35 && Math.abs(v.z) > 0.05) {
+        // Torso: v is height in tiles of 0.25 m, u the angle round the body (4 tiles), the
+        // tangent runs round the body (horizontal, perpendicular to the radial direction).
+        expect(vv).toBeCloseTo(v.y / 0.25, 5);
+        expect(Math.abs(u)).toBeLessThanOrEqual(2);
+        radial.set(v.x, 0, v.z).normalize();
+        expect(Math.abs(t.y)).toBeLessThan(0.35);
+        expect(Math.abs(t.dot(radial))).toBeLessThan(0.35);
+        torso++;
+      } else if (v.x > upperarm.x + 0.08 && v.x < hand.x - 0.08 && v.y > 1.3) {
+        // Left arm: v runs along the bone from the shoulder, u round it (1 tile).
+        expect(vv).toBeCloseTo((v.x - upperarm.x) / 0.25, 1);
+        expect(Math.abs(u)).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(t.x)).toBeLessThan(0.35); // round the arm, not along it
+        arm++;
+      } else if (v.y > 0.3 && v.y < 0.7 && Math.abs(v.x) > 0.05) {
+        expect(vv).toBeCloseTo(v.y / 0.25, 5);
+        expect(Math.abs(u)).toBeLessThanOrEqual(1);
+        expect(Math.abs(t.y)).toBeLessThan(0.35);
+        leg++;
+      }
+    }
+    expect(skinN).toBeGreaterThan(500);
+    expect(torso).toBeGreaterThan(20);
+    expect(arm).toBeGreaterThan(20);
+    expect(leg).toBeGreaterThan(50);
+    sys.dispose();
+
+    // The garment material takes the fold map on uv channel 1 when the factory has it; the skin does not.
+    const folds = new THREE.Texture();
+    const tex = { get: (name) => (name === 'clothFolds' ? folds : null), manager: new THREE.LoadingManager() };
+    sys = new CharacterSystem(scene, tex, { loader: diskLoader });
+    await sys.load();
+    const k = sys.createKohen(0, 0, 0);
+    let mesh;
+    k.traverse((o) => { if (o.isSkinnedMesh && o.name !== 'Hair' && o.name !== 'Eyes' && !mesh) mesh = o; });
+    const [skinMat, garment] = mesh.material;
+    expect(garment.normalMap).toBe(folds);
+    expect(folds.channel).toBe(1);
+    expect(garment.normalScale.x).toBe(FOLD_SCALE);
+    expect(skinMat.normalMap).toBeNull();
+    expect(sys.materials.get('garment:kohen')).toBe(garment); // shared: no material per figure
     sys.dispose();
   });
 

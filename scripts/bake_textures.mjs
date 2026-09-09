@@ -3,7 +3,7 @@
  * Bake the procedural canvas textures to public/textures/<name>.webp so the app loads
  * images instead of blocking the main thread for seconds generating them.
  *
- *   npm run bake                 # all 21 textures
+ *   npm run bake                 # all 22 textures
  *   node scripts/bake_textures.mjs --only jerusalemStone
  *   node scripts/bake_textures.mjs --quality 0.9
  *
@@ -51,7 +51,7 @@ try {
   const names = await page.evaluate(() => window.__bake.names);
   for (const name of names) {
     if (only && name !== only) continue;
-    const q = name === 'normalMap' ? Math.max(quality, 0.95) : quality; // normals hate lossy artifacts
+    const q = name === 'normalMap' || name === 'clothFolds' ? Math.max(quality, 0.95) : quality; // normals hate lossy artifacts
     const { width, height, dataUrl } = await page.evaluate(([n, qq]) => window.__bake.render(n, qq), [name, q]);
     if (!dataUrl.startsWith('data:image/webp')) {
       console.error(`${name}: browser did not encode WebP`);

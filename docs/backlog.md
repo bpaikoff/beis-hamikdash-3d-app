@@ -39,6 +39,21 @@ stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
   the `ulam_facade` view sees the Ulam front at a grazing angle (the altar's north-east
   quadrant blocks every bearing nearer the axis); a hand-placed `cam` view would frame the
   facade square-on.
+- Round 6 court walker (2026-09-09): fuzz of azaras_kohanim / azaras_yisrael / ezras_nashim
+  (40 starts each, seed 61) found no real fall; four `r6_court_*` routes (Nicanor to the
+  Levites on the Duchan, round the flock at the rings, kiyor past the muchni post up the
+  Ulam flight, the `ulam_facade` spawn down to the steps) walk green. The `?at=` picker was
+  audited for every entry (`scripts/screenshot.mjs --at id,id` captures any spawn): a gate
+  is now faced square-on along its passage from the side a visitor arrives, a standing
+  point must be level ground within a step of the entry's base (no more standing on a
+  slaughter table, a Gazis bench, the small kevesh or the kevesh foot) and never inside
+  another chamber, and the Nicanor gate is seen from the axis over the Maalos Shir landing.
+  Still open: `?at=beis_avtinas` and `?at=taim` have no standing point in the ring (the
+  storey is 21.5 amos up, the ta'im are sealed cells) and fall back to the old rule, which
+  drops the player onto the court below / beside the building; `?at=lishkas_haetz` stands
+  on the south strip and sees only the Gazis' and Golah's back walls (the Etz has no face
+  on the court); Bechoros, Delek and Nitzotz are seen 30 degrees off their axis (the kevesh
+  foot and the Ulam's wings take the axis points).
 - Beis HaMoked's vestibule floor runs past flight A's outer wall into a dead-end pocket
   under the hall floor (x 68.5..75.75, z -5.25..-3); open, no drop, harmless.
 
@@ -56,9 +71,10 @@ cap. A skinned LOD (`figureTier`) hides figures below 4 px and their small parts
 
 - The garment is still paint over the body: a real tunic mesh with folds (or a garment
   normal map) would read better at arm's length; the shoulders keep the base body's bulk.
-- The pack has no scalp hair, so bare heads are covered (sudar / migba'as). The two Levites
-  on the Duchan wear the migba'as (default `createKohen` role); a Levite role with its own
-  cap would be a small addition.
+- The pack has no scalp hair, so bare heads are covered (sudar / migba'as / the Levite's
+  turban). Round 6 made the Yisrael's sudar a head-wrap to the ears (`SUDAR`: an ellipsoid
+  cap with a rolled band, 12 cm down the skull, tested against the body's skull vertices)
+  after `yisrael_close` showed bare scalp above the old 6 cm cap.
 - No goat or bull model: the goat is the sheep narrowed and recoloured, the bull is the
   cow recoloured dark.
 

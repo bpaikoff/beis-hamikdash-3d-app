@@ -18,9 +18,11 @@ import { daylight, DEFAULT_TIME, saturate, skyBand } from './sun.js';
  * lit from a warm floor, not from black, and at dawn and dusk the walls take the horizon's
  * orange from below, while it stays dark enough that a vertical gold face keeps its
  * bright-above / dark-below gradient. `sigma` is the PMREM blur (radians); `panelSun`
- * the sunIntensity at which the panels show their listed radiance.
+ * the sunIntensity at which the panels show their listed radiance (a full sun is 1.6, so
+ * 1.2 shows them a third over their listed values: round 6 measured the gold 8-11 %
+ * brighter in hero / altar_fire / hero_dusk with no pixel reaching 240 of 255; 2.2 dimmed it).
  */
-export const ENV = { exposure: 0.8, saturation: 0.85, groundExposure: 2.5, ground: [0.3, 0.27, 0.23], sigma: 0.04, panelSun: 1.6 };
+export const ENV = { exposure: 0.8, saturation: 0.85, groundExposure: 2.5, ground: [0.3, 0.27, 0.23], sigma: 0.04, panelSun: 1.2 };
 
 /**
  * Bright panels in the environment scene around the sun: a smooth sky gives the burnished
@@ -36,7 +38,7 @@ export const ENV = { exposure: 0.8, saturation: 0.85, groundExposure: 2.5, groun
  * one to catch; the panel opposite the sun is a dim rim light.
  */
 export const ENV_PANELS = [
-  { azimuth: 0, elevation: 15, width: 5, height: 3, radiance: 45 },
+  { azimuth: 0, elevation: 15, width: 5, height: 3, radiance: 60 }, // the sun-side highlight (45 before round 6)
   { azimuth: -45, elevation: 12, width: 5, height: 3, radiance: 20 },
   { azimuth: 45, elevation: 12, width: 5, height: 3, radiance: 20 },
   { azimuth: -100, elevation: 12, width: 5, height: 3, radiance: 10 },

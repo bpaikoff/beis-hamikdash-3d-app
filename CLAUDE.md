@@ -35,6 +35,7 @@ Content model, geometry conventions and the review log: `docs/content.md`. Open 
 ```bash
 npm run lint && npm test -- --run && npm run build     # 0 errors, all tests, build green
 node scripts/verify_refs.mjs                           # when content changed
+node scripts/fetch_assets.mjs --verify                 # when assets/manifests changed (no network)
 node scripts/walk.mjs --list                           # ~70 routes across scripts/walk-routes/*.mjs
 node scripts/walk.mjs --route a,b,c --port 43xx --out DIR     # ≤ 24 routes per process
 node scripts/walk.mjs --fuzz 40 --fuzz-walk 3 --seed N --area <id> --port 43xx --out DIR
@@ -89,6 +90,19 @@ Operational rules: never `pkill -f` with a pattern that appears in the same comm
 (it kills the shell); run long walks with `run_in_background` and bounded polls; agents
 that stop mid-task ("waiting on the walker") are resumed with a short message telling
 them to read their output file and finish; each agent uses its own port range.
+
+## Characters (round 5)
+
+- `public/assets/characters/kohen.glb` is the Quaternius Universal Base Characters male
+  body (CC0) on the Universal Animation Library rig; `scripts/fetch_assets.mjs --characters`
+  rebuilds it (itch.io download, joint names asserted, clips retargeted, textures resized
+  with `scripts/resize_textures.py` via Python PIL). The garment is vertex paint over the
+  body: `CharacterSystem.paintHuman` derives the skin/garment split from the rig's bones,
+  flattens garment normals to per-limb tubes and puffs the cloth 3 cm; without that the
+  muscular base body reads as unclothed at close range. Always Read `kohanim_close` and
+  `yisrael_close` after touching it.
+- The environment map is a PMREM of the sky per time of day (`Daylight`); gold contrast
+  comes from the sun-side panels and the ground hemisphere's darkness (`ENV` in Daylight.js).
 
 ## Related
 

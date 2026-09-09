@@ -38,22 +38,32 @@ stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
 - Beis HaMoked's vestibule floor runs past flight A's outer wall into a dead-end pocket
   under the hall floor (x 68.5..75.75, z -5.25..-3); open, no drop, harmless.
 
-## Characters (Sprint 4)
+## Characters (Sprint 4, round 5)
 
-- The kohanim are the Quaternius Universal Animation Library mannequin with per-role
-  vertex colours: white robe, red avnet, cap, tan head and hands, no modelled face. A
-  textured human (Quaternius Universal Base Characters, 122 MB download) or a Mixamo-style
-  rig would replace them without touching `CharacterSystem`'s API.
+Round 5 (2026-09-06) replaced the mannequin: `kohen.glb` is the Quaternius Universal Base
+Characters male body (CC0) on the Universal Animation Library rig, the three clips
+retargeted by joint name (`scripts/fetch_assets.mjs`), its skin/eyes/eyebrow textures
+shipped as five small files (`manifest.textures`). `CharacterSystem.paintHuman` splits the
+body into a textured skin group and a vertex-coloured garment group by the rig's bones,
+flattens the garment's normals to per-limb tubes and puffs it 3 cm so the muscular body
+does not read through the robe; Yisraelim wear grey wool with a belt and hem and a sudar
+cap. A skinned LOD (`figureTier`) hides figures below 4 px and their small parts beyond
+~30 m. Still open:
+
+- The garment is still paint over the body: a real tunic mesh with folds (or a garment
+  normal map) would read better at arm's length; the shoulders keep the base body's bulk.
+- The pack has no scalp hair, so bare heads are covered (sudar / migba'as). The two Levites
+  on the Duchan wear the migba'as (default `createKohen` role); a Levite role with its own
+  cap would be a small addition.
 - No goat or bull model: the goat is the sheep narrowed and recoloured, the bull is the
   cow recoloured dark.
-- Skinned meshes are skipped by `DistanceCuller`; a distance LOD for characters would
-  bring the hero view further below 800 draw calls.
 
-## Sky and lighting (Sprint 6)
+## Sky and lighting (Sprint 6, round 5)
 
-- Dawn and dusk change the sky and the sun's warmth, but in the hero view the sky is only
-  a strip through the gate, so the effect reads faintly there. A sky-based PMREM for the
-  environment map (instead of RoomEnvironment) would carry the time of day into the stone.
+Round 5 renders `scene.environment` from the sky dome per time of day (`Daylight`:
+offscreen Sky + ground hemisphere + sun-side panels, PMREM cached per time), so dawn and
+dusk reach the stone in the hero view; gold `envMapIntensity` retuned. Open: the burnish
+on gold is flatter than the old studio map at some angles; the panels are the knob.
 
 ## Deployment
 

@@ -17,6 +17,9 @@ jobs:
       - run: npm run lint
       - run: npm test -- --run
       - run: npm run build
+      # The runner image ships a Google Chrome apt source whose index has served
+      # "Hash Sum mismatch" (2026-09-09); Playwright's --with-deps runs apt-get update.
+      - run: sudo rm -f /etc/apt/sources.list.d/google-chrome*.list /etc/apt/sources.list.d/google*.list
       - run: npx playwright install --with-deps chromium
       - run: npm run bake
       - run: npm run build

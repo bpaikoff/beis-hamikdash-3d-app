@@ -339,14 +339,15 @@ export const routes = {
   ],
 
   // (i) The kodesh / chol line (Yoma 25a) in both chambers: an inlaid strip at x +-67.5,
-  // crossed both ways on the hall floor (Beis HaMoked at z -20, between the chambers'
-  // faces; the Gazis at z -98.5, between the well's parapet and the benches).
+  // crossed both ways on the hall floor (Beis HaMoked at z -19.5, between the chambers'
+  // faces and into the Tevilah chamber on the door's east side, clear of the round-6
+  // well parapet at z -20.25; the Gazis at z -98.5, between the well's parapet and the benches).
   r3_kodesh_line: [
     p(56, -14, K),
-    p(66.5, -20, K),
-    p(60, -20, K),
-    p(76, -20, K),
-    p(60, -20, K),
+    p(66.5, -19.5, K),
+    p(60, -19.5, K),
+    p(76, -19.5, K),
+    p(60, -19.5, K),
     p(66.5, -14, K),
     p(56, -14, K),
   ],

@@ -123,7 +123,9 @@ export const routes = {
     amos(50, -210, HB), // out opposite the northern west gate
     amos(50, -198, CH),
     amos(78.5, -198, CH),
-    amos(78.5, -100, CH),
+    amos(78.5, -102, CH),
+    amos(82.4, -102, { ...CH, reach: 0.4 }), // round the Nitzotz stair tower (round 6: x to 81, z -99 .. -83) by the lane along the Soreg
+    amos(82.4, -81, { ...CH, reach: 0.4 }),
     amos(78.5, -78, CH),
     amos(90, -78, HB), // out opposite Shaar HaNitzotz
     amos(78.5, -78, CH),
@@ -195,10 +197,22 @@ export const routes = {
     amos(0, 165, HB), // out, and over the plaza to the opening opposite Shaar HaNashim
     amos(90, 165, HB),
     amos(90, -36, HB),
-    amos(74.3, -36, CH),
-    amos(74.3, -26.8, CH), // the Beis HaMoked's south wall
-    amos(74.3, -36, CH),
-    amos(74.3, -194.5, { ...CH, reach: 0.3 }), // north strip past Shaar HaKorban and Shaar HaNitzotz to the north-west corner
+    // Round 6: the vault of the Middot 1:9 passage (x to 77) runs along the wall's foot from
+    // the Beis HaMoked's west wall (z -26) to the bath-house (x to 81.5, z -52 .. -42), and
+    // the Nitzotz stair tower (x to 81) stands at z -99 .. -83; both are rounded by the
+    // 2-amah lane along the Soreg (x 83.5).
+    amos(77.8, -36, CH),
+    amos(77.8, -26.8, CH), // the Beis HaMoked's west wall, along the passage's vault
+    amos(77.8, -36, CH),
+    amos(77.8, -41.2, { ...CH, reach: 0.3 }), // the bath-house's east wall
+    amos(82.4, -41.2, { ...CH, reach: 0.3 }),
+    amos(82.4, -52.8, { ...CH, reach: 0.3 }), // its west wall
+    amos(74.3, -52.8, { ...CH, reach: 0.3 }),
+    amos(74.3, -82.2, { ...CH, reach: 0.3 }), // past Shaar HaKorban to the Nitzotz tower's east wall
+    amos(82.4, -82.2, { ...CH, reach: 0.3 }),
+    amos(82.4, -99.8, { ...CH, reach: 0.3 }), // its west wall
+    amos(74.3, -99.8, { ...CH, reach: 0.3 }),
+    amos(74.3, -194.5, { ...CH, reach: 0.3 }), // north strip to the north-west corner
     amos(-75, -193.8, { ...CH, reach: 0.3 }), // west strip behind the building, past the two western gates (closed, at court level), to the south-west corner
     amos(-74.3, -148.8, CH), // south strip to the west wall of Lishkas HaEtz
     amos(-74.3, -172, CH),

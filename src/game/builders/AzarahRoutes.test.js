@@ -276,7 +276,7 @@ describe('Ezras Kohanim floor over the whole Temple', () => {
     const under = (x, z, from = 200) => player.getFloorHeight(...xz(x, z), from);
     const cheil = levelWorldY('cheil');
     const below = K - 0.5; // under the chamber floor slabs
-    for (const [x, z] of [[78, -14], [72, -20], [-72, -110], [-70, -100]]) expect(under(x, z, below), `${x},${z}`).toBeCloseTo(cheil + 0.09 * AMAH, 2); // the vestibule floors, cast from under the chamber floors
+    for (const [x, z] of [[78, -14], [70, -20], [-72, -110], [-70, -100]]) expect(under(x, z, below), `${x},${z}`).toBeCloseTo(cheil + 0.09 * AMAH, 2); // the vestibule floors, cast from under the chamber floors (round 6: x 70 is the lane west of the Tevilah stair's landing)
     expect(under(70, -15, below)).toBeCloseTo(K + LIP - 5 * AMAH, 2); // landing L2 under the Beis HaMoked hall
     expect(under(69.5, -8.75)).toBeCloseTo(K + LIP, 2); // the top tread in the well, level with the hall floor
     expect(under(69.5, -13.25)).toBeCloseTo(K + LIP - 4.5 * AMAH, 2); // the first tread of flight C, seen from above through the well

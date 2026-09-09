@@ -2,8 +2,9 @@ import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
 import {
   EnvironmentBuilder, hillPlacements, groundSize, gridCoords, terrainHeight, terrainBlend,
-  HILL_CLEARANCE, BLEND_WIDTH, NOISE_AMPLITUDE, FOG_END,
+  fadeNormalMapWithDistance, HILL_CLEARANCE, BLEND_WIDTH, NOISE_AMPLITUDE, FOG_END, NORMAL_FADE,
 } from './EnvironmentBuilder.js';
+import { ShaderChunk, ShaderLib } from 'three';
 import { walkableBounds, byId, worldBounds } from '../../content/index.js';
 import { CONFIG } from '../../config.js';
 
@@ -126,5 +127,40 @@ describe('environment', () => {
     expect(coords[0]).toBe(-half);
     expect(coords[coords.length - 1]).toBe(half);
     for (let i = 1; i < coords.length; i++) expect(coords[i] - coords[i - 1]).toBeGreaterThan(0);
+  });
+
+  it('fades the ground normal map with camera distance inside the standard shader (one material, no extra draw call)', () => {
+    const scene = new THREE.Scene();
+    const mat = { ground: new THREE.MeshStandardMaterial() };
+    const floors = [];
+    const b = new EnvironmentBuilder(scene, { get: () => undefined }, mat, floors, []);
+    b.hills = hills;
+    b.buildGround();
+    const ground = scene.getObjectByName('ground');
+    expect(ground.material).not.toBe(mat.ground); // a clone: the shared sand material stays plain
+    expect(typeof ground.material.onBeforeCompile).toBe('function');
+    expect(ground.material.customProgramCacheKey()).toContain('normalFade');
+    // Run the patch on the real physical shader, then expand its chunks as three does
+    // (onBeforeCompile sees the unexpanded source, so the chunk itself must be patched
+    // where it is expanded: the anchor lives inside normal_fragment_maps).
+    const expand = (src) => src.replace(/#include <([\w_]+)>/g, (m, name) => ShaderChunk[name] ?? m);
+    const shader = { uniforms: {}, vertexShader: ShaderLib.standard.vertexShader, fragmentShader: ShaderLib.standard.fragmentShader };
+    ground.material.onBeforeCompile(shader);
+    shader.fragmentShader = expand(shader.fragmentShader);
+    expect(shader.uniforms.normalFade.value.x).toBe(NORMAL_FADE.near);
+    expect(shader.uniforms.normalFade.value.y).toBe(NORMAL_FADE.far);
+    expect(NORMAL_FADE.near).toBeLessThan(NORMAL_FADE.far);
+    expect(shader.fragmentShader).not.toContain('mapN.xy *= normalScale;');
+    expect(shader.fragmentShader).toContain('mapN.xy *= normalScale * ( 1.0 - smoothstep( normalFade.x, normalFade.y, length( vViewPosition ) ) );');
+    const decl = shader.fragmentShader.indexOf('uniform vec2 normalFade;');
+    expect(decl).toBeGreaterThan(shader.fragmentShader.indexOf('varying vec3 vViewPosition;'));
+    expect(decl).toBeLessThan(shader.fragmentShader.indexOf('void main()'));
+    expect(shader.fragmentShader.match(/uniform vec2 normalFade;/g)).toHaveLength(1);
+    // A custom near/far pair lands in the uniform.
+    const other = fadeNormalMapWithDistance(new THREE.MeshStandardMaterial(), { near: 10, far: 20 });
+    const s2 = { uniforms: {}, fragmentShader: '#include <normal_pars_fragment>\n#include <normal_fragment_maps>' };
+    other.onBeforeCompile(s2);
+    expect(s2.uniforms.normalFade.value.toArray()).toEqual([10, 20]);
+    expect(s2.fragmentShader).toContain('smoothstep( normalFade.x, normalFade.y');
   });
 });

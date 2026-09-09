@@ -180,6 +180,37 @@ export function gridCoords(half, fineReach) {
  * their steeper, higher ground.
  */
 const SAND_TINT = new THREE.Color(1, 1, 1);
+
+/**
+ * Camera distances (metres) between which the ground's normal map fades out: the sand
+ * ripple is full within NORMAL_FADE.near and gone past NORMAL_FADE.far, so the hills do
+ * not carry the 8 m tile's ripple as a moire across their slopes.
+ */
+export const NORMAL_FADE = { near: 25, far: 60 };
+
+/**
+ * Patch a material so its tangent-space normal map is attenuated with distance from the
+ * camera: normalScale is multiplied by 1 - smoothstep(near, far, distance) inside
+ * normal_fragment_maps. One material, one draw call; the flat ring keeps the ripple under
+ * foot and the hills, always farther than `far`, shade from their vertex normals alone.
+ */
+export function fadeNormalMapWithDistance(mat, { near, far } = NORMAL_FADE) {
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.normalFade = { value: new THREE.Vector2(near, far) };
+    // onBeforeCompile sees the unexpanded source: the chunk that applies normalScale is
+    // inlined here with the attenuation, in place of its #include.
+    const maps = THREE.ShaderChunk.normal_fragment_maps.replace(
+      'mapN.xy *= normalScale;',
+      'mapN.xy *= normalScale * ( 1.0 - smoothstep( normalFade.x, normalFade.y, length( vViewPosition ) ) );'
+    );
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <normal_pars_fragment>', '#include <normal_pars_fragment>\nuniform vec2 normalFade;')
+      .replace('#include <normal_fragment_maps>', maps);
+  };
+  // three keys its program cache by the material's flags; a patched shader needs its own key.
+  mat.customProgramCacheKey = () => `normalFade:${near}:${far}`;
+  return mat;
+}
 const SCRUB_TINT = new THREE.Color().setHSL(0.13, 0.28, 0.4);
 const ROCK_TINT = new THREE.Color().setHSL(0.08, 0.14, 0.58);
 
@@ -243,7 +274,7 @@ export class EnvironmentBuilder extends BaseBuilder {
     geo.setAttribute('color', new THREE.BufferAttribute(this.terrainColors(geo), 3));
     geo.computeBoundingSphere();
 
-    const mat = this.mat.ground.clone();
+    const mat = fadeNormalMapWithDistance(this.mat.ground.clone());
     mat.vertexColors = true;
     const ground = new THREE.Mesh(geo, mat);
     ground.name = 'ground';

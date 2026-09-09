@@ -2,7 +2,8 @@
 
 First-person three.js walkthrough of the Second Temple (React 18, three 0.160, Vite 7,
 Node 22). Live at https://beis-hamikdash-3d-production.up.railway.app (Railway service
-`beis-hamikdash-3d`, auto-deploys `master`; the mikdash.tzadek.ai CNAME is deferred).
+`beis-hamikdash-3d`, auto-deploys `master`; mikdash.tzadek.ai is attached to the service
+and waits on the Cloudflare CNAME `mikdash -> 4bae3oiu.up.railway.app`).
 Content model, geometry conventions and the review log: `docs/content.md`. Open items:
 `docs/backlog.md`. Starter prompt for the next session: `docs/next-session.md`.
 
@@ -36,7 +37,7 @@ Content model, geometry conventions and the review log: `docs/content.md`. Open 
 npm run lint && npm test -- --run && npm run build     # 0 errors, all tests, build green
 node scripts/verify_refs.mjs                           # when content changed
 node scripts/fetch_assets.mjs --verify                 # when assets/manifests changed (no network)
-node scripts/walk.mjs --list                           # ~70 routes across scripts/walk-routes/*.mjs
+node scripts/walk.mjs --list                           # ~88 routes across scripts/walk-routes/*.mjs
 node scripts/walk.mjs --route a,b,c --port 43xx --out DIR     # ≤ 24 routes per process
 node scripts/walk.mjs --fuzz 40 --fuzz-walk 3 --seed N --area <id> --port 43xx --out DIR
 node scripts/screenshot.mjs --port 43xx --out DIR --budget hero=1200   # then Read the PNGs
@@ -103,6 +104,20 @@ them to read their output file and finish; each agent uses its own port range.
   `yisrael_close` after touching it.
 - The environment map is a PMREM of the sky per time of day (`Daylight`); gold contrast
   comes from the sun-side panels and the ground hemisphere's darkness (`ENV` in Daylight.js).
+
+## Round 6 notes (2026-09-09)
+
+- `?at=<id>` spawns go through `src/game/spawn.js` (`pickSpawn`): a ring of candidates
+  round the entry, level ground within a step of the entry's base, outside every mass and
+  other chamber, with a line of sight; `scripts/screenshot.mjs --at id,id` captures any.
+- The ground material fades its normal map with distance in the shader
+  (`EnvironmentBuilder.fadeNormalMapWithDistance`); the chunk is inlined in
+  `onBeforeCompile`, so a three.js upgrade must re-check it.
+- The garment normal map lives on `uv1` (`paintHuman` writes it); `clothFolds` is baked
+  by `scripts/bake_textures.mjs`. Roles: `kohen`, `kohenGadol`, `yisrael`, `levi`.
+- The Middot 1:9 passage and the Nitzotz tower (`AzaraBuilder.buildTevilahPassage`,
+  `buildNitzotzWicket`) are probed by `R6Moked.test.js` and `R6North.test.js` with the
+  real `PlayerController`; walk routes `r6_*`, `r6n_*`, `r6_court_*`.
 
 ## Related
 

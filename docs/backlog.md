@@ -11,9 +11,20 @@ pillars at z -39, `kiyor` x -24, Madichin 15 wide, tour stops 9 and 13 moved, an
 Cheil doors of Beis HaMoked and Lishkas HaGazis reached by vestibules and switchback
 stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
 
-- The mikveh passage of Middot 1:9 (down from the north-west chamber of Beis HaMoked
-  under the Birah) is not built; it would start in the west bay of the vestibule's
-  undercroft. Shaar HaNitzotz's wicket to the Cheil (Middot 1:5) has no stair either.
+- Round 6 (2026-09-09) built the Middot 1:9 passage (a well in the north-west chamber of
+  Beis HaMoked, three flights to the vestibule's west bay, a vaulted lamp-lit corridor
+  along the outer face of the north wall to a bath-house with a sunken pool at z -52..-42)
+  and Shaar HaNitzotz's opening to the Cheil (Middot 1:5) as a stair tower on the Cheil
+  west of the gate with a 2 x 4 wicket; both are reconstructions (`meta.disputes`). Still
+  open: the passage and bath stand ON the Cheil pavement because `HarHaBayisBuilder`'s
+  mount and pavement are single slabs; a sunken passage needs a notch in those slabs.
+- Second reading of Yoma 19a (source reviewer, 2026-09-09): the Gemara raises and rejects
+  the reasoning that Palhedrin was the southern chamber and leaves the question open;
+  Rambam (Beis HaBechirah 5:17), Meiri (Yoma 19a) and Yerushalmi Yoma 1:5 put Beis Avtinas
+  over the Water Gate in the south and Palhedrin (= Lishkas HaEtz) in the north. The notes
+  now say so; the geometry still follows the rejected reading (Palhedrin south beside the
+  Water Gate, Avtinas over the Korban gate). Decision pending: flip them (Avtinas as the
+  aliyah over Shaar HaMayim with its stair; Palhedrin back beside Lishkas HaEtz).
 - The 16-amah drop from the Azarah chambers to the Cheil on the north and south is the
   eastern Cheil level (Middot 2:3, 2:5) carried round; no source gives those levels.
 
@@ -79,23 +90,32 @@ does not read through the robe; Yisraelim wear grey wool with a belt and hem and
 cap. A skinned LOD (`figureTier`) hides figures below 4 px and their small parts beyond
 ~30 m. Still open:
 
-- The garment is still paint over the body: a real tunic mesh with folds (or a garment
-  normal map) would read better at arm's length; the shoulders keep the base body's bulk.
+- Round 6: the garment carries a seeded cloth-fold normal map (`TextureFactory.clothFolds`,
+  baked to `public/textures/clothFolds.webp`, on a per-limb cylindrical `uv1`), so it reads
+  as cloth at arm's length; the shoulders still keep the base body's bulk (a tunic mesh
+  was judged unnecessary). Levites (`role: 'levi'`) wear white linen without the avnet and
+  a flat wool turban (a reconstruction; see the comment in `CharacterSystem.js`).
 - The pack has no scalp hair, so bare heads are covered (sudar / migba'as / the Levite's
   turban). Round 6 made the Yisrael's sudar a head-wrap to the ears (`SUDAR`: an ellipsoid
   cap with a rolled band, 12 cm down the skull, tested against the body's skull vertices)
   after `yisrael_close` showed bare scalp above the old 6 cm cap.
-- No goat or bull model: the goat is the sheep narrowed and recoloured, the bull is the
-  cow recoloured dark.
+- The bull is now the Quaternius Ultimate Animated Animal Pack Bull (CC0, via Poly Pizza),
+  merged to one primitive. No CC0 rigged goat exists (Quaternius, Kenney, Poly Pizza
+  checked); the goat stays the sheep with horns and a beard hung on the head bone and a
+  hide colour. `attachToBone` now divides out the bone's world scale (the FBX animals'
+  head bone is scaled 0.2177).
 
 ## Sky and lighting (Sprint 6, round 5)
 
 Round 5 renders `scene.environment` from the sky dome per time of day (`Daylight`:
 offscreen Sky + ground hemisphere + sun-side panels, PMREM cached per time), so dawn and
-dusk reach the stone in the hero view; gold `envMapIntensity` retuned. Open: the burnish
-on gold is flatter than the old studio map at some angles; the panels are the knob.
+dusk reach the stone in the hero view; gold `envMapIntensity` retuned. Round 6 set
+`ENV.panelSun` 1.2 and the sun panel's radiance 60 (gold +5..11 % in the hero and altar
+views, no clipped pixels); `panelSun` scales the panels down, not up.
 
 ## Deployment
 
-- DNS for mikdash.tzadek.ai (CNAME `mikdash` -> `4bae3oiu.up.railway.app`) is deferred
-  until the app is closer to finished.
+- mikdash.tzadek.ai is attached to the Railway service (certificate pending). The DNS
+  record still to add at Cloudflare: `mikdash CNAME 4bae3oiu.up.railway.app` (DNS-only
+  until the certificate issues; SSL mode Full if proxied). tzadek.ai's landing page and
+  app nav link to it (deployed once the name resolves).

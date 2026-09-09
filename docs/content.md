@@ -269,6 +269,40 @@ after the first frame, `?tour=tamid&stop=5` starts at a stop (1-based); the star
 
 ## Review log
 
+### 2026-09-09 — Round 6 (Middot 1:9 passage, Nitzotz opening, second reading of Yoma 19a)
+
+Content: `beis_hatevilah_descent` (position note: the well, stair, corridor, bath-house
+and pool, every measure a reconstruction), `beis_hamoked` geometry-notes tail,
+`nitzotz_gate` (position and geometry notes, a dimension row "opening to the Cheil",
+Middot 1:5, the Mishnah's word is פתח), `meta.disputes[0]` (the passage) and a new entry
+for the Nitzotz opening. No position moved. Builders: `AzaraBuilder.buildTevilahPassage`
+(hall floor with two wells, `flightMergedA`, the vaulted corridor with lamps, the
+bath-house and pool) and `buildNitzotzWicket` (tower, wicket, two flights, a bay through
+the north wall at z -87..-84); the passage and bath stand on the Cheil pavement because
+the mount and pavement are single slabs. Source reviewer (read-only, Sefaria): the
+"under the Birah" gloss was misattributed (Yoma 2a itself: R' Yochanan, a place on the
+mount; Reish Lakish, the whole Mikdash, followed by Rambam Beis HaBechirah 5:11 and
+Bartenura; there is no Tosafos s.v. birah); Middot 1:6 does have them "go down" from the
+north-west chamber (a winding stair on Rashi Yoma 19a, a tunnel on Bartenura), and R'
+Eliezer ben Yaakov (Middot 1:9) runs the passage under the Cheil to Tadi; Middot 1:6
+does not say which pair of chambers is chol (Rambam's diagram); Bartenura (Middot 1:5)
+puts the Nitzotz opening in one of the exedra's side walls, and the Bavli's baraisa
+(Yoma 19a) has no opening; Middot 2:6 lists Shaar Yechonya without naming Nitzotz. All
+applied as note wording. **Yoma 19a, second reading:** the sugya suggests Palhedrin was
+the southern chamber and rejects the reasoning; Rambam 5:17 and Bartenura (Middot 5:4)
+make Palhedrin the Lishkas HaEtz in the north, Meiri (Yoma 19a) states Palhedrin north and
+Beis Avtinas south by the Water Gate, Yerushalmi Yoma 1:5 puts Beis Avtinas over the
+Water Gate. The `lishkas_palhedrin` and `beis_avtinas` notes and descriptions now say
+the built arrangement follows the rejected suggestion and the printed Mishnah's southern
+Lishkas HaEtz; flipping the geometry is an open decision (docs/backlog.md). Levite dress:
+II Chron 5:12 is the singers' byssus and Josephus (Ant. 20.216-218) has Second Temple
+Levites win linen only under Agrippa II, so the white linen is labelled a choice.
+
+Verification: lint, 348 tests, build, 196 refs; walkers fuzzed azaras_kohanim,
+azaras_yisrael, ezras_nashim, har_habayis (no real fall) and probed every landing, the
+pool, the vault (head room fixed over the four steps), the wicket and the Cheil lane;
+the full route set walked in four batches; screenshots Read.
+
 ### 2026-09-06 — Round 4 (visual fidelity: hills, Tadi, Ulam steps, benches, kiyor rim)
 
 Three build agents in worktrees, then two read-only reviewers; no position moved.

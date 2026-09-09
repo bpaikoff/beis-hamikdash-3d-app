@@ -366,6 +366,28 @@ function leviTurbanGeometry() {
 }
 
 /**
+ * The Yisrael's sudar: a wool head-wrap from the crown to just above the ears, an
+ * ellipsoid cap of half-width `a` (x), depth `c` (z) and height `h` whose base sits `drop`
+ * below the crown, with a rolled band (a torus of tube `band`) round its rim. The base
+ * body's skull (rest pose, measured in Characters.test.js) is 9.1 cm half-wide at the
+ * ears (10-12 cm below the crown), 10.6 cm back and 9.8 cm forward at the brow, so the
+ * cap clears it by over a centimetre everywhere; the old 8.5 cm sphere cap sat 6 cm
+ * down and left the scalp bare above the rim.
+ */
+export const SUDAR = { a: 0.108, c: 0.126, h: 0.145, drop: 0.12, band: 0.014 };
+
+/** The sudar as one geometry (one draw call): the cap and the band merged, uvs kept for the wool. */
+function sudarGeometry() {
+  const { a, c, h, band } = SUDAR;
+  const cap = new THREE.SphereGeometry(1, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2).scale(a, h, c);
+  const rim = new THREE.TorusGeometry(a, band, 8, 28).rotateX(Math.PI / 2).scale(1, 1, c / a);
+  const merged = mergeGeometries([cap, rim]);
+  cap.dispose();
+  rim.dispose();
+  return merged;
+}
+
+/**
  * A goat's horns and beard, relative to the sheep model's Head bone (rest pose: the bone at
  * (0, 0.88, 0.39), the crown at y 0.95, the chin's lowest point at (0, 0.67, 0.58), the
  * muzzle 25 cm forward of the bone): two horns 20 cm long rising from the crown 5 cm either
@@ -713,8 +735,8 @@ export class CharacterSystem {
    * Head covering and, for the Kohen Gadol, the golden garments. The hats hang from the
    * crown measured in prepare (model.headTop): the migba'as cylinder is centred 3 cm above
    * it (its 20 cm height reaches 7 cm down the skull), the mitznefes dome starts 5 cm below
-   * it, the tzitz sits 9 cm below on the forehead, a Yisrael's sudar 6 cm below and a
-   * Levite's turban 4.5 cm below (see LEVI_TURBAN).
+   * it, the tzitz sits 9 cm below on the forehead, a Yisrael's sudar 12 cm below (its
+   * rim; see SUDAR) and a Levite's turban 4.5 cm below (see LEVI_TURBAN).
    */
   dress(root, role) {
     const linen = this.material('hat:linen', () => new THREE.MeshStandardMaterial({ color: LINEN, map: this.tex?.get?.('whiteLinen') ?? null, roughness: 0.9 }));
@@ -744,11 +766,11 @@ export class CharacterSystem {
       const turban = new THREE.Mesh(this.geometry('leviTurban', leviTurbanGeometry), wool);
       this.attachToBone(root, 'Head', turban, new THREE.Vector3(-0.02, top - LEVI_TURBAN.drop, 0.01));
     } else if (role === 'yisrael') {
-      // Sudar: a wool skullcap over the top 6 cm of the head (the skull is longer in z than x:
-      // 7.4 cm half-width, 10 cm back and 9 cm forward at that depth on the base body).
+      // Sudar: a wool head-wrap from the crown down to just above the ears, with a rolled
+      // band at its rim (SUDAR). Centred on the skull's axis (x 0) since it hugs it.
       const wool = this.material('hat:wool', () => new THREE.MeshStandardMaterial({ color: 0xb5a992, map: this.tex?.get?.('sheepWool') ?? null, roughness: 0.95 }));
-      const sudar = new THREE.Mesh(this.geometry('sudar', () => new THREE.SphereGeometry(0.085, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, 0.88, 1.3)), wool);
-      this.attachToBone(root, 'Head', sudar, new THREE.Vector3(-0.02, top - 0.06, 0.01));
+      const sudar = new THREE.Mesh(this.geometry('sudar', sudarGeometry), wool);
+      this.attachToBone(root, 'Head', sudar, new THREE.Vector3(0, top - SUDAR.drop, 0));
     }
   }
 

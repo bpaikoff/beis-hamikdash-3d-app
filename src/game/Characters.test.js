@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {
   CharacterSystem, CHARACTER_FILES, CLIPS, LIMITS, ANIMATE_RADIUS, LOD, FIGURE_RADIUS,
-  templePlacements, makeWalker, figureTier, lodK, skinBounds, paintHuman, textureUrl, FOLD_SCALE, ROLES, LEVI_TURBAN, GOAT_PARTS,
+  templePlacements, makeWalker, figureTier, lodK, skinBounds, paintHuman, textureUrl, FOLD_SCALE, ROLES, LEVI_TURBAN, SUDAR, GOAT_PARTS,
 } from './CharacterSystem.js';
 import { PlayerController } from './PlayerController.js';
 import { TempleBuilder } from './TempleBuilder.js';
@@ -207,7 +207,7 @@ describe('CharacterSystem', () => {
     expect(names(y)).toEqual(['sudar']);
     y.updateMatrixWorld(true);
     const sudar = y.getObjectByProperty('geometry', sys.geometries.find((g) => g.userData.key === 'sudar'));
-    expect(sudar.getWorldPosition(new THREE.Vector3()).y).toBeCloseTo(sys.models.kohen.headTop - 0.06, 5);
+    expect(sudar.getWorldPosition(new THREE.Vector3()).y).toBeCloseTo(sys.models.kohen.headTop - SUDAR.drop, 5);
     // The hat sits on the head: above 1.75 m in the rest pose.
     const hat = a.getObjectByProperty('geometry', sys.geometries.find((g) => g.userData.key === 'migbaas'));
     a.updateMatrixWorld(true);
@@ -492,6 +492,49 @@ describe('CharacterSystem', () => {
     expect(plain.normalMap).toBeNull();
     expect(plain.color.getHex()).toBe(0xd9a878);
     expect(urls).toHaveLength(loaded);
+    sys.dispose();
+  });
+
+  it('wraps a Yisrael\'s head in a sudar that covers the scalp down to the ears', async () => {
+    sys = new CharacterSystem(scene, stubTex, { loader: diskLoader });
+    await sys.load();
+    const y = sys.createKohen(0, 0, 0, { role: 'yisrael' });
+    y.updateMatrixWorld(true);
+    const parts = [];
+    y.traverse((o) => { if (o.isMesh && !o.isSkinnedMesh) parts.push(o); });
+    expect(parts.map((p) => p.geometry.userData.key)).toEqual(['sudar']); // one draw call: cap and band merged
+    const sudar = parts[0];
+    expect(sudar.material).toBe(sys.materials.get('hat:wool'));
+    expect(sudar.geometry.attributes.uv, 'keeps uvs for the wool map').toBeTruthy();
+    const top = sys.models.kohen.headTop;
+    const origin = sudar.getWorldPosition(new THREE.Vector3());
+    expect(origin.y).toBeCloseTo(top - SUDAR.drop, 5);
+    expect(origin.x).toBeCloseTo(0, 5);
+    sudar.geometry.computeBoundingBox();
+    const bb = sudar.geometry.boundingBox;
+    expect(bb.max.x - bb.min.x).toBeGreaterThan(0.23); // wider than the old 17 cm cap
+    expect(bb.max.y, 'the cap tops out just over the crown').toBeCloseTo(SUDAR.h, 3);
+    expect(bb.min.y).toBeCloseTo(-SUDAR.band, 3);
+    // Every skull vertex of the rest pose from the crown down to the rim lies inside the
+    // cap's ellipsoid with at least 8 mm to spare, so no scalp shows through the wool; the
+    // rim reaches the ears (the skull's widest, 10-12 cm below the crown).
+    let body;
+    y.traverse((o) => { if (o.isSkinnedMesh && o.name !== 'Hair' && o.name !== 'Eyes' && !body) body = o; });
+    const pos = body.geometry.attributes.position;
+    const v = new THREE.Vector3();
+    let checked = 0;
+    let widest = 0;
+    for (let i = 0; i < pos.count; i++) {
+      v.fromBufferAttribute(pos, i).applyMatrix4(body.matrixWorld).sub(origin);
+      if (v.y < 0 || v.y > SUDAR.h) continue;
+      const r = Math.hypot(v.x / SUDAR.a, v.y / SUDAR.h, v.z / SUDAR.c);
+      const gap = (1 - r) * Math.min(SUDAR.a, SUDAR.h, SUDAR.c);
+      expect(gap, `skull vertex ${i} at (${v.x.toFixed(3)}, ${v.y.toFixed(3)}, ${v.z.toFixed(3)})`).toBeGreaterThan(0.008);
+      checked++;
+      if (v.y < 0.03) widest = Math.max(widest, Math.abs(v.x));
+    }
+    expect(checked).toBeGreaterThan(50);
+    expect(widest, 'the rim sits at the ears').toBeGreaterThan(0.085);
     sys.dispose();
   });
 

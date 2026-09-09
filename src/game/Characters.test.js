@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {
   CharacterSystem, CHARACTER_FILES, CLIPS, LIMITS, ANIMATE_RADIUS, LOD, FIGURE_RADIUS,
-  templePlacements, makeWalker, figureTier, lodK, skinBounds, paintHuman, textureUrl, FOLD_SCALE, ROLES, LEVI_TURBAN,
+  templePlacements, makeWalker, figureTier, lodK, skinBounds, paintHuman, textureUrl, FOLD_SCALE, ROLES, LEVI_TURBAN, GOAT_PARTS,
 } from './CharacterSystem.js';
 import { PlayerController } from './PlayerController.js';
 import { TempleBuilder } from './TempleBuilder.js';
@@ -98,6 +98,52 @@ describe('character GLBs', () => {
     expect(json.images).toBeUndefined();
     expect(json.textures).toBeUndefined();
     expect(json.extensionsUsed ?? []).toEqual([]);
+  });
+
+  it('bull.glb is the Ultimate pack Bull from Poly Pizza, merged to one vertex-coloured primitive on 42 bones', async () => {
+    const f = CHARACTER_FILES['bull.glb'];
+    expect(f.pack).toBe('ultimate-animated-animals');
+    expect(f.page).toBe('https://poly.pizza/m/a8PIIYwF7r');
+    expect(f.url).toMatch(/^https:\/\/static\.poly\.pizza\/[0-9a-f-]+\.glb$/);
+    expect(f.sourceSha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(f.merged).toBe(true);
+    expect(f.use).toMatch(/no CC0 rigged goat/);
+    expect(f.bytes).toBeLessThan(450 * 1024);
+    const gltf = await parseGlb('bull');
+    const meshes = [];
+    gltf.scene.traverse((o) => { if (o.isMesh) meshes.push(o); });
+    expect(meshes).toHaveLength(1);
+    const [m] = meshes;
+    expect(m.isSkinnedMesh).toBe(true);
+    expect(m.material.name).toBe('Painted');
+    expect(m.material.vertexColors).toBe(true);
+    expect(m.geometry.index).toBeTruthy();
+    expect(m.geometry.attributes.color).toBeTruthy();
+    expect(m.geometry.attributes.uv).toBeUndefined();
+    expect(m.skeleton.bones).toHaveLength(42);
+    expect(m.skeleton.bones.map((b) => b.name)).toContain('Head');
+    // Several flat colours survived the merge (hide, light patches, hooves, horns, eyes).
+    const col = m.geometry.attributes.color;
+    const hexes = new Set();
+    for (let i = 0; i < col.count; i++) hexes.add(new THREE.Color(col.getX(i), col.getY(i), col.getZ(i)).getHexString());
+    expect(hexes.size).toBeGreaterThanOrEqual(5);
+    expect(hexes.size).toBeLessThanOrEqual(8);
+    // Faces +z: posed in the first Idle frame, the topmost vertices (the horns) sit forward of the body's centre.
+    const mixer = new THREE.AnimationMixer(gltf.scene);
+    mixer.clipAction(gltf.animations[0]).play();
+    mixer.update(0);
+    gltf.scene.updateMatrixWorld(true);
+    const pos = m.geometry.attributes.position;
+    let topZ = 0, topY = -Infinity, maxZ = -Infinity;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) { m.applyBoneTransform(i, v.fromBufferAttribute(pos, i)).applyMatrix4(m.matrixWorld); maxZ = Math.max(maxZ, v.z); if (v.y > topY) { topY = v.y; topZ = v.z; } }
+    expect(topY).toBeGreaterThan(1.3);
+    expect(topZ).toBeGreaterThan(0.1);
+    expect(maxZ, 'the muzzle reaches forward of the centred body').toBeGreaterThan(0.9);
+    const licenses = readFileSync(resolve(dir, '../LICENSES.md'), 'utf8');
+    expect(licenses).toContain(f.page);
+    expect(licenses).toContain(f.url);
+    expect(licenses).toContain('Poly Pizza');
   });
 
   it('every texture in the manifest is on disk with its sha256 and LICENSES.md names both packs', async () => {
@@ -500,6 +546,61 @@ describe('CharacterSystem', () => {
     expect(keys(k)).toEqual(['migbaas']);
     expect(sys.materials.get('garment:levi')).toBeTruthy();
     expect(sys.materials.get('garment:levi')).not.toBe(sys.materials.get('garment:kohen'));
+    sys.dispose();
+  });
+
+  it('a goat is the sheep in hide colours with horns and a beard on its head bone; the bull draws in one call', async () => {
+    sys = new CharacterSystem(scene, stubTex, { loader: diskLoader });
+    await sys.load();
+    const goat = sys.createAnimal('goat', 0, 0, 0);
+    const sheep = sys.createAnimal('sheep', 3, 0, 0);
+    const bull = sys.createAnimal('bull', 6, 0, 0);
+    const meshes = (g) => { const m = []; g.traverse((o) => { if (o.isMesh) m.push(o); }); return m; };
+    const names = (g) => meshes(g).filter((o) => !o.isSkinnedMesh).map((o) => o.geometry.userData.key);
+    expect(names(goat)).toEqual(['goatParts']);
+    expect(names(sheep)).toEqual([]);
+    expect(names(bull)).toEqual([]);
+    expect(meshes(bull)).toHaveLength(1);
+    expect(meshes(bull)[0].material.vertexColors).toBe(true);
+    expect(meshes(bull)[0].material.map).toBeNull();
+    expect(meshes(goat).filter((o) => o.isSkinnedMesh).map((o) => o.material.map === null)).toEqual([true, true]); // no wool map (stubTex has none either way)
+    const goatSkin = meshes(goat).filter((o) => o.isSkinnedMesh).map((o) => o.material.color.getHex()).sort((a, b) => a - b);
+    const sheepSkin = meshes(sheep).filter((o) => o.isSkinnedMesh).map((o) => o.material.color.getHex()).sort((a, b) => a - b);
+    expect(goatSkin).toEqual([0x5a4432, 0x8b6f4e]); // hide, and the face/legs a shade darker: not a black-faced sheep
+    expect(sheepSkin).toEqual([0x2b2118, 0xede6d6]);
+    // The parts hang on the Head bone, at the bone, and follow it (LOD part, this system's cull).
+    const parts = meshes(goat).find((o) => !o.isSkinnedMesh);
+    expect(parts.parent.isBone).toBe(true);
+    expect(parts.parent.name).toBe('Head');
+    expect(parts.userData.lodPart).toBe(true);
+    expect(parts.userData.noCull).toBe(true);
+    goat.updateMatrixWorld(true);
+    const head = goat.getObjectByName('Head').getWorldPosition(new THREE.Vector3());
+    expect(parts.getWorldPosition(new THREE.Vector3()).distanceTo(head)).toBeLessThan(1e-5);
+    expect(head.y).toBeCloseTo(0.88 * 0.95, 1); // the root's goat scale carries the bone and the parts
+    // Horns above the crown (0.95 unscaled) and swept back, the beard below the chin and forward.
+    parts.geometry.computeBoundingBox();
+    const bb = parts.geometry.boundingBox; // in the bone's frame: y up along the head, offsets from GOAT_PARTS
+    expect(bb.max.y).toBeGreaterThan(GOAT_PARTS.horn[1] + 0.05);
+    expect(bb.min.y).toBeLessThan(GOAT_PARTS.beard[1] - GOAT_PARTS.beardLength + 0.01);
+    expect(bb.max.z).toBeGreaterThan(GOAT_PARTS.beard[2] - 0.03);
+    expect(parts.geometry.attributes.color).toBeTruthy();
+    expect(parts.geometry.attributes.uv).toBeUndefined();
+    expect(parts.geometry.groups.length).toBeLessThanOrEqual(1); // one draw call
+    // In metres in the world, whatever the armature's scale: the horns span ~30 cm and rise
+    // above the crown (0.95 unscaled, 0.90 at the goat's 0.95 y scale), the beard hangs below the chin.
+    const world = new THREE.Box3().setFromObject(parts);
+    expect(world.max.x - world.min.x).toBeGreaterThan(0.25);
+    expect(world.max.x - world.min.x).toBeLessThan(0.45);
+    expect(world.max.y).toBeGreaterThan(0.95);
+    expect(world.min.y).toBeLessThan(0.62);
+    // The kohen's hat is unaffected (unit-scaled rig): 27 cm across.
+    const k = sys.createKohen(9, 0, 0);
+    k.updateMatrixWorld(true);
+    const hat = k.getObjectByProperty('geometry', sys.geometries.find((g) => g.userData.key === 'migbaas'));
+    const hb = new THREE.Box3().setFromObject(hat);
+    expect(hb.max.x - hb.min.x).toBeCloseTo(0.27, 1);
+    expect(hat.scale.x).toBeCloseTo(1, 6);
     sys.dispose();
   });
 

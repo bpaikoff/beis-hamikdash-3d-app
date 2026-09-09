@@ -365,6 +365,44 @@ function leviTurbanGeometry() {
   return merged;
 }
 
+/**
+ * A goat's horns and beard, relative to the sheep model's Head bone (rest pose: the bone at
+ * (0, 0.88, 0.39), the crown at y 0.95, the chin's lowest point at (0, 0.67, 0.58), the
+ * muzzle 25 cm forward of the bone): two horns 20 cm long rising from the crown 5 cm either
+ * side of the midline, leaning back 35 deg and out 35 deg, and a beard 8 cm long hanging
+ * from the chin, as one geometry with vertex colours (dark horn, hair a shade lighter).
+ * GOAT_PARTS holds the offsets from the bone.
+ */
+export const GOAT_PARTS = { horn: [0.05, 0.065, 0], hornLength: 0.2, hornLean: 0.61, hornSplay: 0.61, beard: [0, -0.21, 0.19], beardLength: 0.08 };
+
+function goatPartsGeometry() {
+  const { horn, hornLength, hornLean, hornSplay, beard, beardLength } = GOAT_PARTS;
+  const paint = (g, hex) => {
+    const c = new THREE.Color(hex);
+    const n = g.attributes.position.count;
+    const col = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) col.set([c.r, c.g, c.b], i * 3);
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    g.deleteAttribute('uv');
+    return g;
+  };
+  const parts = [];
+  for (const side of [1, -1]) {
+    // A tapered horn: base on the crown, leaning back (rotateX toward -z) and out (rotateZ).
+    const h = new THREE.CylinderGeometry(0.006, 0.026, hornLength, 6)
+      .translate(0, hornLength / 2, 0)
+      .rotateX(-hornLean)
+      .rotateZ(-side * hornSplay)
+      .translate(side * horn[0], horn[1], horn[2]);
+    parts.push(paint(h, 0x3a3028));
+  }
+  const b = new THREE.ConeGeometry(0.022, beardLength, 6).rotateX(Math.PI).translate(beard[0], beard[1] - beardLength / 2, beard[2]);
+  parts.push(paint(b, 0x6a5238));
+  const merged = mergeGeometries(parts);
+  for (const g of parts) g.dispose();
+  return merged;
+}
+
 /** The choshen's twelve stones as one merged geometry (one draw call). */
 function stonesGeometry() {
   const hues = [0xb22222, 0x2e8b57, 0x1e90ff, 0xdaa520, 0x8a2be2, 0x20b2aa, 0xff8c00, 0x800080, 0x006400, 0x191970, 0x808000, 0x800000];
@@ -560,16 +598,23 @@ export class CharacterSystem {
     });
   }
 
+  /**
+   * The animals' materials by the source primitive's material name: the farm-pack sheep
+   * has `White` (fleece), `Black` (face and legs) and `Pink`; as a goat the fleece is a
+   * short brown hide, the face and legs the same hide a shade darker, and no wool map. The
+   * bull is `Painted`: one primitive with the pack's own colours as vertex colours
+   * (scripts/fetch_assets.mjs merges its seven), tinted warm so the black reads as hide.
+   */
   animalMaterial(type, part) {
     const table = {
       sheep: { White: [0xede6d6, 'sheepWool'], Black: [0x2b2118], Pink: [0x9c6a62] },
-      goat: { White: [0x8b6f4e, 'goatHide'], Black: [0x2b2118], Pink: [0x6b4a3a] },
-      bull: { White: [0x4a3222, 'bullHide'], Black: [0x1e1512], Pink: [0x3a2a22] },
+      goat: { White: [0x8b6f4e, 'goatHide'], Black: [0x5a4432], Pink: [0x6b4a3a] },
+      bull: { Painted: [0xf0e4d4, null, true], White: [0x4a3222, 'bullHide'], Black: [0x1e1512], Pink: [0x3a2a22] },
     };
-    const [color, texName] = table[type]?.[part] ?? [0x888888];
+    const [color, texName, vertexColors = false] = table[type]?.[part] ?? [0x888888];
     return this.material(`animal:${type}:${part}`, () => {
       const map = texName ? this.tex?.get?.(texName) ?? null : null;
-      return new THREE.MeshStandardMaterial({ color, map, roughness: 0.95, metalness: 0 });
+      return new THREE.MeshStandardMaterial({ color, map, vertexColors, roughness: 0.95, metalness: 0 });
     });
   }
 
@@ -587,7 +632,9 @@ export class CharacterSystem {
 
   /**
    * Hang a mesh on a bone at a world position given in the model's rest pose: the mesh
-   * stays upright relative to the bone's rest orientation and follows the bone from then on.
+   * stays upright relative to the bone's rest orientation, keeps its size in metres (the
+   * FBX-converted animals carry a centimetre armature under a metre root, so a bone's world
+   * scale is far from 1) and follows the bone from then on.
    */
   attachToBone(root, boneName, mesh, worldPoint) {
     const bone = root.getObjectByName(boneName);
@@ -595,6 +642,8 @@ export class CharacterSystem {
     bone.updateWorldMatrix(true, false);
     mesh.position.copy(bone.worldToLocal(this._v.copy(worldPoint)));
     mesh.quaternion.copy(bone.getWorldQuaternion(new THREE.Quaternion()).invert());
+    const ws = bone.getWorldScale(new THREE.Vector3());
+    mesh.scale.set(1 / ws.x, 1 / ws.y, 1 / ws.z);
     mesh.castShadow = true;
     mesh.userData.lodPart = true; // hidden at the 'body' tier
     mesh.userData.noCull = true; // this system's LOD owns `visible`, not DistanceCuller
@@ -714,8 +763,9 @@ export class CharacterSystem {
   }
 
   /**
-   * An animal standing at (x, y, z): 'sheep', 'goat' (the sheep model, narrowed and in
-   * goat colours) or 'bull'. `facing` in radians (0 = +z).
+   * An animal standing at (x, y, z): 'sheep', 'goat' (the sheep model, narrowed, in hide
+   * colours, with horns and a beard hung on its head bone: no CC0 rigged goat exists) or
+   * 'bull'. `facing` in radians (0 = +z).
    */
   createAnimal(type, x, y, z, { facing = Math.random() * Math.PI * 2 } = {}) {
     if (this.animals.length >= LIMITS.animals) {
@@ -731,7 +781,14 @@ export class CharacterSystem {
       const swapped = mats.map((mm) => this.animalMaterial(type, mm.name));
       m.material = Array.isArray(m.material) ? swapped : swapped[0];
     });
-    if (type === 'goat') root.scale.set(0.85, 0.95, 0.9);
+    if (type === 'goat') {
+      // Horns and beard on the head bone, placed in the unscaled rest pose (the root's
+      // scale below carries them with the head). One merged geometry: one draw call.
+      const parts = new THREE.Mesh(this.geometry('goatParts', goatPartsGeometry), this.material('goatParts', () => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0 })));
+      const head = root.getObjectByName('Head');
+      if (head) this.attachToBone(root, 'Head', parts, head.getWorldPosition(new THREE.Vector3()));
+      root.scale.set(0.85, 0.95, 0.9);
+    }
     const g = new THREE.Group();
     g.name = type;
     g.add(root);

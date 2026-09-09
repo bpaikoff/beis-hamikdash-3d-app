@@ -15,8 +15,9 @@
  * No dependencies: Node's fetch plus a minimal zip reader on zlib.inflateRawSync.
  *
  * --characters fetches the CC0 Quaternius packs from itch.io (their "download" flow is a
- * POST for a download page, then a POST per file; no account needed), takes the one file
- * the app uses out of each zip and reduces it with three's own loaders/exporter (node):
+ * POST for a download page, then a POST per file; no account needed) or, for a spec with
+ * a `url`, one file from Poly Pizza's static host, takes the one file the app uses out of
+ * each zip and reduces it with three's own loaders/exporter (node):
  * the human is the Universal Base Characters male body (a .gltf + .bin in the zip) with
  * the three clips the kohanim play taken from the Universal Animation Library GLB (same
  * 65-joint rig, checked by name before the clips are retargeted), its textures stripped
@@ -87,18 +88,27 @@ export const CHARACTERS = {
     entry: 'FBX/Sheep.fbx',
     clips: ['Idle'],
     height: 0.95,
-    use: 'sheep (also the goats, recoloured and narrowed) at the Tamid pen',
+    use: 'sheep at the Tamid pen; also the goats (narrowed, in hide colours, horns and a beard hung on the head bone at load: no CC0 rigged goat exists)',
   },
   bull: {
-    pack: 'lowpoly-animated-animals',
-    zip: 'Farm Animals Animated  by Quaternius.zip',
-    entry: 'FBX/Cow.fbx',
+    // The Ultimate Animated Animal Pack is not on itch.io: quaternius.com hands out a Google
+    // Drive folder, so the file comes from Poly Pizza's mirror of the pack (CC0 1.0, the
+    // model page below), one GLB per animal. Seven flat-coloured primitives (hide, light
+    // patches, muzzle, hooves, eyes, horns) on one skeleton: the colours are baked to vertex
+    // colours and the primitives merged into one, so a bull is one draw call.
+    pack: 'ultimate-animated-animals',
+    page: 'https://poly.pizza/m/a8PIIYwF7r',
+    url: 'https://static.poly.pizza/5704ef69-2c27-4de8-a942-70a29458af21.glb',
+    entry: 'Bull.glb',
     clips: ['Idle'],
     height: 1.5,
-    use: 'bull (the pack\'s cow, recoloured dark) at the Tamid pen',
+    merge: true,
+    use: 'bull (the Ultimate Animated Animal Pack\'s Bull, horns and all, its seven flat-coloured primitives merged into one with vertex colours) at the Tamid pen; no CC0 rigged goat exists in the Quaternius, Kenney or Poly Pizza catalogues, so the goats stay the sheep model with horns and a beard hung on the head bone',
   },
 };
 const itchPage = (pack) => `https://quaternius.itch.io/${pack}`;
+/** Where a spec's pack lives: its own `page` (a Poly Pizza model page) or the itch.io project. */
+const packPage = (spec) => spec.page ?? itchPage(spec.pack);
 
 /**
  * Set name (as used by TextureFactory.pbrSet) -> ambientCG asset id. All are 1K JPG.
@@ -205,7 +215,7 @@ function charactersSection(chars) {
   const link = (f) => `[${f.pack}](${f.page})`;
   const rows = files.map(([file, f]) => {
     const packs = f.animations ? `${link(f)} (body), ${link(f.animations)} (clips)` : link(f);
-    const entries = f.animations ? `\`${f.entry}\` + \`${f.animations.entry}\`` : `\`${f.entry}\``;
+    const entries = f.animations ? `\`${f.entry}\` + \`${f.animations.entry}\`` : f.url ? `[${f.entry}](${f.url})` : `\`${f.entry}\``;
     return `| \`${file}\` | ${packs} | ${entries} | ${f.clips.join(', ')} | ${(f.bytes / 1024).toFixed(0)} KB | ${f.use} |`;
   });
   const textures = Object.entries(chars.textures ?? {});
@@ -231,16 +241,19 @@ own License.txt reads "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication. Mod
 @Quaternius". No attribution is required; Quaternius asks for support on Patreon
 (<https://www.patreon.com/quaternius>).
 
-Each file is one model taken out of the pack's zip and reduced with
+Each file is one model taken out of the pack's zip (or, for the Ultimate Animated Animal
+Pack, which quaternius.com hands out as a Google Drive folder, the per-model GLB on
+[Poly Pizza](https://poly.pizza)'s CC0 mirror of it) and reduced with
 \`node scripts/fetch_assets.mjs --characters\` (three's loaders and GLTFExporter in node):
 the human is the Universal Base Characters body carrying only the clips listed from the
 Universal Animation Library (same rig), with its textures moved out of the glb into the
 files below; the FBX animals are converted to GLB, scaled to metres and their material
-groups merged. Nothing was resculpted or re-animated. \`manifest.json\` records the
-itch.io page, the zip's sha256, the source entry and the sha256 of every output file;
-\`--verify\` checks them.
+groups merged; the bull's flat-coloured primitives are merged into one with the colours
+as vertex colours. Nothing was resculpted or re-animated. \`manifest.json\` records the
+pack page, the zip's (or the file's) sha256, the source entry and the sha256 of every
+output file; \`--verify\` checks them.
 
-| File | Pack (itch.io) | Source entry | Clips kept | Size | Used for |
+| File | Pack | Source entry | Clips kept | Size | Used for |
 |---|---|---|---|---|---|
 ${rows.join('\n')}
 
@@ -373,7 +386,53 @@ async function reduceModel(spec, bytes, { entries, clipBytes } = {}) {
 
   if (spec.entry.endsWith('.glb')) {
     const g = await parseGlb(bytes);
-    return exportGlb(g.scene, pickClips(g.animations, spec.clips, spec.entry));
+    const clips = pickClips(g.animations, spec.clips, spec.entry);
+    if (!spec.merge) return exportGlb(g.scene, clips);
+    // Flat-coloured primitives on one skeleton -> one vertex-coloured primitive: the material
+    // colour goes into a `color` attribute, the geometries merge, and one SkinnedMesh binds
+    // to the shared skeleton in the first primitive's place.
+    const { mergeGeometries, mergeVertices } = await import('three/examples/jsm/utils/BufferGeometryUtils.js');
+    const meshes = skinnedMeshes(g.scene);
+    const first = meshes[0];
+    if (!meshes.every((m) => m.skeleton === first.skeleton && m.parent === first.parent && m.bindMatrix.equals(first.bindMatrix))) {
+      throw new Error(`${spec.entry}: primitives do not share one skeleton and bind matrix; cannot merge`);
+    }
+    const parts = meshes.map((m) => {
+      const geo = m.geometry.toNonIndexed();
+      for (const a of Object.keys(geo.attributes)) if (!KEEP_ATTRIBUTES.has(a)) geo.deleteAttribute(a);
+      const n = geo.attributes.position.count;
+      const col = new Float32Array(n * 3);
+      const c = m.material.color;
+      for (let i = 0; i < n; i++) col.set([c.r, c.g, c.b], i * 3);
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      return geo;
+    });
+    const joined = mergeGeometries(parts, false);
+    if (!joined) throw new Error(`${spec.entry}: primitives have different attributes; cannot merge`);
+    const merged = mergeVertices(joined); // back to an index (toNonIndexed tripled the vertices)
+    const mesh = new THREE.SkinnedMesh(merged, Object.assign(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.9, metalness: 0 }), { name: 'Painted' }));
+    mesh.name = spec.entry.replace(/\.glb$/i, '');
+    const parent = first.parent;
+    for (const m of meshes) parent.remove(m);
+    parent.add(mesh);
+    mesh.bind(first.skeleton, first.bindMatrix);
+    process.stdout.write(`${meshes.length} primitives -> 1 (${merged.attributes.position.count}v, ${first.skeleton.bones.length} bones) -> `);
+    // Scale to `height` with the feet on y 0 and centred in x/z, like the FBX animals.
+    const mixer = new THREE.AnimationMixer(g.scene);
+    mixer.clipAction(clips[0]).play();
+    mixer.update(0);
+    g.scene.updateMatrixWorld(true);
+    const box = new THREE.Box3();
+    const v = new THREE.Vector3();
+    const pos = mesh.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) box.expandByPoint(mesh.applyBoneTransform(i, v.fromBufferAttribute(pos, i)).applyMatrix4(mesh.matrixWorld));
+    const s = spec.height / (box.max.y - box.min.y);
+    const root = new THREE.Group();
+    root.name = mesh.name.toLowerCase();
+    root.scale.setScalar(s);
+    root.position.set(-(box.min.x + box.max.x) / 2 * s, -box.min.y * s, -(box.min.z + box.max.z) / 2 * s);
+    root.add(g.scene);
+    return exportGlb(root, clips);
   }
 
   if (spec.entry.endsWith('.gltf')) {
@@ -491,6 +550,13 @@ function writeTextures(spec, entries) {
   }
 }
 
+/** A plain file download (Poly Pizza's static host); the sha256 goes into the manifest as `sourceSha256`. */
+async function download(url) {
+  const res = await fetch(url, { headers: { 'User-Agent': UA }, redirect: 'follow' });
+  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
 async function fetchCharacters(chars, only = null) {
   const zips = new Map();
   const getZip = async (pack, zipName) => {
@@ -512,8 +578,15 @@ async function fetchCharacters(chars, only = null) {
   chars.textures ??= {};
   for (const [name, spec] of Object.entries(CHARACTERS)) {
     if (only && name !== only) continue;
-    const { zip, entries } = await getZip(spec.pack, spec.zip);
-    const src = entryOf(entries, spec.zip, spec.entry);
+    let zip = null, entries = null, src;
+    if (spec.url) {
+      process.stdout.write(`${spec.pack.padEnd(28)} ${spec.url} downloading... `);
+      src = await download(spec.url);
+      console.log(`${(src.length / 1024).toFixed(0)} KB`);
+    } else {
+      ({ zip, entries } = await getZip(spec.pack, spec.zip));
+      src = entryOf(entries, spec.zip, spec.entry);
+    }
     let animations = null, clipBytes = null;
     if (spec.animations) {
       const a = await getZip(spec.animations.pack, spec.animations.zip);
@@ -526,9 +599,10 @@ async function fetchCharacters(chars, only = null) {
     writeFileSync(resolve(charDir, file), glb);
     console.log(`${file} ${(glb.length / 1024).toFixed(0)} KB, clips ${spec.clips.join(', ')}`);
     chars.files[file] = {
-      pack: spec.pack, page: itchPage(spec.pack), license: 'CC0-1.0', zip: spec.zip, zipSha256: sha256(zip),
+      pack: spec.pack, page: packPage(spec), license: 'CC0-1.0',
+      ...(spec.url ? { url: spec.url, sourceSha256: sha256(src) } : { zip: spec.zip, zipSha256: sha256(zip) }),
       entry: spec.entry, ...(spec.meshes ? { meshes: spec.meshes } : {}), ...(animations ? { animations } : {}),
-      clips: spec.clips, height: spec.height ?? null, use: spec.use, bytes: glb.length, sha256: sha256(glb),
+      clips: spec.clips, height: spec.height ?? null, ...(spec.merge ? { merged: true } : {}), use: spec.use, bytes: glb.length, sha256: sha256(glb),
     };
     if (spec.textures) {
       const tex = writeTextures(spec, entries);

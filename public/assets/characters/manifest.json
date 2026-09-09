@@ -41,27 +41,28 @@
         "Idle"
       ],
       "height": 0.95,
-      "use": "sheep (also the goats, recoloured and narrowed) at the Tamid pen",
+      "use": "sheep at the Tamid pen; also the goats (narrowed, in hide colours, horns and a beard hung on the head bone at load: no CC0 rigged goat exists)",
       "bytes": 192496,
       "sha256": "f11188e2a4f7db6781da13449893bb0886f6f7bb730c04cfdd2fbc28232bb70c"
     },
     "bull.glb": {
-      "pack": "lowpoly-animated-animals",
-      "page": "https://quaternius.itch.io/lowpoly-animated-animals",
+      "pack": "ultimate-animated-animals",
+      "page": "https://poly.pizza/m/a8PIIYwF7r",
       "license": "CC0-1.0",
-      "zip": "Farm Animals Animated  by Quaternius.zip",
-      "zipSha256": "b4bc5f209368cafc21962934e7d676cf1cfb1f746a363086cd9f45c4385db70e",
-      "entry": "FBX/Cow.fbx",
+      "url": "https://static.poly.pizza/5704ef69-2c27-4de8-a942-70a29458af21.glb",
+      "sourceSha256": "545642d15d4d062efb45915ac6e776c2b5921ff89de3544f65e450bbfd16ce16",
+      "entry": "Bull.glb",
       "clips": [
         "Idle"
       ],
       "height": 1.5,
-      "use": "bull (the pack's cow, recoloured dark) at the Tamid pen",
-      "bytes": 239424,
-      "sha256": "d4556dad1d61f0e0b779943c9751479d58e337123da9e6c7ad03a431eaf77636"
+      "merged": true,
+      "use": "bull (the Ultimate Animated Animal Pack's Bull, horns and all, its seven flat-coloured primitives merged into one with vertex colours) at the Tamid pen; no CC0 rigged goat exists in the Quaternius, Kenney or Poly Pizza catalogues, so the goats stay the sheep model with horns and a beard hung on the head bone",
+      "bytes": 381920,
+      "sha256": "87846389569b6e7820b02ae27b71c256b54ce774bd300f92a731002724a67a95"
     }
   },
-  "fetchedAt": "2026-09-06",
+  "fetchedAt": "2026-09-09",
   "source": "https://quaternius.itch.io (CC0 1.0)",
   "textures": {
     "kohen_skin.jpg": {

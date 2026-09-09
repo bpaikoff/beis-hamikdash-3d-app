@@ -113,6 +113,15 @@ const VIEWS = [
   { name: 'tevilah_passage', cam: '37.5,1.8,-5.75,0,-4' },
   { name: 'tevilah_mikveh', cam: '37.5,2.8,-13.75,-38,-12' },
   { name: 'nitzotz_wicket', cam: '39.5,1.8,-30,4,-2' },
+  // The north walker's views (round 6): the bath-house from its door (x 75.25, z -42.75
+  // amos, the pool and its kerb to the right, the hearth ahead left), the bath-house door
+  // and the vault's end from inside (x 75, z -49, looking east), the passage door and its
+  // leaf from the strip's north end (x 80.5, z -23.5, looking south along the wall), and
+  // the Nitzotz tower's north-east corner with the wicket from the Cheil lane (x 82.4, z -79).
+  { name: 'tevilah_bath_door', cam: '37.6,2.75,-13.4,-8,-10' },
+  { name: 'tevilah_bath_inside', cam: '37.5,2.8,-16.5,180,-2' },
+  { name: 'tevilah_bay_door', cam: '40.25,1.8,-3.75,73,-3' },
+  { name: 'nitzotz_tower_lane', cam: '41.2,1.77,-31.5,25,-2' },
 ];
 
 // Hard watchdog: SwiftShader can wedge a renderer so that even browser.close() never

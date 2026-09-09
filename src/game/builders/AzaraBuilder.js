@@ -526,7 +526,7 @@ export class AzaraBuilder extends CourtBuilder {
           const xm = (xa + xb) / 2;
           brackets.push({ position: this.pt(xm, F + 2.1, z) });
           lamps.push({ position: this.pt(xm, F + 2.35, z) });
-          flames.push({ position: this.pt(xm, F + 2.65, z) });
+          flames.push({ position: this.pt(xm, F + 2.58, z) }); // seated on the cup's rim (2.5), not floating over it
         }
       }
       this.scene.add(instance(this.box(0.4 * AMAH, 0.2 * AMAH, 0.5 * AMAH, sm), sm, brackets, { name: 'beis_hatevilah lamp brackets' }));

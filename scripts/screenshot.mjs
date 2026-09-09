@@ -70,6 +70,10 @@ const VIEWS = [
   // (6.4, 4.6) stays at the frame's edge instead of in front of him.
   { name: 'kohanim_close', cam: '16.5,9.65,-15.5,135,-3' },
   { name: 'yisrael_close', cam: '5.2,8.4,6.6,-60,-6' },
+  // Round 6: the Levites on the Duchan (duchan y 7.3, the walkers' strip at z 2.1). Walkers
+  // start where templePlacements() puts them: the southern Levite at x -18 heading north,
+  // so a camera on the strip at x -11.5 facing south (yaw 90) meets him ~5 m off, head height.
+  { name: 'duchan_close', cam: '-11.5,8.9,2.4,80,-4' },
   // The mount's gates from the ground outside its wall (Middot 1:3). The player is clamped
   // to the `outside` ring (TempleGame), so each stands inside it, diagonally off the gate.
   { name: 'shushan_outside', cam: '20,1.75,166,50,6' },      // the east wall (low, Middot 2:4) and Shushan

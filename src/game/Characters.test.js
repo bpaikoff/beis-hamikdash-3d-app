@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {
   CharacterSystem, CHARACTER_FILES, CLIPS, LIMITS, ANIMATE_RADIUS, LOD, FIGURE_RADIUS,
-  templePlacements, makeWalker, figureTier, lodK, skinBounds, paintHuman, textureUrl, FOLD_SCALE,
+  templePlacements, makeWalker, figureTier, lodK, skinBounds, paintHuman, textureUrl, FOLD_SCALE, ROLES, LEVI_TURBAN,
 } from './CharacterSystem.js';
 import { PlayerController } from './PlayerController.js';
 import { TempleBuilder } from './TempleBuilder.js';
@@ -179,6 +179,19 @@ describe('CharacterSystem', () => {
     expect(sys.doves.length).toBe(LIMITS.doves);
     expect(sys.humans.filter((h) => h.userData.walker)).toHaveLength(4);
     expect(sys.humans.filter((h) => h.name === 'kohenGadol')).toHaveLength(1);
+    // Twenty humans as before the Levite role; the two Duchan walkers are the Levites.
+    expect(placements.filter((p) => p.kind === 'human')).toHaveLength(20);
+    const levites = sys.humans.filter((h) => h.name === 'levi');
+    expect(levites).toHaveLength(2);
+    for (const l of levites) expect(l.userData.walker, 'a Levite walks the Duchan').toBeTruthy();
+    expect(sys.humans.filter((h) => h.name === 'kohen' && h.userData.walker)).toHaveLength(2);
+    // A walker starts where it is placed (the slaughter lane's pair half a loop apart).
+    for (const p of placements.filter((q) => q.path)) {
+      const g = sys.humans.find((h) => h.position.x === p.x && h.position.z === p.z);
+      expect(g, `walker at ${p.x}, ${p.z}`).toBeTruthy();
+      const { pos } = g.userData.walker.at(g.userData.walker.s);
+      expect(Math.hypot(pos.x - p.x, pos.z - p.z), 'start on the path at the placement').toBeLessThan(1e-6);
+    }
     expect(placements.filter((p) => p.kind === 'human').length + placements.filter((p) => p.kind !== 'human').length).toBe(placements.length);
 
     const near = sys.humans[0];
@@ -436,6 +449,60 @@ describe('CharacterSystem', () => {
     sys.dispose();
   });
 
+  it('dresses a Levite in plain white linen with a flat wool turban', async () => {
+    sys = new CharacterSystem(scene, stubTex, { loader: diskLoader });
+    await sys.load();
+    expect(ROLES).toEqual(['kohen', 'kohenGadol', 'levi', 'yisrael']);
+    expect(Object.keys(sys.models.kohen.roles).sort()).toEqual([...ROLES].sort());
+    const { skin: bounds, scene: src } = sys.models.kohen;
+    const hand = src.getObjectByName('hand_l').getWorldPosition(new THREE.Vector3());
+    let body;
+    src.traverse((o) => { if (o.isSkinnedMesh && o.name !== 'Hair' && o.name !== 'Eyes' && !body) body = o; });
+    const p0 = body.geometry.attributes.position;
+    const lc = sys.models.kohen.roles.levi.get(body.geometry.uuid).attributes.color;
+    const kc = sys.models.kohen.roles.kohen.get(body.geometry.uuid).attributes.color;
+    const hexAt = (a, i) => new THREE.Color(a.getX(i), a.getY(i), a.getZ(i)).getHex();
+    let garment = 0, avnet = 0;
+    for (let i = 0; i < p0.count; i++) {
+      const v = new THREE.Vector3().fromBufferAttribute(p0, i);
+      if (v.y > bounds.headY || v.y < bounds.ankleY || Math.abs(v.x) > hand.x - 0.01) continue;
+      expect(hexAt(lc, i), `levi vertex ${i}`).toBe(0xf2eee4); // linen everywhere: no band
+      if (hexAt(kc, i) === 0x7a2e3e) avnet++;
+      garment++;
+    }
+    expect(garment).toBeGreaterThan(1000);
+    expect(avnet, 'the kohen has the avnet where the Levite has none').toBeGreaterThan(20);
+
+    const l = sys.createKohen(0, 0, 0, { role: 'levi' });
+    expect(l.name).toBe('levi');
+    const parts = [];
+    l.traverse((o) => { if (o.isMesh && !o.isSkinnedMesh) parts.push(o); });
+    expect(parts.map((p) => p.geometry.userData.key)).toEqual(['leviTurban']); // one draw call
+    const turban = parts[0];
+    expect(turban.material).not.toBe(sys.materials.get('hat:linen'));
+    expect(turban.material.color.getHex()).toBe(0xefeae0);
+    expect(turban.material.roughness).toBeGreaterThan(0.9);
+    expect(turban.userData.lodPart).toBe(true);
+    l.updateMatrixWorld(true);
+    const top = sys.models.kohen.headTop;
+    expect(turban.getWorldPosition(new THREE.Vector3()).y).toBeCloseTo(top - LEVI_TURBAN.drop, 5);
+    // Flat and wide: wider than the migba'as (27 cm) and about a third of its height (20 cm).
+    turban.geometry.computeBoundingBox();
+    const bb = turban.geometry.boundingBox;
+    expect(bb.max.x - bb.min.x).toBeGreaterThan(0.28);
+    expect(bb.max.z - bb.min.z).toBeGreaterThan(bb.max.x - bb.min.x); // follows the skull, longer in z
+    expect(bb.max.y - bb.min.y).toBeLessThan(0.09);
+    expect(bb.max.y - bb.min.y).toBeGreaterThan(0.08);
+    expect(bb.max.y + top - LEVI_TURBAN.drop, 'the dome tops out just above the crown').toBeLessThan(top + 0.01);
+    // The kohen's cap is the migba'as; its material is the linen, and the garment materials differ per role.
+    const k = sys.createKohen(2, 0, 0);
+    const keys = (g) => { const n = []; g.traverse((o) => { if (o.isMesh && !o.isSkinnedMesh) n.push(o.geometry.userData.key); }); return n; };
+    expect(keys(k)).toEqual(['migbaas']);
+    expect(sys.materials.get('garment:levi')).toBeTruthy();
+    expect(sys.materials.get('garment:levi')).not.toBe(sys.materials.get('garment:kohen'));
+    sys.dispose();
+  });
+
   it('paintHuman groups a non-indexed geometry too', () => {
     const g = new THREE.BufferGeometry();
     // Two triangles: one high (head), one low (torso).
@@ -525,6 +592,14 @@ describe('makeWalker', () => {
     const g = new THREE.Group();
     g.userData.baseY = 2;
     const w = makeWalker([[0, 0], [10, 0]], false, 1);
+    expect(w.s).toBeGreaterThanOrEqual(0);
+    expect(w.s).toBeLessThanOrEqual(10);
+    // A start point is projected onto the path: on it, off it, and past its end.
+    expect(makeWalker([[0, 0], [10, 0]], false, 1, [3, 0]).s).toBeCloseTo(3, 6);
+    expect(makeWalker([[0, 0], [10, 0]], false, 1, [4, 2]).s).toBeCloseTo(4, 6);
+    expect(makeWalker([[0, 0], [10, 0]], false, 1, [14, 0]).s).toBeCloseTo(10, 6);
+    expect(makeWalker([[0, 0], [10, 0], [10, 10], [0, 10]], true, 1, [10, 3]).s).toBeCloseTo(13, 6);
+    expect(makeWalker([[0, 0], [10, 0], [10, 10], [0, 10]], true, 1, [0, 4]).s).toBeCloseTo(36, 6);
     w.s = 9.5;
     w.step(1, g);
     expect(w.dir).toBe(-1);

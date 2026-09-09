@@ -81,6 +81,7 @@ export const CLIPS = {
 
 const SKIN = 0xd9a878;
 const LINEN = 0xf2eee4;
+const WHITE_WOOL = 0xefeae0; // the Levite's turban
 const WOOL = 0xd8d0c0; // the Yisraelim's light grey-beige wool
 const WOOL_BELT = 0x5a4632;
 const WOOL_HEM = 0x8a7a66;
@@ -253,11 +254,15 @@ function isSkin(x, y, z, bounds, tmp) {
   return false;
 }
 
+/** Every human role: what paintHuman colours and dress hats. */
+export const ROLES = ['kohen', 'kohenGadol', 'levi', 'yisrael'];
+
 /**
  * A per-role copy of a human body geometry: vertex colours for the garment (white linen
- * with the dark-red avnet for kohanim; the Kohen Gadol's techeiles meil covers the torso
- * down to the knees but has no sleeves, so the white kesones shows on the arms and at the
- * hem; grey-beige wool with a brown belt and a darker hem band for Yisraelim), garment
+ * with the dark-red avnet for kohanim; plain white linen for Levites; the Kohen Gadol's
+ * techeiles meil covers the torso down to the knees but has no sleeves, so the white
+ * kesones shows on the arms and at the hem; grey-beige wool with a brown belt and a
+ * darker hem band for Yisraelim), garment
  * normals flattened to per-limb tubes and the garment puffed GARMENT_PUFF outward so the
  * muscles do not shade through (see TUBE_WEIGHT), and the index reordered into two groups,
  * 0 = skin and 1 = garment, each triangle going with the majority of its three vertices.
@@ -295,6 +300,7 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
     } else {
       if (role === 'yisrael') hex = x < 0.32 && y > waist[0] && y < waist[1] ? WOOL_BELT : y < hemY ? WOOL_HEM : WOOL;
       else if (role === 'kohenGadol' && x < (limbs?.shoulderX ?? 0.3) && y > 0.5 && y < 1.5) hex = TECHEILES; // sleeveless: ends at the shoulder joint
+      else if (role === 'levi') hex = LINEN; // white linen throughout (2 Chron 5:12), no avnet: the belt is a priestly vestment
       else hex = x < 0.32 && y > waist[0] && y < waist[1] ? AVNET : LINEN;
       if (limbs && nor) {
         // Flatten the shading to the limb's tube and push the cloth out, except right at the skin.
@@ -336,6 +342,27 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
   g.computeBoundingBox();
   g.computeBoundingSphere();
   return g;
+}
+
+/**
+ * The Levite's turban: a ring of major radius `ring` and tube `tube`, stretched `depth` in
+ * z to follow the skull (10 cm back, 9 cm forward against 7.4 cm half-width, so the wool
+ * hugs the head all round), under a dome of radius `dome` flattened to `domeHeight`; the
+ * whole sits `drop` below the crown. Outer width 29 cm against the migba'as' 27 cm, height
+ * 8.5 cm (the band's 7 plus the dome above the band's centre) against its 20 cm.
+ */
+export const LEVI_TURBAN = { ring: 0.11, tube: 0.035, depth: 1.2, dome: 0.1, domeHeight: 0.5, drop: 0.045 };
+
+/** The turban as one geometry (one draw call): the ring and the dome merged. */
+function leviTurbanGeometry() {
+  const { ring, tube, depth, dome, domeHeight } = LEVI_TURBAN;
+  const band = new THREE.TorusGeometry(ring, tube, 8, 24).rotateX(Math.PI / 2).scale(1, 1, depth);
+  const cap = new THREE.SphereGeometry(dome, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, domeHeight, depth);
+  for (const g of [band, cap]) g.deleteAttribute('uv');
+  const merged = mergeGeometries([band, cap]);
+  band.dispose();
+  cap.dispose();
+  return merged;
 }
 
 /** The choshen's twelve stones as one merged geometry (one draw call). */
@@ -444,7 +471,7 @@ export class CharacterSystem {
         }
       });
       model.headTop = Number.isFinite(top) ? top : 1.83;
-      for (const role of ['kohen', 'kohenGadol', 'yisrael']) {
+      for (const role of ROLES) {
         const geoms = new Map();
         gltf.scene.traverse((o) => {
           if (o.isSkinnedMesh && !isPartMesh(o)) geoms.set(o.geometry.uuid, paintHuman(o.geometry, role, model.skin));
@@ -578,7 +605,7 @@ export class CharacterSystem {
 
   /**
    * A human figure with its feet at (x, y, z), facing `facing` radians (0 = +z, east).
-   * @param {boolean | {role?: 'kohen'|'kohenGadol'|'yisrael', clip?: 'idle'|'talk'|'walk',
+   * @param {boolean | {role?: 'kohen'|'kohenGadol'|'levi'|'yisrael', clip?: 'idle'|'talk'|'walk',
    *   facing?: number, path?: number[][], closed?: boolean, speed?: number}} [opts]
    *   `true` is shorthand for the Kohen Gadol. `path` is a polyline of [x, z] the figure
    *   walks (closed loop or ping-pong) at `speed` m/s with the walk clip.
@@ -625,7 +652,7 @@ export class CharacterSystem {
     g.userData = { type: 'human', role, mixer, action, baseY: y, parts: lodParts(root), tier: 'full' };
     if (o.path && o.path.length >= 2) {
       const speed = o.speed ?? 1.1;
-      g.userData.walker = makeWalker(o.path, o.closed ?? false, speed);
+      g.userData.walker = makeWalker(o.path, o.closed ?? false, speed, [x, z]);
       if (action) action.timeScale = speed / CLIP_SPEED.kohen;
     }
     this.scene.add(g);
@@ -637,7 +664,8 @@ export class CharacterSystem {
    * Head covering and, for the Kohen Gadol, the golden garments. The hats hang from the
    * crown measured in prepare (model.headTop): the migba'as cylinder is centred 3 cm above
    * it (its 20 cm height reaches 7 cm down the skull), the mitznefes dome starts 5 cm below
-   * it, the tzitz sits 9 cm below on the forehead and a Yisrael's sudar 6 cm below.
+   * it, the tzitz sits 9 cm below on the forehead, a Yisrael's sudar 6 cm below and a
+   * Levite's turban 4.5 cm below (see LEVI_TURBAN).
    */
   dress(root, role) {
     const linen = this.material('hat:linen', () => new THREE.MeshStandardMaterial({ color: LINEN, map: this.tex?.get?.('whiteLinen') ?? null, roughness: 0.9 }));
@@ -659,6 +687,13 @@ export class CharacterSystem {
       this.attachToBone(root, 'spine_03', choshen, new THREE.Vector3(0, 1.3, 0.16));
       const stones = new THREE.Mesh(this.geometry('stones', stonesGeometry), this.material('stones', () => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.25, metalness: 0.1 })));
       this.attachToBone(root, 'spine_03', stones, new THREE.Vector3(0, 1.3, 0.175));
+    } else if (role === 'levi') {
+      // A flat white wool turban: a wound ring round the head with a low dome over the crown,
+      // one merged geometry (LEVI_TURBAN). Wider than the migba'as and a third of its height,
+      // so a Levite is told from a kohen at a glance; in wool, not the priestly linen.
+      const wool = this.material('hat:whiteWool', () => new THREE.MeshStandardMaterial({ color: WHITE_WOOL, map: this.tex?.get?.('sheepWool') ?? null, roughness: 0.95 }));
+      const turban = new THREE.Mesh(this.geometry('leviTurban', leviTurbanGeometry), wool);
+      this.attachToBone(root, 'Head', turban, new THREE.Vector3(-0.02, top - LEVI_TURBAN.drop, 0.01));
     } else if (role === 'yisrael') {
       // Sudar: a wool skullcap over the top 6 cm of the head (the skull is longer in z than x:
       // 7.4 cm half-width, 10 cm back and 9 cm forward at that depth on the base body).
@@ -853,7 +888,7 @@ function lodParts(root) {
 }
 
 /** A figure moving along a polyline of [x, z] at `speed`, turning toward its direction of travel. */
-export function makeWalker(points, closed, speed) {
+export function makeWalker(points, closed, speed, start = null) {
   const pts = points.map(([x, z]) => new THREE.Vector2(x, z));
   const segs = [];
   const n = closed ? pts.length : pts.length - 1;
@@ -862,8 +897,22 @@ export function makeWalker(points, closed, speed) {
     segs.push({ a, b, len: a.distanceTo(b) });
   }
   const total = segs.reduce((s, x) => s + x.len, 0);
-  const w = { s: Math.random() * total, dir: 1, total, closed, speed, points: pts };
   const tmp = new THREE.Vector2();
+  // Start at the arc length of the path point nearest `start` (the placement's feet), so a
+  // scene loads the same way every time; anywhere on the path when no start is given.
+  let s0 = Math.random() * total;
+  if (start) {
+    const p = new THREE.Vector2(start[0], start[1]), ab = new THREE.Vector2();
+    let best = Infinity, acc = 0;
+    for (const seg of segs) {
+      ab.copy(seg.b).sub(seg.a);
+      const t = seg.len > 0 ? Math.min(1, Math.max(0, tmp.copy(p).sub(seg.a).dot(ab) / (seg.len * seg.len))) : 0;
+      const d = tmp.copy(ab).multiplyScalar(t).add(seg.a).distanceTo(p);
+      if (d < best) { best = d; s0 = acc + t * seg.len; }
+      acc += seg.len;
+    }
+  }
+  const w = { s: s0, dir: 1, total, closed, speed, points: pts };
   /** Position at arc length s (0..total) and the segment heading. */
   w.at = (s, out = new THREE.Vector3()) => {
     let rest = Math.min(Math.max(s, 0), total);
@@ -930,8 +979,8 @@ export function templePlacements() {
   // Two Levites pacing the Duchan platform (it stops 12 amos short of each side wall).
   const [dxx, , dz0] = at('duchan');
   const strip = dz0 + 0.35;
-  human(dxx - 18, duchanY, strip, { path: [[dxx - 20, strip], [dxx + 20, strip]], speed: 0.9 });
-  human(dxx + 12, duchanY, strip, { path: [[dxx + 20, strip], [dxx - 20, strip]], speed: 0.95 });
+  human(dxx - 18, duchanY, strip, { role: 'levi', path: [[dxx - 20, strip], [dxx + 20, strip]], speed: 0.9 });
+  human(dxx + 12, duchanY, strip, { role: 'levi', path: [[dxx + 20, strip], [dxx - 20, strip]], speed: 0.95 });
 
   // Yisraelim in the Ezras Yisrael, west of the Nicanor threshold (the middle one stands
   // 3 m north of the axis so tour stop 13 looks past him).

@@ -28,8 +28,14 @@ jobs:
       - run: npm run bake
       - run: npm run build
       - run: node scripts/bundle_sizes.mjs
-      - run: npm run screenshot -- --budget hero=1200
+      # A representative subset on the runner's software renderer (60-90 s a capture);
+      # the full set runs locally before a push (CLAUDE.md, Verification).
+      - run: npm run screenshot -- --budget hero=1200 --only hero,mizbeach_kevesh,ulam_facade,altar_fire,kohanim_close,duchan_close,tevilah_passage,nitzotz_wicket,hero_dusk
+        env:
+          SCREENSHOT_CAPTURE_MS: '240000'
       - run: npm run screenshot -- --mobile --only hero,mizbeach_kevesh
+        env:
+          SCREENSHOT_CAPTURE_MS: '240000'
       - uses: actions/upload-artifact@v4
         if: always()
         with:

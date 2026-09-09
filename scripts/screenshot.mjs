@@ -136,6 +136,9 @@ const log = (m) => console.log(`[${new Date().toISOString().slice(11, 19)}] ${m}
 const args = process.argv.slice(2);
 const opt = (k, d) => (args.includes(k) ? args[args.indexOf(k) + 1] : d);
 const only = opt('--only');
+// Capture timeout: the GitHub runner's SwiftShader takes 60-90 s per capture of the busy
+// views (the altar's particles, the hero), so CI raises it via SCREENSHOT_CAPTURE_MS.
+const CAPTURE_MS = Number(process.env.SCREENSHOT_CAPTURE_MS) || 90000;
 // `--at id,id`: ad-hoc views of the `?at=` spawn for content entries (round 6 spawn audit),
 // named at_<id>; with --only absent these are captured instead of the fixed list.
 const atIds = (opt('--at', '') || '').split(',').filter(Boolean);
@@ -248,7 +251,7 @@ try {
     const suffix = `${mobile ? '_mobile' : ''}${mobile && keepCard ? '_card' : ''}${timeOfDay ? `_${timeOfDay}` : ''}`;
     const file = `${outDir}/${v.name}${suffix}.png`;
     log(`view ${v.name}: capture`);
-    await page.screenshot({ path: file, timeout: 90000, animations: 'disabled' });
+    await page.screenshot({ path: file, timeout: CAPTURE_MS, animations: 'disabled' });
     // Do not talk to the page again: after a capture the software renderer can wedge and any
     // further page call hangs. The next view navigates away anyway.
     results.push({ view: v.name, file, calls: info?.calls, triangles: info?.triangles, culled: info?.culled, touch: info?.touch });

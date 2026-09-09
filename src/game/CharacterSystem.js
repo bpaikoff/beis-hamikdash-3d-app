@@ -259,7 +259,7 @@ export const ROLES = ['kohen', 'kohenGadol', 'levi', 'yisrael'];
 
 /**
  * A per-role copy of a human body geometry: vertex colours for the garment (white linen
- * with the dark-red avnet for kohanim; plain white linen for Levites; the Kohen Gadol's
+ * with the dark-red avnet for kohanim; plain white linen for Levites (a reconstruction, see the role branch below); the Kohen Gadol's
  * techeiles meil covers the torso down to the knees but has no sleeves, so the white
  * kesones shows on the arms and at the hem; grey-beige wool with a brown belt and a
  * darker hem band for Yisraelim), garment
@@ -300,7 +300,7 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
     } else {
       if (role === 'yisrael') hex = x < 0.32 && y > waist[0] && y < waist[1] ? WOOL_BELT : y < hemY ? WOOL_HEM : WOOL;
       else if (role === 'kohenGadol' && x < (limbs?.shoulderX ?? 0.3) && y > 0.5 && y < 1.5) hex = TECHEILES; // sleeveless: ends at the shoulder joint
-      else if (role === 'levi') hex = LINEN; // white linen throughout (2 Chron 5:12), no avnet: the belt is a priestly vestment
+      else if (role === 'levi') hex = LINEN; // no fixed Levite dress is given: the singers wore byssus (II Chron 5:12), and Second Temple Levites won linen like the kohanim only under Agrippa II (Josephus, Ant. 20.216-218); white linen here is a choice, no avnet: the four vestments are the kohen's alone (Rambam Klei HaMikdash 10:4)
       else hex = x < 0.32 && y > waist[0] && y < waist[1] ? AVNET : LINEN;
       if (limbs && nor) {
         // Flatten the shading to the limb's tube and push the cloth out, except right at the skin.

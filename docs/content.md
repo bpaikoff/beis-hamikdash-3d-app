@@ -94,11 +94,14 @@ Conventions:
   further. Lishkas HaEtz is the next room west of the Gazis, in the band of its chol half
   and the Cheil (x −67.5 .. −83.5, z −118 .. −148), behind the Golah and beyond the Gazis
   (Middot 5:4, Abba Shaul), entered from the Gazis' chol half. Palhedrin is in the Cheil
-  beside the Water Gate in the south (Yoma 19a) with its floor at the Cheil level and an
-  internal stair to a landing at the court level whose door opens into the Water Gate
-  passage; Beis Avtinas is an upper storey on the north wall over the Korban gate, reached
-  by a stair tower beside the gate (`geometry.stair`). Both stairs are reconstructions.
-  The Kohen Gadol's first immersion was on the Water Gate's roof beside Palhedrin (Yoma 31a).
+  beside the Water Gate in the south (the arrangement Yoma 19a raises and leaves unproved;
+  Rambam 5:17 and Meiri put it north) with its floor at the Cheil level and an internal
+  stair to a landing at the court level whose door opens into the Water Gate passage;
+  Beis Avtinas is an upper storey on the north wall over the Korban gate, reached by a
+  stair tower beside the gate (`geometry.stair`). Both stairs and the north/south
+  assignment are reconstructions. The Kohen Gadol's first immersion was on the Water
+  Gate's roof 'beside his chamber' (Yoma 31a), which chamber the Bavli leaves open and
+  Meiri and Yerushalmi Yoma 1:5 take as Beis Avtinas.
 - Sub-rooms listed under a parent's `children` (Beis HaMoked's four) are flattened by
   `src/content/index.js` into `entries` and `byId` with `parent` set: they keep their own
   id, name, desc, position and sources and inherit type, area, period, icon and questions,

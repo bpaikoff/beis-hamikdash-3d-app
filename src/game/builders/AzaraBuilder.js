@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { CHEIL_LIP, CourtBuilder, GROUND, LIP, ROOM_WALL_T, SLAB, WALL_T } from './CourtBuilder.js';
+import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { CHEIL_LIP, CourtBuilder, GROUND, LIP, ROOM_WALL_T, SLAB, STEP_RISE, WALL_T } from './CourtBuilder.js';
 import { instance } from '../instanced.js';
 import { AMAH } from '../../content/units.js';
 
@@ -224,11 +225,13 @@ export class AzaraBuilder extends CourtBuilder {
     const { z1, z2 } = this.hall;
     const tower = this.avtinasTower;
     const storey = this.avtinasStorey;
+    const nBay = this.nitzotzBay;
     this.group('azaras_kohanim', () => {
       this.wallRunA({
         along: 'z', across: [X_IN, X_OUT], from: WALL_T, to: Z_WEST - WALL_T, y1: GROUND, y2: WALL_TOP, mat: this.mat.stone,
         openings: [
           this.gateOpening('nitzotz_gate', 'z', { labels: ['shaar_yechonya'] }),
+          { at: (nBay.z1 + nBay.z2) / 2, w: nBay.z2 - nBay.z1, h: nBay.h, floor: this.yKohanim, threshold: true, name: 'nitzotz wicket passage' }, // round 6
           this.gateOpening('shaar_hanashim', 'z'),
           { at: (z1 + z2) / 2, w: z2 - z1, cut: true },
           { at: (tower.z1 + tower.z2) / 2, w: tower.z2 - tower.z1, cut: true },
@@ -244,6 +247,7 @@ export class AzaraBuilder extends CourtBuilder {
         openings: [this.gateOpening('korban_gate', 'z', { frameTop: under })],
       });
     }, { part: 'north wall' });
+    this.buildNitzotzWicket();
   }
 
   buildWestWall() {
@@ -292,10 +296,14 @@ export class AzaraBuilder extends CourtBuilder {
       this.wallA(x1, X_IN, z1, z2, GROUND, under, this.mat.stone);
       this.roomA({
         x1: X_IN, x2, z1, z2, floor: yPav, h: under - yPav, base: GROUND, floorMat: this.mat.floor, wallMat: this.mat.stone, roof: false, name: 'beis_hamoked vestibule',
-        doors: [{ face: 'n', at: zc, w: 5, h: 8, frame: this.mat.cedar, name: 'beis_hamoked cheil door' }],
+        doors: [
+          { face: 'n', at: zc, w: 5, h: 8, frame: this.mat.cedar, name: 'beis_hamoked cheil door' },
+          { face: 'w', at: this.mesibah.xc, w: this.mesibah.w, h: this.mesibah.h, frame: this.mat.cedar, name: 'beis_hamoked mesibah door' }, // round 6: to the Middot 1:9 passage
+        ],
       });
       const { well } = this.switchbackA({ x0: X_IN + ROOM_WALL_T, sx: 1, zFoot: zc + 0.5, floor: yPav + LIP, top: floor + LIP, ceiling: under + LIP, name: 'beis_hamoked' });
-      this.floorWithWellA(x1, x2, z1, z2, well, floor + LIP, this.mat.floor, 'beis_hamoked');
+      // The hall floor round this well and the Tevilah chamber's (round 6), the second stair and the passage.
+      this.buildTevilahPassage({ x1, x2, z1, z2, well, floor, under, yPav });
       this.wellParapetA(well, floor + LIP, this.mat.stonePolished, 'beis_hamoked well parapet');
       // The kodesh / chol line (Yoma 25a), inlaid across the hall floor.
       this.decoA(X_IN - LINE_W / 2, X_IN + LINE_W / 2, z1 + ROOM_WALL_T, z2 - ROOM_WALL_T, floor + LIP, floor + LIP + LINE_H, this.mat.marbleR);
@@ -324,6 +332,313 @@ export class AzaraBuilder extends CourtBuilder {
         }, { period: e.period });
       }
     });
+  }
+
+
+  /**
+   * The winding passage of Middot 1:9 (round 6): its door out of the Beis HaMoked
+   * vestibule's west wall, its width and height, and the bath-house it leads to. Every
+   * value is a reconstruction ({@link buildTevilahPassage}).
+   */
+  get mesibah() {
+    const bath = { x1: X_OUT, x2: X_OUT + 8, z1: -52, z2: -42 }; // the bath-house on the Cheil pavement, west of Shaar HaNashim's front
+    return { xc: X_OUT + 1.5, w: 3, h: 5, x1: X_OUT, x2: X_OUT + 3, bath };
+  }
+
+  /**
+   * Shaar HaNitzotz's opening to the Cheil (Middot 1:5): a 3-amah bay through the wall
+   * beside the gate's west jamb at the court level, like the Palhedrin bay, into which
+   * the stair tower's top landing opens ({@link buildNitzotzWicket}).
+   */
+  get nitzotzBay() {
+    const g = this.entry('nitzotz_gate');
+    const z2 = g.position.z - g.geometry.w / 2 - FRAME_T; // -84: west of the gate's west jamb
+    return { z1: z2 - 3, z2, h: 7 };
+  }
+
+  /**
+   * Middot 1:9 / Tamid 1:1: a kohen who became impure at night left Beis HaMoked by the
+   * winding passage that "goes under the Birah, with lamps burning on either side, until
+   * he reaches the bath-house", immersed, came up, dried and warmed himself at the fire.
+   * The passage leaves the north-west chamber (`beis_hatevilah_descent`, in the chol):
+   *
+   * - A second stair well in the hall floor over that chamber (x 74 .. 78.5, z -22.75 ..
+   *   -20.75, parapet on its room side and at its foot end, the chamber's west wall on
+   *   the other), from which 32 half-amah rises in three flights along x (C 10 down from
+   *   the well, the first of them the slab's edge, B 11, A 11; 2-amah bands parted by
+   *   quarter-amah walls under the
+   *   chamber, landings at the turns) go down 16 amos to the west bay of the vestibule
+   *   under the hall's chol half, west of the GEO-D switchback and sealed from its foot.
+   * - From the bay, through a door in its west wall, a vaulted passage 3 wide and 5 high
+   *   (a half-cylinder vault on half-amah walls, lamps on brackets both sides) runs west
+   *   along the foot of the north wall on the Cheil pavement, past Shaar HaNashim's front,
+   *   to the bath-house at z -52 .. -42, where four steps rise to its floor 2 amos over
+   *   the pavement and a pool 4 x 4 is sunk to the pavement with three treads and the
+   *   floor as its four steps down, water 1.5 amos deep; a fire (Middot 1:9) in a corner.
+   *
+   * The Mishnah gives the line, the level and the size of none of this; the model's Cheil
+   * pavement and mount slabs (HarHaBayisBuilder) are not cut, so nothing here goes below
+   * the pavement and "under the Birah" is read as under the hall and the passage's own
+   * vault (Tosafos Yoma 2a: a building on the mount; Rambam: the whole Mikdash). The
+   * bath-house floor is raised so that the pool can be sunk; its size is dictated by the
+   * pool and the lanes round it. Recorded in temple.json (beis_hatevilah_descent's note,
+   * meta.disputes). The Cheil lane between these structures and the Soreg stays 2 amos.
+   *
+   * Also builds the hall floor slabs round both wells (the caller's floorWithWellA did
+   * the first), so `well` is the GEO-D well.
+   */
+  buildTevilahPassage({ x1, x2, z1, z2, well, floor, under, yPav }) {
+    const chamber = this.entry('beis_hatevilah_descent');
+    const T = floor + LIP; // the hall and chamber floor
+    const CEIL = under + LIP; // the vestibule ceiling (the floor slabs' underside)
+    const F = yPav + LIP; // the vestibule floor, the Cheil pavement plus a LIP
+    const bottom = F - SLAB;
+    const rise = STEP_RISE;
+    const wm = this.mat.stone;
+    const sm = this.mat.stonePolished;
+    const cx = chamber.position.x; // 76.5
+    const cz = chamber.position.z; // -20
+    const ix1 = cx - 4 + ROOM_WALL_T; // 73.5: the chamber's interior
+    const iz1 = cz - 4 + ROOM_WALL_T; // -23
+    // Bands along z (flights run along x): C at the chamber's west wall, B, A; quarter-amah walls between.
+    const bt = 0.25;
+    const zC = [iz1 + bt, iz1 + bt + 2]; // -22.75 .. -20.75
+    const zB = [zC[1] + bt, zC[1] + bt + 2]; // -20.5 .. -18.5
+    const zA = [zB[1] + bt, zB[1] + bt + 2]; // -18.25 .. -16.25
+    // C has ten rises but nine tread blocks: the tenth rise is the floor slab's edge at the
+    // well's open end (x 78.5, an amah short of the chamber's north wall, the step-off floor).
+    // The eye (1.7 m over the feet) must be under the hall floor slab (1.75) by C's lowest
+    // tread, whose foot lies within a body's radius of the chamber's south wall, whose
+    // foundation inside the slab is a wall box; so that tread tops at -1.95 and L2 at -2.45.
+    const [nC, nB, nA] = [9, 11, 11];
+    const xW = [ix1 + 0.5, ix1 + 0.5 + nC * rise]; // the well, 74 .. 78.5: C's run
+    const xL2 = [xW[0] - 2.5, xW[0]]; // 71.5 .. 74
+    const xB = [xW[0], xW[0] + nB * rise]; // 74 .. 79.5
+    const xL1 = [xB[1], xB[1] + 2]; // 79.5 .. 81.5, the vestibule's north wall
+    const xA = [xB[1] - nA * rise, xB[1]]; // 74 .. 79.5
+    const yL2 = T - (nC + 1) * rise; // -2.45
+    const yL1 = yL2 - nB * rise; // -7.95
+    const yA = yL1 - nA * rise; // -13.45: a quarter metre under the first tread
+    const xIn = x2 - ROOM_WALL_T; // 81.5: the vestibule's north wall
+    const wellsFloor = { x1: xW[0], x2: xW[1], z1: zC[0], z2: zC[1] };
+    this.group('beis_hamoked', () => {
+      this.hallFloorWithWellsA(x1, x2, z1, z2, [well, wellsFloor], T, this.mat.floor, 'beis_hamoked');
+    }, { part: 'floor' });
+    this.group('beis_hatevilah_descent', () => {
+      // Flights and landings, solid to a slab under the vestibule floor.
+      this.flightMergedA({ axis: 'x', span: zC, from: xW[0], to: xW[1], yBase: yL2, bottom, steps: nC, rise, mat: sm, name: 'beis_hatevilah stair' });
+      this.blockA(xL2[0], xL2[1], zC[0], zB[1], bottom, yL2, sm, 'beis_hatevilah landing');
+      this.flightMergedA({ axis: 'x', span: zB, from: xB[1], to: xB[0], yBase: yL1, bottom, steps: nB, rise, mat: sm, name: 'beis_hatevilah stair' });
+      this.blockA(xL1[0], xL1[1], zB[0], zA[1], bottom, yL1, sm, 'beis_hatevilah landing');
+      this.flightMergedA({ axis: 'x', span: zA, from: xA[0], to: xA[1], yBase: yA, bottom, steps: nA, rise, mat: sm, name: 'beis_hatevilah stair' });
+      // Walls from the vestibule floor to its ceiling: C's west side (and L2's, and the
+      // void past the well up to the north wall), L2's end, between C and B (from L2's edge
+      // to the north wall, so L1's foot end is fenced), between B and A (from L2's far
+      // side to L1's edge, so L2's other side is fenced), A's outer side (from the GEO-D
+      // L2 end wall, which ends at x 73.5, to the north wall: the pocket at A's foot is
+      // sealed from the switchback's foot).
+      this.wallA(xL2[0], xIn, iz1, zC[0], F, CEIL, wm);
+      this.wallA(xL2[0] - bt, xL2[0], iz1, zA[0], F, CEIL, wm);
+      this.wallA(xW[0], xIn, zC[1], zB[0], F, CEIL, wm);
+      this.wallA(xL2[0], xL1[0], zB[1], zA[0], F, CEIL, wm);
+      this.wallA(ix1, xIn, zA[1], zA[1] + 2 * bt, F, CEIL, wm);
+      // C's side walls go on through the floor slab and the parapet as invisible colliders
+      // (switchbackA explains), stopping short of the well's open end.
+      const xRail = xW[1] - 0.9;
+      this.colliderA(xW[0], xRail, iz1, zC[0], CEIL, T + 1.5);
+      this.colliderA(xW[0], xRail, zC[1], zC[1] + 0.1, CEIL, T + 1.5); // the band wall's inner face only: the floor beside the parapet keeps its width
+      // Parapet: half-amah masses 1.5 high on the well's room side and across its foot end
+      // (the chamber's west wall is its other side); the foot end stands beside the door.
+      const py = T + LIP;
+      this.blockA(xW[0], xW[1], zC[1], zC[1] + 0.5, py, py + 1.5, sm, 'beis_hatevilah well parapet');
+      this.blockA(ix1, xW[0], iz1, zC[1] + 0.5, py, py + 1.5, sm, 'beis_hatevilah well parapet');
+    }, { part: 'stair' });
+
+    // The passage: on the Cheil pavement along the wall's outer face, from the vestibule's
+    // west wall (z -26) to the bath-house's east wall (z -42); its floor a LIP over the
+    // pavement like the vestibule's, a half-amah wall on the Cheil side, a vault of two
+    // half-cylinder shells (inner face seen from inside, outer from the Cheil) springing
+    // 3.5 amos up, crown 5 amos over the floor; the door leaf folded inside the bay.
+    const m = this.mesibah;
+    const zDoor = z1; // -26: the vestibule's west wall's outer face
+    const zBath = m.bath.z2; // -42
+    const stepsRun = 2; // four half-amah steps up to the bath-house floor, in the passage's last two amos
+    const yBath = yPav + 2; // the bath-house floor sits 2 amos over the pavement (so the pool can be sunk to it)
+    const stoneDS = this.mat.stone.clone();
+    stoneDS.side = THREE.DoubleSide;
+    this.group('beis_hatevilah_descent', () => {
+      this.floorA(m.x1, m.x2, zBath + stepsRun, zDoor, F, this.mat.floor, 'beis_hatevilah passage');
+      this.flightMergedA({ axis: 'z', span: [m.x1, m.x2], from: zBath + stepsRun, to: zBath, yBase: F, bottom, steps: 4, rise, mat: sm, name: 'beis_hatevilah passage steps' });
+      const spring = F + m.h - 1.5;
+      this.wallA(m.x2, m.x2 + 0.5, zBath, zDoor, GROUND, spring, wm);
+      for (const r of [1.5, 2]) {
+        const geo = new THREE.CylinderGeometry(r * AMAH, r * AMAH, (zDoor - zBath) * AMAH, 24, 1, true, 0, Math.PI);
+        geo.rotateZ(Math.PI / 2).rotateY(Math.PI / 2);
+        const vault = new THREE.Mesh(geo, stoneDS);
+        vault.position.set(...this.pt(m.xc, spring, (zDoor + zBath) / 2));
+        vault.castShadow = true;
+        vault.receiveShadow = true;
+        vault.name = 'beis_hatevilah passage vault';
+        this.scene.add(vault);
+      }
+      this.decoA(m.x2 - 3, m.x2, zDoor, zDoor + 0.1, F, F + m.h - 0.5, this.mat.cedar); // the door's leaf, folded against the bay's west wall
+      // Lamps on either side (Middot 1:9): stone brackets, copper lamps, a still flame.
+      const flame = new THREE.MeshStandardMaterial({ color: 0x201008, emissive: 0xffa040, emissiveIntensity: 2.5, roughness: 1 });
+      const brackets = [];
+      const lamps = [];
+      const flames = [];
+      for (let z = zDoor - 2.5; z > zBath + stepsRun + 1; z -= 3) {
+        for (const [xa, xb] of [[m.x1, m.x1 + 0.4], [m.x2 - 0.4, m.x2]]) {
+          const xm = (xa + xb) / 2;
+          brackets.push({ position: this.pt(xm, F + 2.1, z) });
+          lamps.push({ position: this.pt(xm, F + 2.35, z) });
+          flames.push({ position: this.pt(xm, F + 2.65, z) });
+        }
+      }
+      this.scene.add(instance(this.box(0.4 * AMAH, 0.2 * AMAH, 0.5 * AMAH, sm), sm, brackets, { name: 'beis_hatevilah lamp brackets' }));
+      this.scene.add(instance(new THREE.CylinderGeometry(0.12 * AMAH, 0.16 * AMAH, 0.3 * AMAH, 10), this.mat.copper, lamps, { name: 'beis_hatevilah lamps' }));
+      this.scene.add(instance(new THREE.SphereGeometry(0.11 * AMAH, 8, 6), flame, flames, { name: 'beis_hatevilah lamp flames', castShadow: false }));
+    }, { part: 'passage' });
+
+    // The bath-house: an 8 x 10 room on the pavement against the wall (its south face),
+    // floor 2 amos up, a plinth to the ground under its walls, the pool 4 x 4 against
+    // the north wall with half-amah walls, three treads and the pavement as its four
+    // steps down on the east side, a kerb 1.5 high on its other sides, water 1.5 deep,
+    // and a fire in the south-west corner.
+    const b = m.bath;
+    const t = ROOM_WALL_T;
+    const bx2 = b.x2 - t; // 80.5: the interior's north edge
+    const pool = { x1: bx2 - 4, x2: bx2, z1: -50, z2: -46 };
+    const pw = 0.5;
+    const Y = yBath + LIP; // -11.41
+    this.group('beis_hatevilah_descent', () => {
+      this.roomA({
+        x1: b.x1, x2: b.x2, z1: b.z1, z2: b.z2, floor: yBath, h: 6, wallMat: wm, roofMat: wm, skip: ['s'], name: 'beis_hatevilah bath-house',
+        doors: [{ face: 'e', at: m.xc, w: m.w, h: m.h, frame: this.mat.cedar, threshold: true, name: 'beis_hatevilah bath-house door' }],
+      });
+      this.wallA(b.x2 - t, b.x2, b.z1, b.z2, GROUND, yBath - SLAB, wm); // plinth
+      this.wallA(b.x1, b.x2, b.z1, b.z1 + t, GROUND, yBath - SLAB, wm);
+      this.wallA(b.x1, b.x2, b.z2 - t, b.z2, GROUND, yBath - SLAB, wm);
+      // Floor round the pool.
+      this.floorA(b.x1, pool.x1, b.z1 + t, b.z2 - t, Y, this.mat.floor, 'beis_hatevilah bath-house');
+      this.floorA(pool.x1, pool.x2, b.z1 + t, pool.z1, Y, this.mat.floor, 'beis_hatevilah bath-house');
+      this.floorA(pool.x1, pool.x2, pool.z2, b.z2 - t, Y, this.mat.floor, 'beis_hatevilah bath-house');
+      // The pool: its floor on the pavement, its walls under the floor slab, the treads, the water.
+      this.floorA(pool.x1, pool.x2, pool.z1, pool.z2, F, sm, 'beis_hatevilah pool');
+      this.wallA(pool.x1 - pw, pool.x1, pool.z1 - pw, pool.z2 + pw, yPav, Y - SLAB, sm);
+      this.wallA(pool.x1 - pw, pool.x2, pool.z1 - pw, pool.z1, yPav, Y - SLAB, sm);
+      // No wall on the east side: the treads fill it, and a wall box under the floor slab there
+      // would top out at the body's bottom on the second tread and stop the climb out.
+      this.flightMergedA({ axis: 'z', span: [pool.x1, pool.x2], from: pool.z2 - 1.5, to: pool.z2, yBase: F, bottom, steps: 3, rise, mat: sm, name: 'beis_hatevilah pool steps' });
+      this.decoA(pool.x1, pool.x2, pool.z1, pool.z2, F + 1.5, F + 1.52, this.mat.water);
+      // Kerb on the pool's south and west sides (the north is the wall, the east the steps).
+      this.blockA(pool.x1 - pw, pool.x1, pool.z1 - pw, pool.z2 + pw, Y + LIP, Y + LIP + 1.5, sm, 'beis_hatevilah pool kerb');
+      this.blockA(pool.x1 - pw, pool.x2, pool.z1 - pw, pool.z1, Y + LIP, Y + LIP + 1.5, sm, 'beis_hatevilah pool kerb');
+      // The fire (Middot 1:9): a stone hearth with embers, in the south-west corner.
+      const hx = b.x1 + 1;
+      const hz = b.z1 + t + 0.75;
+      this.blockA(hx - 0.6, hx + 0.6, hz - 0.6, hz + 0.6, Y + LIP, Y + 0.5, sm, 'beis_hatevilah hearth');
+      const embers = new THREE.Mesh(this.box(0.9 * AMAH, 0.1 * AMAH, 0.9 * AMAH, sm), new THREE.MeshStandardMaterial({ color: 0x301008, emissive: 0xff6020, emissiveIntensity: 1.8, roughness: 1 }));
+      embers.position.set(...this.pt(hx, Y + 0.55, hz));
+      this.scene.add(embers);
+      this.decoA(m.x2, m.x2 + 3, b.z2 - t, b.z2 - t + 0.1, Y, Y + m.h - 0.5, this.mat.cedar); // the door's leaf, folded inside
+    }, { part: 'bath-house' });
+  }
+
+  /**
+   * {@link CourtBuilder#flightA} as one mesh: the step blocks merged into a single
+   * walkable body (the probe and insideSolid treat each merged box as its own closed
+   * body), so a 16-step flight is one draw call instead of sixteen.
+   */
+  flightMergedA({ axis, span: [s1, s2], from, to, yBase, bottom, steps, rise, mat, name }) {
+    const tread = (to - from) / steps;
+    const base = bottom ?? yBase - SLAB;
+    const parts = [];
+    for (let k = 0; k < steps; k++) {
+      const a = from + k * tread;
+      const b = a + tread;
+      const top = yBase + (k + 1) * rise;
+      const r = axis === 'z' ? [s1, s2, a, b] : [a, b, s1, s2];
+      parts.push(this.frameBox(...r, base, top, mat));
+    }
+    const geo = BufferGeometryUtils.mergeGeometries(parts, false);
+    for (const p of parts) p.dispose();
+    const m = new THREE.Mesh(geo, mat);
+    m.castShadow = true;
+    m.receiveShadow = true;
+    m.userData = { isFloor: true, isStep: true, name };
+    this.scene.add(m);
+    this.floors.push(m);
+    return m;
+  }
+
+  /**
+   * Floor slab with rectangular wells left open: x bands between the wells (sorted by x,
+   * not overlapping in x), and in each well's band the slabs before and after it along z.
+   */
+  hallFloorWithWellsA(x1, x2, z1, z2, wells, yTop, mat, name) {
+    const ws = [...wells].sort((a, b) => a.x1 - b.x1);
+    let cursor = x1;
+    for (const w of ws) {
+      if (w.x1 < cursor) throw new Error(`wells overlap in x at ${w.x1}`);
+      if (w.x1 > cursor) this.floorA(cursor, w.x1, z1, z2, yTop, mat, name);
+      this.floorA(w.x1, w.x2, z1, w.z1, yTop, mat, name);
+      this.floorA(w.x1, w.x2, w.z2, z2, yTop, mat, name);
+      cursor = w.x2;
+    }
+    if (cursor < x2) this.floorA(cursor, x2, z1, z2, yTop, mat, name);
+  }
+
+  /**
+   * Shaar HaNitzotz's opening to the Cheil (Middot 1:5; round 6). The gate's threshold
+   * lies 16 amos over the Cheil, so the opening is built as a wicket door 2 x 4 at the
+   * Cheil level in the east face of a stair tower on the Cheil pavement west of the gate
+   * (x 73.5 .. 81, z -99 .. -83; the court wall is its south face), like Lishkas
+   * Palhedrin's: a lower flight of 16 half-amah steps along the Soreg side climbs west
+   * from an entry strip inside the wicket, a landing crosses the west end, an upper
+   * flight along the wall side climbs back east to a landing at the court level that
+   * opens through a 3-amah bay in the wall beside the gate's west jamb
+   * ({@link nitzotzBay}, cut in buildNorthWall) into the court; a quarter-amah wall
+   * between the two flights. The gate's own doors stay closed. The tower stands like a
+   * porch under the gate's west reveal (Middot 1:5, "like an exedra"). Its size, the bay
+   * and the wicket's place are reconstructions (temple.json: nitzotz_gate's notes,
+   * meta.disputes). The Cheil lane between the tower and the Soreg stays 2.5 amos.
+   */
+  buildNitzotzWicket() {
+    const bay = this.nitzotzBay;
+    const t = ROOM_WALL_T;
+    const yPav = this.level('cheil') + CHEIL_LIP;
+    const F = yPav + LIP;
+    const floor = this.level('cheil'); // flights from the Cheil level, as Palhedrin's: 32 half-amah rises close on the court level
+    const top = this.yKohanim;
+    const steps = 16;
+    const rise = (top - floor) / (2 * steps); // 0.5
+    const run = steps * rise; // 8
+    const x1 = X_OUT; // 73.5
+    const x2 = X_OUT + 7.5; // 81
+    const z2 = bay.z2 + FRAME_T; // -83: the gate's west reveal
+    const z1 = z2 - 16; // -99
+    const roof = top + 7; // 9.5
+    const bottom = floor - SLAB;
+    const xWall = [x1, x1 + 3]; // the wall-side band: the upper flight and the top landing
+    const xSoreg = [x1 + 3.5, x2 - t]; // 77 .. 80: the lower flight and the entry strip
+    const zFoot = bay.z1; // -87: the entry strip is z -87 .. -84 inside the wicket
+    const zTurn = zFoot - run; // -95
+    const wicketX = (xSoreg[0] + xSoreg[1]) / 2; // 78.5
+    this.group('nitzotz_gate', () => {
+      this.roomA({
+        x1, x2, z1, z2, floor: yPav, h: roof - yPav, base: GROUND, floorMat: this.mat.floor, wallMat: this.mat.stone, roofMat: this.mat.stone, skip: ['s'], name: 'nitzotz stair',
+        doors: [{ face: 'e', at: wicketX, w: 2, h: 4, frame: this.mat.cedar, name: 'nitzotz wicket' }],
+      });
+      this.flightMergedA({ axis: 'z', span: xSoreg, from: zFoot, to: zTurn, yBase: floor, bottom, steps, rise, mat: this.mat.stonePolished, name: 'nitzotz stair' });
+      this.blockA(x1, x2 - t, zTurn, z1 + t, bottom, floor + run, this.mat.stonePolished, 'nitzotz landing');
+      this.flightMergedA({ axis: 'z', span: xWall, from: zTurn, to: zFoot, yBase: floor + run, bottom, steps, rise, mat: this.mat.stonePolished, name: 'nitzotz stair' });
+      this.blockA(xWall[0], xWall[1], zFoot, z2 - t, bottom, top, this.mat.stonePolished, 'nitzotz landing');
+      // Between the flights, from the turn landing to the east wall.
+      this.wallA(xWall[1], xSoreg[0], zTurn, z2 - t, F, roof, this.mat.stone);
+      // The wicket's leaf, swung open against the tower's face between the wall and the door.
+      this.decoA(wicketX - 3, wicketX - 1, z2, z2 + 0.1, F, F + 3.5, this.mat.cedar);
+    }, { part: 'stair' });
   }
 
   /**

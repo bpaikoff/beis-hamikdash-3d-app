@@ -676,8 +676,21 @@ Object.assign(routes, {
     ...chamberLoop(62.5, -8, 1, 3.3, 3), // Lishkas Osei Lechem HaPanim
     h(72.5 - HUG, -8, K),
     ...chamberLoop(72.5, -8, -1, 3.3, 3), // Lishkas Avnei HaMizbeach
-    h(72.5 - HUG, -20, K),
-    ...chamberLoop(72.5, -20, -1, 3.3, 3), // Beis HaTevilah's descent
+    // Beis HaTevilah's descent (round 6): its west half is the stair well of the Middot 1:9
+    // passage (x 74 .. 78.5, z -22.75 .. -20.75; its treads half an amah under the floor's edge) with a parapet on its room side (to z -20.25;
+    // the collider inside it keeps the body's edge off z -20.65) and across its foot end
+    // beside the door (x 73.5 .. 74, to z -20.25), so the loop keeps to the door's east
+    // side and the east half, and reaches the west wall only over the step-off floor at
+    // the well's open end (x 78.5 .. 79.5).
+    h(72.5 - HUG, -19.5, K),
+    h(72.5 + 3.3, -19.5, K),
+    h(81.5 - 2 - HUG, -19.5, K),
+    h(81.5 - 2 - HUG, -24 + 1 + HUG, K), // the step-off floor, against the west wall
+    h(81.5 - 2 - HUG, -16 - 1 - HUG, K), // the north-east corner
+    h(72.5 + 1 + HUG, -16 - 1 - HUG, K), // the south-east corner
+    h(72.5 + 1 + HUG, -19.8, K), // the south wall, up to the parapet's foot end
+    h(72.5 + 3.3, -19.5, K),
+    hc(72.5 - HUG, -19.5, K),
     h(66.5, -14, K),
     p(56, -14, K),
     p(40, -14, K),

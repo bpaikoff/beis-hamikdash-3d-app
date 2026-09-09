@@ -41,6 +41,16 @@ stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
   facade square-on.
 - Beis HaMoked's vestibule floor runs past flight A's outer wall into a dead-end pocket
   under the hall floor (x 68.5..75.75, z -5.25..-3); open, no drop, harmless.
+- Round 6 north walker (2026-09-09), the Middot 1:9 passage and the Nitzotz tower: the
+  vault now steps up over the passage's four steps (it ran level and left 1.35 m of head
+  room on the top step) and the passage door's leaf stands beside its opening instead of
+  in it. Still open: the vestibule's west bay (the stair's foot, the passage door) is
+  sealed from the switchback's foot and the Cheil door (z -16.25..-15.75, x 68.5..81.5),
+  so the tamei kohen's way to Tadi runs back up through the hall and down the switchback
+  (`r6n_pool_to_tadi`); opening the seal east of flight A's outer wall (x 75.75..81.5)
+  would give the passage a direct way to the Cheil door. The floor south of the pool is a
+  half-amah sliver behind the kerb (z -51..-50.5), unwalkable, harmless. The passage sits
+  on the Cheil pavement (no notch in the slab) and the lamps are static spheres.
 
 ## Characters (Sprint 4, round 5)
 

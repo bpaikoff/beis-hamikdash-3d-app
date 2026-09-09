@@ -172,13 +172,6 @@ const xz = (x, z) => {
 const yOf = (a) => toWorld({ x: 0, y: a, z: 0 })[1];
 /** Highest walkable surface under (x, z) amos cast from `from` amos (or from far above), in amos. */
 const hA = (x, z, from) => (player.getFloorHeight(...xz(x, z), from == null ? 200 : yOf(from)) - yOf(0)) / AMAH;
-/** Is (x, y, z) amos inside a wall box? */
-const wallAt = (x, y, z) => {
-  const [wx, wy, wz] = toWorld({ x, y, z });
-  const pt = new THREE.Vector3(wx, wy, wz);
-  return player.wallBoxes.some((b) => b.containsPoint(pt));
-};
-
 /**
  * Stand at (x, z) amos on the surface `y` amos up and walk straight toward (tx, tz) for
  * up to `seconds`; returns where the feet ended (amos) and the walkTo result. A leg into

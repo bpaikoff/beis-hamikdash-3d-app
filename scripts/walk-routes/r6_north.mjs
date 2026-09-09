@@ -259,9 +259,9 @@ export const routes = {
     on(75, -46, -11.41),
     wall(79, -46, -11.41), // the pool's west kerb
     on(75, -46, -11.41),
-    on(75.5, -45.5, -11.41),
-    wall(79, -45.5, -11.41), // the kerb's return beside the treads
-    on(75.5, -45.5, -11.41),
+    on(75.5, -45.8, -11.41),
+    wall(79, -45.8, -11.41), // the kerb's north end beside the treads (it ends at z -45.5; on that line the browser walker slid along its face)
+    on(75.5, -45.8, -11.41),
     on(75, -50, -11.41), // the south-west corner by the hearth (the floor south of the pool is a half-amah sliver behind the kerb, not walked)
     on(75, -44.5, -11.41),
     on(78.5, -44.5, -11.41),

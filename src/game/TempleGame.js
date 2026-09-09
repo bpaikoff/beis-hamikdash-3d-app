@@ -15,6 +15,7 @@ import { areas, byId, hotspots, walkableBounds, worldBounds, worldPos, levelWorl
 import { AMAH } from '../content/units.js';
 import { byTourId } from '../content/tours/index.js';
 import { Tour } from './Tour.js';
+import { readSpawn } from './spawn.js';
 import { Hotspots } from './Hotspots.js'; // HUD: in-scene labels
 import { TouchControls, isTouchDevice } from './TouchControls.js'; // HUD: virtual joystick
 
@@ -35,28 +36,6 @@ function wantsPostFX(renderer) {
 
 /** Let the browser paint (loading text) between build phases. */
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
-
-/** Parse `?cam=x,y,z,yaw,pitch` (metres, degrees) and `?at=<hotspot id>`. */
-function readSpawn(search) {
-  const q = new URLSearchParams(search);
-  const cam = q.get('cam');
-  if (cam) {
-    const [x, y, z, yaw = 0, pitch = 0] = cam.split(',').map(Number);
-    if ([x, y, z].every(Number.isFinite)) return { pos: [x, y, z], yaw, pitch };
-  }
-  const at = q.get('at');
-  if (at && byId[at]) {
-    const entry = byId[at];
-    const [x, y, z] = worldPos(entry);
-    // East of the item (clear of its footprint), at eye height, facing west toward it.
-    const depth = (entry.geometry?.d ?? entry.geometry?.w ?? 0) * AMAH;
-    const height = (entry.geometry?.h ?? 0) * AMAH;
-    // Stand far enough back to take the whole object in (its depth plus roughly its height).
-    const back = Math.max(4, depth / 2 + 3 + Math.min(height, 12) * 0.8);
-    return { pos: [x, y + CONFIG.PLAYER_HEIGHT, z + back], yaw: 0, pitch: height > 6 ? 8 : 0 };
-  }
-  return null;
-}
 
 // ============================================================================
 // MAIN GAME
@@ -228,7 +207,7 @@ export class TempleGame {
     }
     if (this.disposed) return;
 
-    const spawn = readSpawn(window.location.search);
+    const spawn = readSpawn(window.location.search, this.player);
     if (spawn) {
       this.camera.position.set(...spawn.pos);
       this.camera.rotation.set(THREE.MathUtils.degToRad(spawn.pitch), THREE.MathUtils.degToRad(spawn.yaw), 0, 'YXZ');

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { TextureFactory, TEXTURE_NAMES, BAKED_PATH } from './TextureFactory.js';
+import { TextureFactory, TEXTURE_NAMES, BAKED_PATH, CLOTH_FOLDS, clothFoldsHeight, heightToNormal } from './TextureFactory.js';
+import { mulberry32 } from './random.js';
 
 /** Stub the image loader: returns a bare Texture and settles on the next tick. */
 function stubLoader(factory, { fail = [] } = {}) {
@@ -16,10 +17,48 @@ function stubLoader(factory, { fail = [] } = {}) {
 }
 
 describe('TextureFactory (baked path)', () => {
-  it('lists 21 bakeable textures, each backed by a generator method', () => {
-    expect(TEXTURE_NAMES).toHaveLength(21);
+  it('lists 22 bakeable textures, each backed by a generator method', () => {
+    expect(TEXTURE_NAMES).toHaveLength(22);
     for (const n of TEXTURE_NAMES) expect(typeof TextureFactory.prototype[n], n).toBe('function');
-    expect(new Set(TEXTURE_NAMES).size).toBe(21);
+    expect(new Set(TEXTURE_NAMES).size).toBe(22);
+  });
+
+  it('clothFolds is a seeded, tileable tangent-space map whose folds run along v', () => {
+    const size = 64;
+    const p = { ...CLOTH_FOLDS, size };
+    const h = clothFoldsHeight(mulberry32(7), p);
+    expect(h).toHaveLength(size * size);
+    expect(clothFoldsHeight(mulberry32(7), p)).toEqual(h);
+    expect(clothFoldsHeight(mulberry32(8), p)).not.toEqual(h);
+    // Tileable: the wrapped neighbours across each edge differ no more than neighbours inside.
+    let edge = 0, inner = 0;
+    for (let i = 0; i < size; i++) {
+      edge = Math.max(edge, Math.abs(h[i * size] - h[i * size + size - 1]), Math.abs(h[i] - h[(size - 1) * size + i]));
+      inner = Math.max(inner, Math.abs(h[i * size + 1] - h[i * size + 2]), Math.abs(h[size + i] - h[2 * size + i]));
+    }
+    expect(edge).toBeLessThanOrEqual(inner * 1.5 + 1e-3);
+    // Ridges along v: the height varies far more across u than along v, and there are `folds` of them.
+    let du = 0, dv = 0;
+    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+      du += Math.abs(h[y * size + (x + 1) % size] - h[y * size + x]);
+      dv += Math.abs(h[((y + 1) % size) * size + x] - h[y * size + x]);
+    }
+    expect(du).toBeGreaterThan(dv * 2.5);
+    const row = Array.from(h.subarray(0, size));
+    const peaks = row.filter((v, x) => v > row[(x + size - 1) % size] && v >= row[(x + 1) % size] && v > 0.3).length;
+    expect(peaks).toBe(p.folds);
+    const px = heightToNormal(h, size, p.depth);
+    expect(px).toHaveLength(size * size * 4);
+    let r = 0, g = 0, rVar = 0, gVar = 0, bMin = 255, aMin = 255;
+    for (let i = 0; i < px.length; i += 4) { r += px[i]; g += px[i + 1]; bMin = Math.min(bMin, px[i + 2]); aMin = Math.min(aMin, px[i + 3]); }
+    r /= size * size; g /= size * size;
+    for (let i = 0; i < px.length; i += 4) { rVar += (px[i] - r) ** 2; gVar += (px[i + 1] - g) ** 2; }
+    expect(Math.abs(r - 127.5)).toBeLessThan(3); // slopes cancel over a tile
+    expect(Math.abs(g - 127.5)).toBeLessThan(3);
+    expect(rVar).toBeGreaterThan(gVar * 3); // the perturbation is mostly across u
+    expect(Math.sqrt(rVar / (size * size))).toBeGreaterThan(20); // and not faint
+    expect(bMin).toBeGreaterThan(127); // never a normal below the surface
+    expect(aMin).toBe(255);
   });
 
   it('requests /textures/<name>.webp once, caches the texture and reports progress', async () => {

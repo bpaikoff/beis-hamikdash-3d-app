@@ -103,8 +103,8 @@ by `src/game/CharacterSystem.js`. Doves stay primitives.
 | File | Source | Clips | Size | Notes |
 |---|---|---|---|---|
 | `kohen.glb` | Universal Animation Library (Standard), `UAL1_Standard.glb` | `Idle_Loop`, `Idle_Talking_Loop`, `Walk_Loop` | 1.6 MB | the UAL mannequin, 1.8 m, two skinned primitives (8.5k vertices), 65 bones, in-place animation (not the root-motion file) |
-| `sheep.glb` | Lowpoly Animated Animals (farm pack), `FBX/Sheep.fbx` | `Idle` | 0.2 MB | converted from FBX, scaled to 0.95 m, feet on y 0, facing +z; also the goats |
-| `bull.glb` | same pack, `FBX/Cow.fbx` | `Idle` | 0.2 MB | the pack's cow, scaled to 1.5 m; coloured dark at load |
+| `sheep.glb` | Lowpoly Animated Animals (farm pack), `FBX/Sheep.fbx` | `Idle` | 0.2 MB | converted from FBX, scaled to 0.95 m, feet on y 0, facing +z; also the goats (hide colours, horns and beard on the head bone at load) |
+| `bull.glb` | Ultimate Animated Animal Pack, `Bull.glb` from Poly Pizza's CC0 mirror (quaternius.com hands the pack out as a Google Drive folder) | `Idle` | 0.4 MB | seven flat-coloured primitives merged into one with the colours as vertex colours (one draw call), scaled to 1.5 m |
 
 Total 2.0 MB, static files outside the JS bundle. No Draco or KTX2: the files are plain
 glTF 2.0 binaries written by three's `GLTFExporter`, so `GLTFLoader` alone reads them and

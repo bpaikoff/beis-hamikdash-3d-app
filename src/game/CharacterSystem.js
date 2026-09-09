@@ -56,6 +56,17 @@ const ANKLE_MARGIN = 0.02;
 const TUBE_WEIGHT = 0.75;
 const GARMENT_PUFF = 0.03;
 const GARMENT_BLEND = 0.03;
+/**
+ * The garment's fold map (TextureFactory `clothFolds`, tangent space, one tile =
+ * FOLD_TILE metres of cloth) samples a second UV set: `uv1` is a cylindrical unwrap per
+ * limb frame, u going round the torso / arm / leg (a whole number of tiles, so the seam
+ * at the back is invisible) and v running up the limb in metres / FOLD_TILE, with the
+ * tangent (+u) written per vertex so the folds run along the limb whatever the atlas UVs
+ * do. FOLD_TILES: tiles round the torso, an arm, a leg. FOLD_SCALE is the normalScale.
+ */
+const FOLD_TILE = 0.25;
+const FOLD_TILES = { torso: 4, arm: 1, leg: 2 };
+export const FOLD_SCALE = 0.9;
 /** The belt band (avnet / a Yisrael's belt) above the pelvis joint, metres, and how tall the hem band is. */
 const WAIST_BAND = [0.03, 0.11];
 const HEM_BAND = 0.12;
@@ -70,6 +81,7 @@ export const CLIPS = {
 
 const SKIN = 0xd9a878;
 const LINEN = 0xf2eee4;
+const WHITE_WOOL = 0xefeae0; // the Levite's turban
 const WOOL = 0xd8d0c0; // the Yisraelim's light grey-beige wool
 const WOOL_BELT = 0x5a4632;
 const WOOL_HEM = 0x8a7a66;
@@ -195,6 +207,37 @@ function tubeNormal(x, y, z, limbs, out) {
   return out.normalize();
 }
 
+const _e1 = new THREE.Vector3(), _e2 = new THREE.Vector3(), _up = new THREE.Vector3(0, 1, 0);
+
+/**
+ * The fold map's cylindrical `uv1` and tangent (+u, round the limb) at a bind-pose vertex:
+ * the arm frame beyond the shoulder (above the hip), the leg frame below the crotch, else
+ * the torso frame (the same tests as tubeNormal, without the cross-fade: a uv cannot be
+ * blended across a seam, and the shoulder / crotch is where a sleeve or a skirt is sewn on).
+ * Writes u, v into `uv` and the tangent into `tan`.
+ */
+function garmentUv(x, y, z, limbs, uv, tan) {
+  const arm = y > limbs.hipY && Math.abs(x) >= limbs.shoulderX ? limbs.arms[x > 0 ? 0 : 1] : null;
+  if (arm) {
+    // Frame round the bone axis: e1 = up x axis, e2 = axis x e1.
+    _e1.crossVectors(_up, arm.axis).normalize();
+    _e2.crossVectors(arm.axis, _e1).normalize();
+    _limb.set(x, y, z).sub(arm.origin);
+    const along = _limb.dot(arm.axis);
+    const angle = Math.atan2(_limb.dot(_e1), _limb.dot(_e2));
+    uv.set((angle / (2 * Math.PI)) * FOLD_TILES.arm, along / FOLD_TILE);
+    // +u: the angle's increasing direction, cos * e1 - sin * e2.
+    tan.copy(_e1).multiplyScalar(Math.cos(angle)).addScaledVector(_e2, -Math.sin(angle));
+    return;
+  }
+  const leg = y < limbs.crotchY;
+  const cx = leg ? (x > 0 ? limbs.thighX[0] : limbs.thighX[1]) : 0;
+  const tiles = leg ? FOLD_TILES.leg : FOLD_TILES.torso;
+  const angle = Math.atan2(x - cx, z); // 0 at the front (+z), the seam at the back
+  uv.set((angle / (2 * Math.PI)) * tiles, y / FOLD_TILE);
+  tan.set(Math.cos(angle), 0, -Math.sin(angle));
+}
+
 /** Distance from a garment vertex to the nearest skin boundary (neck, ankle, wrist planes). */
 function skinDistance(x, y, z, bounds, tmp) {
   let d = Math.min(bounds.headY - y, y - bounds.ankleY);
@@ -211,11 +254,15 @@ function isSkin(x, y, z, bounds, tmp) {
   return false;
 }
 
+/** Every human role: what paintHuman colours and dress hats. */
+export const ROLES = ['kohen', 'kohenGadol', 'levi', 'yisrael'];
+
 /**
  * A per-role copy of a human body geometry: vertex colours for the garment (white linen
- * with the dark-red avnet for kohanim; the Kohen Gadol's techeiles meil covers the torso
- * down to the knees but has no sleeves, so the white kesones shows on the arms and at the
- * hem; grey-beige wool with a brown belt and a darker hem band for Yisraelim), garment
+ * with the dark-red avnet for kohanim; plain white linen for Levites; the Kohen Gadol's
+ * techeiles meil covers the torso down to the knees but has no sleeves, so the white
+ * kesones shows on the arms and at the hem; grey-beige wool with a brown belt and a
+ * darker hem band for Yisraelim), garment
  * normals flattened to per-limb tubes and the garment puffed GARMENT_PUFF outward so the
  * muscles do not shade through (see TUBE_WEIGHT), and the index reordered into two groups,
  * 0 = skin and 1 = garment, each triangle going with the majority of its three vertices.
@@ -233,6 +280,15 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
   const limbs = bounds.limbs;
   const waist = limbs?.waist ?? [0.98, 1.06];
   const hemY = bounds.ankleY + HEM_BAND;
+  // The fold map's uv1 + tangent: atlas tangents for everything (the skin's own normal map
+  // reads them), then the cylindrical frame per garment vertex. Needs index, normal and uv.
+  const folds = Boolean(limbs && nor && g.index && g.attributes.uv);
+  if (folds) {
+    g.computeTangents();
+    g.setAttribute('uv1', g.attributes.uv.clone());
+  }
+  const uv1 = g.attributes.uv1, tangent = g.attributes.tangent;
+  const uv = new THREE.Vector2(), tan = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {
     const px = pos.getX(i), y = pos.getY(i), pz = pos.getZ(i), x = Math.abs(px);
     let hex;
@@ -244,6 +300,7 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
     } else {
       if (role === 'yisrael') hex = x < 0.32 && y > waist[0] && y < waist[1] ? WOOL_BELT : y < hemY ? WOOL_HEM : WOOL;
       else if (role === 'kohenGadol' && x < (limbs?.shoulderX ?? 0.3) && y > 0.5 && y < 1.5) hex = TECHEILES; // sleeveless: ends at the shoulder joint
+      else if (role === 'levi') hex = LINEN; // white linen throughout (2 Chron 5:12), no avnet: the belt is a priestly vestment
       else hex = x < 0.32 && y > waist[0] && y < waist[1] ? AVNET : LINEN;
       if (limbs && nor) {
         // Flatten the shading to the limb's tube and push the cloth out, except right at the skin.
@@ -252,6 +309,13 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
         nor.setXYZ(i, n.x, n.y, n.z);
         const puff = GARMENT_PUFF * Math.min(1, skinDistance(px, y, pz, bounds, tmp) / GARMENT_BLEND);
         pos.setXYZ(i, px + n.x * puff, y + n.y * puff, pz + n.z * puff);
+      }
+      if (folds) {
+        garmentUv(px, y, pz, limbs, uv, tan);
+        uv1.setXY(i, uv.x, uv.y);
+        // Keep the tangent perpendicular to the flattened normal; handedness +1.
+        tan.addScaledVector(n, -tan.dot(n)).normalize();
+        tangent.setXYZW(i, tan.x, tan.y, tan.z, 1);
       }
     }
     c.setHex(hex);
@@ -278,6 +342,65 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
   g.computeBoundingBox();
   g.computeBoundingSphere();
   return g;
+}
+
+/**
+ * The Levite's turban: a ring of major radius `ring` and tube `tube`, stretched `depth` in
+ * z to follow the skull (10 cm back, 9 cm forward against 7.4 cm half-width, so the wool
+ * hugs the head all round), under a dome of radius `dome` flattened to `domeHeight`; the
+ * whole sits `drop` below the crown. Outer width 29 cm against the migba'as' 27 cm, height
+ * 8.5 cm (the band's 7 plus the dome above the band's centre) against its 20 cm.
+ */
+export const LEVI_TURBAN = { ring: 0.11, tube: 0.035, depth: 1.2, dome: 0.1, domeHeight: 0.5, drop: 0.045 };
+
+/** The turban as one geometry (one draw call): the ring and the dome merged. */
+function leviTurbanGeometry() {
+  const { ring, tube, depth, dome, domeHeight } = LEVI_TURBAN;
+  const band = new THREE.TorusGeometry(ring, tube, 8, 24).rotateX(Math.PI / 2).scale(1, 1, depth);
+  const cap = new THREE.SphereGeometry(dome, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2).scale(1, domeHeight, depth);
+  for (const g of [band, cap]) g.deleteAttribute('uv');
+  const merged = mergeGeometries([band, cap]);
+  band.dispose();
+  cap.dispose();
+  return merged;
+}
+
+/**
+ * A goat's horns and beard, relative to the sheep model's Head bone (rest pose: the bone at
+ * (0, 0.88, 0.39), the crown at y 0.95, the chin's lowest point at (0, 0.67, 0.58), the
+ * muzzle 25 cm forward of the bone): two horns 20 cm long rising from the crown 5 cm either
+ * side of the midline, leaning back 35 deg and out 35 deg, and a beard 8 cm long hanging
+ * from the chin, as one geometry with vertex colours (dark horn, hair a shade lighter).
+ * GOAT_PARTS holds the offsets from the bone.
+ */
+export const GOAT_PARTS = { horn: [0.05, 0.065, 0], hornLength: 0.2, hornLean: 0.61, hornSplay: 0.61, beard: [0, -0.21, 0.19], beardLength: 0.08 };
+
+function goatPartsGeometry() {
+  const { horn, hornLength, hornLean, hornSplay, beard, beardLength } = GOAT_PARTS;
+  const paint = (g, hex) => {
+    const c = new THREE.Color(hex);
+    const n = g.attributes.position.count;
+    const col = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) col.set([c.r, c.g, c.b], i * 3);
+    g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+    g.deleteAttribute('uv');
+    return g;
+  };
+  const parts = [];
+  for (const side of [1, -1]) {
+    // A tapered horn: base on the crown, leaning back (rotateX toward -z) and out (rotateZ).
+    const h = new THREE.CylinderGeometry(0.006, 0.026, hornLength, 6)
+      .translate(0, hornLength / 2, 0)
+      .rotateX(-hornLean)
+      .rotateZ(-side * hornSplay)
+      .translate(side * horn[0], horn[1], horn[2]);
+    parts.push(paint(h, 0x3a3028));
+  }
+  const b = new THREE.ConeGeometry(0.022, beardLength, 6).rotateX(Math.PI).translate(beard[0], beard[1] - beardLength / 2, beard[2]);
+  parts.push(paint(b, 0x6a5238));
+  const merged = mergeGeometries(parts);
+  for (const g of parts) g.dispose();
+  return merged;
 }
 
 /** The choshen's twelve stones as one merged geometry (one draw call). */
@@ -386,7 +509,7 @@ export class CharacterSystem {
         }
       });
       model.headTop = Number.isFinite(top) ? top : 1.83;
-      for (const role of ['kohen', 'kohenGadol', 'yisrael']) {
+      for (const role of ROLES) {
         const geoms = new Map();
         gltf.scene.traverse((o) => {
           if (o.isSkinnedMesh && !isPartMesh(o)) geoms.set(o.geometry.uuid, paintHuman(o.geometry, role, model.skin));
@@ -444,10 +567,16 @@ export class CharacterSystem {
     });
   }
 
+  /**
+   * The garment: the linen weave (atlas uv) times the vertex colour, with the fold normal
+   * map on the cylindrical `uv1` (see FOLD_TILE) when the TextureFactory has it.
+   */
   garmentMaterial(role) {
     return this.material(`garment:${role}`, () => {
       const map = this.tex?.get?.('whiteLinen') ?? null;
-      return new THREE.MeshStandardMaterial({ map, vertexColors: true, roughness: 0.85, metalness: 0 });
+      const normalMap = this.tex?.get?.('clothFolds') ?? null;
+      if (normalMap) normalMap.channel = 1;
+      return new THREE.MeshStandardMaterial({ map, normalMap, normalScale: new THREE.Vector2(FOLD_SCALE, FOLD_SCALE), vertexColors: true, roughness: 0.85, metalness: 0 });
     });
   }
 
@@ -469,16 +598,23 @@ export class CharacterSystem {
     });
   }
 
+  /**
+   * The animals' materials by the source primitive's material name: the farm-pack sheep
+   * has `White` (fleece), `Black` (face and legs) and `Pink`; as a goat the fleece is a
+   * short brown hide, the face and legs the same hide a shade darker, and no wool map. The
+   * bull is `Painted`: one primitive with the pack's own colours as vertex colours
+   * (scripts/fetch_assets.mjs merges its seven), tinted warm so the black reads as hide.
+   */
   animalMaterial(type, part) {
     const table = {
       sheep: { White: [0xede6d6, 'sheepWool'], Black: [0x2b2118], Pink: [0x9c6a62] },
-      goat: { White: [0x8b6f4e, 'goatHide'], Black: [0x2b2118], Pink: [0x6b4a3a] },
-      bull: { White: [0x4a3222, 'bullHide'], Black: [0x1e1512], Pink: [0x3a2a22] },
+      goat: { White: [0x8b6f4e, 'goatHide'], Black: [0x5a4432], Pink: [0x6b4a3a] },
+      bull: { Painted: [0xf0e4d4, null, true], White: [0x4a3222, 'bullHide'], Black: [0x1e1512], Pink: [0x3a2a22] },
     };
-    const [color, texName] = table[type]?.[part] ?? [0x888888];
+    const [color, texName, vertexColors = false] = table[type]?.[part] ?? [0x888888];
     return this.material(`animal:${type}:${part}`, () => {
       const map = texName ? this.tex?.get?.(texName) ?? null : null;
-      return new THREE.MeshStandardMaterial({ color, map, roughness: 0.95, metalness: 0 });
+      return new THREE.MeshStandardMaterial({ color, map, vertexColors, roughness: 0.95, metalness: 0 });
     });
   }
 
@@ -496,7 +632,9 @@ export class CharacterSystem {
 
   /**
    * Hang a mesh on a bone at a world position given in the model's rest pose: the mesh
-   * stays upright relative to the bone's rest orientation and follows the bone from then on.
+   * stays upright relative to the bone's rest orientation, keeps its size in metres (the
+   * FBX-converted animals carry a centimetre armature under a metre root, so a bone's world
+   * scale is far from 1) and follows the bone from then on.
    */
   attachToBone(root, boneName, mesh, worldPoint) {
     const bone = root.getObjectByName(boneName);
@@ -504,6 +642,8 @@ export class CharacterSystem {
     bone.updateWorldMatrix(true, false);
     mesh.position.copy(bone.worldToLocal(this._v.copy(worldPoint)));
     mesh.quaternion.copy(bone.getWorldQuaternion(new THREE.Quaternion()).invert());
+    const ws = bone.getWorldScale(new THREE.Vector3());
+    mesh.scale.set(1 / ws.x, 1 / ws.y, 1 / ws.z);
     mesh.castShadow = true;
     mesh.userData.lodPart = true; // hidden at the 'body' tier
     mesh.userData.noCull = true; // this system's LOD owns `visible`, not DistanceCuller
@@ -514,7 +654,7 @@ export class CharacterSystem {
 
   /**
    * A human figure with its feet at (x, y, z), facing `facing` radians (0 = +z, east).
-   * @param {boolean | {role?: 'kohen'|'kohenGadol'|'yisrael', clip?: 'idle'|'talk'|'walk',
+   * @param {boolean | {role?: 'kohen'|'kohenGadol'|'levi'|'yisrael', clip?: 'idle'|'talk'|'walk',
    *   facing?: number, path?: number[][], closed?: boolean, speed?: number}} [opts]
    *   `true` is shorthand for the Kohen Gadol. `path` is a polyline of [x, z] the figure
    *   walks (closed loop or ping-pong) at `speed` m/s with the walk clip.
@@ -561,7 +701,7 @@ export class CharacterSystem {
     g.userData = { type: 'human', role, mixer, action, baseY: y, parts: lodParts(root), tier: 'full' };
     if (o.path && o.path.length >= 2) {
       const speed = o.speed ?? 1.1;
-      g.userData.walker = makeWalker(o.path, o.closed ?? false, speed);
+      g.userData.walker = makeWalker(o.path, o.closed ?? false, speed, [x, z]);
       if (action) action.timeScale = speed / CLIP_SPEED.kohen;
     }
     this.scene.add(g);
@@ -573,7 +713,8 @@ export class CharacterSystem {
    * Head covering and, for the Kohen Gadol, the golden garments. The hats hang from the
    * crown measured in prepare (model.headTop): the migba'as cylinder is centred 3 cm above
    * it (its 20 cm height reaches 7 cm down the skull), the mitznefes dome starts 5 cm below
-   * it, the tzitz sits 9 cm below on the forehead and a Yisrael's sudar 6 cm below.
+   * it, the tzitz sits 9 cm below on the forehead, a Yisrael's sudar 6 cm below and a
+   * Levite's turban 4.5 cm below (see LEVI_TURBAN).
    */
   dress(root, role) {
     const linen = this.material('hat:linen', () => new THREE.MeshStandardMaterial({ color: LINEN, map: this.tex?.get?.('whiteLinen') ?? null, roughness: 0.9 }));
@@ -595,6 +736,13 @@ export class CharacterSystem {
       this.attachToBone(root, 'spine_03', choshen, new THREE.Vector3(0, 1.3, 0.16));
       const stones = new THREE.Mesh(this.geometry('stones', stonesGeometry), this.material('stones', () => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.25, metalness: 0.1 })));
       this.attachToBone(root, 'spine_03', stones, new THREE.Vector3(0, 1.3, 0.175));
+    } else if (role === 'levi') {
+      // A flat white wool turban: a wound ring round the head with a low dome over the crown,
+      // one merged geometry (LEVI_TURBAN). Wider than the migba'as and a third of its height,
+      // so a Levite is told from a kohen at a glance; in wool, not the priestly linen.
+      const wool = this.material('hat:whiteWool', () => new THREE.MeshStandardMaterial({ color: WHITE_WOOL, map: this.tex?.get?.('sheepWool') ?? null, roughness: 0.95 }));
+      const turban = new THREE.Mesh(this.geometry('leviTurban', leviTurbanGeometry), wool);
+      this.attachToBone(root, 'Head', turban, new THREE.Vector3(-0.02, top - LEVI_TURBAN.drop, 0.01));
     } else if (role === 'yisrael') {
       // Sudar: a wool skullcap over the top 6 cm of the head (the skull is longer in z than x:
       // 7.4 cm half-width, 10 cm back and 9 cm forward at that depth on the base body).
@@ -615,8 +763,9 @@ export class CharacterSystem {
   }
 
   /**
-   * An animal standing at (x, y, z): 'sheep', 'goat' (the sheep model, narrowed and in
-   * goat colours) or 'bull'. `facing` in radians (0 = +z).
+   * An animal standing at (x, y, z): 'sheep', 'goat' (the sheep model, narrowed, in hide
+   * colours, with horns and a beard hung on its head bone: no CC0 rigged goat exists) or
+   * 'bull'. `facing` in radians (0 = +z).
    */
   createAnimal(type, x, y, z, { facing = Math.random() * Math.PI * 2 } = {}) {
     if (this.animals.length >= LIMITS.animals) {
@@ -632,7 +781,14 @@ export class CharacterSystem {
       const swapped = mats.map((mm) => this.animalMaterial(type, mm.name));
       m.material = Array.isArray(m.material) ? swapped : swapped[0];
     });
-    if (type === 'goat') root.scale.set(0.85, 0.95, 0.9);
+    if (type === 'goat') {
+      // Horns and beard on the head bone, placed in the unscaled rest pose (the root's
+      // scale below carries them with the head). One merged geometry: one draw call.
+      const parts = new THREE.Mesh(this.geometry('goatParts', goatPartsGeometry), this.material('goatParts', () => new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.8, metalness: 0 })));
+      const head = root.getObjectByName('Head');
+      if (head) this.attachToBone(root, 'Head', parts, head.getWorldPosition(new THREE.Vector3()));
+      root.scale.set(0.85, 0.95, 0.9);
+    }
     const g = new THREE.Group();
     g.name = type;
     g.add(root);
@@ -789,7 +945,7 @@ function lodParts(root) {
 }
 
 /** A figure moving along a polyline of [x, z] at `speed`, turning toward its direction of travel. */
-export function makeWalker(points, closed, speed) {
+export function makeWalker(points, closed, speed, start = null) {
   const pts = points.map(([x, z]) => new THREE.Vector2(x, z));
   const segs = [];
   const n = closed ? pts.length : pts.length - 1;
@@ -798,8 +954,22 @@ export function makeWalker(points, closed, speed) {
     segs.push({ a, b, len: a.distanceTo(b) });
   }
   const total = segs.reduce((s, x) => s + x.len, 0);
-  const w = { s: Math.random() * total, dir: 1, total, closed, speed, points: pts };
   const tmp = new THREE.Vector2();
+  // Start at the arc length of the path point nearest `start` (the placement's feet), so a
+  // scene loads the same way every time; anywhere on the path when no start is given.
+  let s0 = Math.random() * total;
+  if (start) {
+    const p = new THREE.Vector2(start[0], start[1]), ab = new THREE.Vector2();
+    let best = Infinity, acc = 0;
+    for (const seg of segs) {
+      ab.copy(seg.b).sub(seg.a);
+      const t = seg.len > 0 ? Math.min(1, Math.max(0, tmp.copy(p).sub(seg.a).dot(ab) / (seg.len * seg.len))) : 0;
+      const d = tmp.copy(ab).multiplyScalar(t).add(seg.a).distanceTo(p);
+      if (d < best) { best = d; s0 = acc + t * seg.len; }
+      acc += seg.len;
+    }
+  }
+  const w = { s: s0, dir: 1, total, closed, speed, points: pts };
   /** Position at arc length s (0..total) and the segment heading. */
   w.at = (s, out = new THREE.Vector3()) => {
     let rest = Math.min(Math.max(s, 0), total);
@@ -866,8 +1036,8 @@ export function templePlacements() {
   // Two Levites pacing the Duchan platform (it stops 12 amos short of each side wall).
   const [dxx, , dz0] = at('duchan');
   const strip = dz0 + 0.35;
-  human(dxx - 18, duchanY, strip, { path: [[dxx - 20, strip], [dxx + 20, strip]], speed: 0.9 });
-  human(dxx + 12, duchanY, strip, { path: [[dxx + 20, strip], [dxx - 20, strip]], speed: 0.95 });
+  human(dxx - 18, duchanY, strip, { role: 'levi', path: [[dxx - 20, strip], [dxx + 20, strip]], speed: 0.9 });
+  human(dxx + 12, duchanY, strip, { role: 'levi', path: [[dxx + 20, strip], [dxx - 20, strip]], speed: 0.95 });
 
   // Yisraelim in the Ezras Yisrael, west of the Nicanor threshold (the middle one stands
   // 3 m north of the axis so tour stop 13 looks past him).

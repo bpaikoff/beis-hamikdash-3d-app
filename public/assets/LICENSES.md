@@ -37,22 +37,25 @@ own License.txt reads "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication. Mod
 @Quaternius". No attribution is required; Quaternius asks for support on Patreon
 (<https://www.patreon.com/quaternius>).
 
-Each file is one model taken out of the pack's zip and reduced with
+Each file is one model taken out of the pack's zip (or, for the Ultimate Animated Animal
+Pack, which quaternius.com hands out as a Google Drive folder, the per-model GLB on
+[Poly Pizza](https://poly.pizza)'s CC0 mirror of it) and reduced with
 `node scripts/fetch_assets.mjs --characters` (three's loaders and GLTFExporter in node):
 the human is the Universal Base Characters body carrying only the clips listed from the
 Universal Animation Library (same rig), with its textures moved out of the glb into the
 files below; the FBX animals are converted to GLB, scaled to metres and their material
-groups merged. Nothing was resculpted or re-animated. `manifest.json` records the
-itch.io page, the zip's sha256, the source entry and the sha256 of every output file;
-`--verify` checks them.
+groups merged; the bull's flat-coloured primitives are merged into one with the colours
+as vertex colours. Nothing was resculpted or re-animated. `manifest.json` records the
+pack page, the zip's (or the file's) sha256, the source entry and the sha256 of every
+output file; `--verify` checks them.
 
-| File | Pack (itch.io) | Source entry | Clips kept | Size | Used for |
+| File | Pack | Source entry | Clips kept | Size | Used for |
 |---|---|---|---|---|---|
 | `kohen.glb` | [universal-base-characters](https://quaternius.itch.io/universal-base-characters) (body), [universal-animation-library](https://quaternius.itch.io/universal-animation-library) (clips) | `Universal Base Characters[Standard]/Base Characters/Godot - UE/Superhero_Male_FullBody.gltf` + `Universal Animation Library[Standard]/Unreal-Godot/UAL1_Standard.glb` | Idle_Loop, Idle_Talking_Loop, Walk_Loop | 1526 KB | rigged human (the Universal Base Characters male body on the Universal Animation Library rig, 1.8 m, 8.5k vertices): every kohen, the Kohen Gadol and the Yisraelim, skin textured from the files beside it and the garments painted by vertex colour at load |
-| `sheep.glb` | [lowpoly-animated-animals](https://quaternius.itch.io/lowpoly-animated-animals) | `FBX/Sheep.fbx` | Idle | 188 KB | sheep (also the goats, recoloured and narrowed) at the Tamid pen |
-| `bull.glb` | [lowpoly-animated-animals](https://quaternius.itch.io/lowpoly-animated-animals) | `FBX/Cow.fbx` | Idle | 234 KB | bull (the pack's cow, recoloured dark) at the Tamid pen |
+| `sheep.glb` | [lowpoly-animated-animals](https://quaternius.itch.io/lowpoly-animated-animals) | `FBX/Sheep.fbx` | Idle | 188 KB | sheep at the Tamid pen; also the goats (narrowed, in hide colours, horns and a beard hung on the head bone at load: no CC0 rigged goat exists) |
+| `bull.glb` | [ultimate-animated-animals](https://poly.pizza/m/a8PIIYwF7r) | [Bull.glb](https://static.poly.pizza/5704ef69-2c27-4de8-a942-70a29458af21.glb) | Idle | 373 KB | bull (the Ultimate Animated Animal Pack's Bull, horns and all, its seven flat-coloured primitives merged into one with vertex colours) at the Tamid pen; no CC0 rigged goat exists in the Quaternius, Kenney or Poly Pizza catalogues, so the goats stay the sheep model with horns and a beard hung on the head bone |
 
-Models: 1.9 MB. Fetched 2026-09-06.
+Models: 2.0 MB. Fetched 2026-09-09.
 
 The textures the human is drawn with are the pack's own PNGs, resized (Python PIL,
 `scripts/resize_textures.py`, Lanczos) and re-encoded; the roughness map is the G channel

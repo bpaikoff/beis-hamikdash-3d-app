@@ -11,12 +11,90 @@ export const TEXTURE_NAMES = [
   'jerusalemStone', 'goldPolished', 'goldEngraved', 'copper', 'copperPatina', 'cedarWood',
   'acaciaWood', 'marbleWhite', 'marbleRose', 'techeiles', 'argaman', 'whiteLinen', 'paroches',
   'groundSand', 'floorTiles', 'mosaic', 'water', 'sheepWool', 'bullHide', 'goatHide', 'normalMap',
+  'clothFolds',
 ];
 
 /** Per-texture settings that apply to both the baked and the canvas path. */
 const META = {
   normalMap: { srgb: false },
+  clothFolds: { srgb: false },
 };
+
+/**
+ * The garment fold normal map (`clothFolds`): one tile is CLOTH_FOLDS.tileMetres of cloth
+ * both ways, with `folds` ridges running along v (the limb's length; CharacterSystem writes
+ * a cylindrical `uv1` per limb so u goes round the limb). Each ridge wanders sideways by up
+ * to `wander` of a fold pitch and pinches to `pinch` of its height as it runs, over a plain
+ * weave of `threads` per tile at `weave` of the fold height. `depth` scales the slopes.
+ */
+export const CLOTH_FOLDS = { size: 256, tileMetres: 0.25, folds: 5, wander: 0.2, pinch: 0.45, threads: 40, weave: 0.015, depth: 1 };
+
+/** x wrapped into [-0.5, 0.5). */
+const wrap = (x) => x - Math.round(x);
+
+/**
+ * The fold height field on a size x size grid, tileable both ways (every modulation is a
+ * whole number of periods per tile). `rand` seeds the ridges' phases and widths.
+ * @returns {Float32Array} heights in about [0, 1.2], row-major, row 0 at v = 0
+ */
+export function clothFoldsHeight(rand, p = CLOTH_FOLDS) {
+  const { size, folds, wander, pinch, threads, weave } = p;
+  const ridges = [];
+  for (let k = 0; k < folds; k++) {
+    ridges.push({
+      centre: (k + 0.5 + (rand() - 0.5) * 0.3) / folds,
+      // Sideways wander: a one-period sway plus a faster, smaller one.
+      m1: 1 + Math.floor(rand() * 2), p1: rand(), m2: 3 + Math.floor(rand() * 2), p2: rand(),
+      // Half-width (fraction of a pitch) and its breathing; height pinching.
+      w: 0.22 + rand() * 0.12, mw: 1 + Math.floor(rand() * 2), pw: rand(),
+      ma: 1 + Math.floor(rand() * 2), pa: rand(),
+    });
+  }
+  const h = new Float32Array(size * size);
+  const TAU = Math.PI * 2;
+  for (let y = 0; y < size; y++) {
+    const v = y / size;
+    for (let x = 0; x < size; x++) {
+      const u = x / size;
+      let z = 0;
+      for (const r of ridges) {
+        const c = r.centre + (wander / folds) * (Math.sin(TAU * (v * r.m1 + r.p1)) * 0.7 + Math.sin(TAU * (v * r.m2 + r.p2)) * 0.3);
+        const w = (r.w + 0.08 * Math.sin(TAU * (v * r.mw + r.pw))) / folds;
+        const a = 1 - pinch * (0.5 + 0.5 * Math.sin(TAU * (v * r.ma + r.pa)));
+        const d = wrap(u - c) / w;
+        z += a * Math.exp(-d * d);
+      }
+      z += weave * (Math.sin(TAU * u * threads) * Math.sin(TAU * v * threads));
+      h[y * size + x] = z;
+    }
+  }
+  return h;
+}
+
+/**
+ * Tangent-space normal map pixels (RGBA, +u red, +v green, wrapped finite differences) of
+ * a tileable height field; `depth` scales the slopes (with the canvas row order of the
+ * other generators: green is height rising toward the row above).
+ * @returns {Uint8ClampedArray} size * size * 4
+ */
+export function heightToNormal(h, size, depth = 1) {
+  const out = new Uint8ClampedArray(size * size * 4);
+  const k = depth * size / 40;
+  for (let y = 0; y < size; y++) {
+    const up = ((y - 1 + size) % size) * size, down = ((y + 1) % size) * size, row = y * size;
+    for (let x = 0; x < size; x++) {
+      const dx = (h[row + (x - 1 + size) % size] - h[row + (x + 1) % size]) * k;
+      const dy = (h[up + x] - h[down + x]) * k;
+      const len = Math.hypot(dx, dy, 1);
+      const i = (row + x) * 4;
+      out[i] = (dx / len + 1) * 127.5;
+      out[i + 1] = (dy / len + 1) * 127.5;
+      out[i + 2] = (1 / len + 1) * 127.5;
+      out[i + 3] = 255;
+    }
+  }
+  return out;
+}
 
 export const BAKED_PATH = '/textures/';
 
@@ -38,7 +116,7 @@ const PBR_MAPS = [
 const PBR_NEUTRAL = { map: [176, 168, 144], normalMap: [128, 128, 255], roughnessMap: [200, 200, 200], aoMap: [255, 255, 255] };
 
 // ============================================================================
-// TEXTURE FACTORY - 21 procedural textures, baked to WebP at build time
+// TEXTURE FACTORY - 22 procedural textures, baked to WebP at build time
 // ============================================================================
 export class TextureFactory {
   /**
@@ -680,6 +758,16 @@ export class TextureFactory {
         img.data[i*4+3] = 255;
       }
     }
+    ctx.putImageData(img, 0, 0);
+    return this.finish(new THREE.CanvasTexture(c), { srgb: false });
+  }
+
+  /** The garment folds (see CLOTH_FOLDS): linear data, repeat-wrapped, seeded like the rest. */
+  clothFolds() {
+    const { size } = CLOTH_FOLDS;
+    const c = this.createCanvas(size, size), ctx = c.getContext('2d');
+    const img = ctx.createImageData(size, size);
+    img.data.set(heightToNormal(clothFoldsHeight(this.rand), size, CLOTH_FOLDS.depth));
     ctx.putImageData(img, 0, 0);
     return this.finish(new THREE.CanvasTexture(c), { srgb: false });
   }

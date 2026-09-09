@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {
   CharacterSystem, CHARACTER_FILES, CLIPS, LIMITS, ANIMATE_RADIUS, LOD, FIGURE_RADIUS,
-  templePlacements, makeWalker, figureTier, lodK, skinBounds, paintHuman, textureUrl,
+  templePlacements, makeWalker, figureTier, lodK, skinBounds, paintHuman, textureUrl, FOLD_SCALE, ROLES, LEVI_TURBAN, GOAT_PARTS,
 } from './CharacterSystem.js';
 import { PlayerController } from './PlayerController.js';
 import { TempleBuilder } from './TempleBuilder.js';
@@ -100,6 +100,52 @@ describe('character GLBs', () => {
     expect(json.extensionsUsed ?? []).toEqual([]);
   });
 
+  it('bull.glb is the Ultimate pack Bull from Poly Pizza, merged to one vertex-coloured primitive on 42 bones', async () => {
+    const f = CHARACTER_FILES['bull.glb'];
+    expect(f.pack).toBe('ultimate-animated-animals');
+    expect(f.page).toBe('https://poly.pizza/m/a8PIIYwF7r');
+    expect(f.url).toMatch(/^https:\/\/static\.poly\.pizza\/[0-9a-f-]+\.glb$/);
+    expect(f.sourceSha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(f.merged).toBe(true);
+    expect(f.use).toMatch(/no CC0 rigged goat/);
+    expect(f.bytes).toBeLessThan(450 * 1024);
+    const gltf = await parseGlb('bull');
+    const meshes = [];
+    gltf.scene.traverse((o) => { if (o.isMesh) meshes.push(o); });
+    expect(meshes).toHaveLength(1);
+    const [m] = meshes;
+    expect(m.isSkinnedMesh).toBe(true);
+    expect(m.material.name).toBe('Painted');
+    expect(m.material.vertexColors).toBe(true);
+    expect(m.geometry.index).toBeTruthy();
+    expect(m.geometry.attributes.color).toBeTruthy();
+    expect(m.geometry.attributes.uv).toBeUndefined();
+    expect(m.skeleton.bones).toHaveLength(42);
+    expect(m.skeleton.bones.map((b) => b.name)).toContain('Head');
+    // Several flat colours survived the merge (hide, light patches, hooves, horns, eyes).
+    const col = m.geometry.attributes.color;
+    const hexes = new Set();
+    for (let i = 0; i < col.count; i++) hexes.add(new THREE.Color(col.getX(i), col.getY(i), col.getZ(i)).getHexString());
+    expect(hexes.size).toBeGreaterThanOrEqual(5);
+    expect(hexes.size).toBeLessThanOrEqual(8);
+    // Faces +z: posed in the first Idle frame, the topmost vertices (the horns) sit forward of the body's centre.
+    const mixer = new THREE.AnimationMixer(gltf.scene);
+    mixer.clipAction(gltf.animations[0]).play();
+    mixer.update(0);
+    gltf.scene.updateMatrixWorld(true);
+    const pos = m.geometry.attributes.position;
+    let topZ = 0, topY = -Infinity, maxZ = -Infinity;
+    const v = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) { m.applyBoneTransform(i, v.fromBufferAttribute(pos, i)).applyMatrix4(m.matrixWorld); maxZ = Math.max(maxZ, v.z); if (v.y > topY) { topY = v.y; topZ = v.z; } }
+    expect(topY).toBeGreaterThan(1.3);
+    expect(topZ).toBeGreaterThan(0.1);
+    expect(maxZ, 'the muzzle reaches forward of the centred body').toBeGreaterThan(0.9);
+    const licenses = readFileSync(resolve(dir, '../LICENSES.md'), 'utf8');
+    expect(licenses).toContain(f.page);
+    expect(licenses).toContain(f.url);
+    expect(licenses).toContain('Poly Pizza');
+  });
+
   it('every texture in the manifest is on disk with its sha256 and LICENSES.md names both packs', async () => {
     const manifest = JSON.parse(readFileSync(resolve(dir, 'manifest.json'), 'utf8'));
     const textures = manifest.textures ?? {};
@@ -179,6 +225,19 @@ describe('CharacterSystem', () => {
     expect(sys.doves.length).toBe(LIMITS.doves);
     expect(sys.humans.filter((h) => h.userData.walker)).toHaveLength(4);
     expect(sys.humans.filter((h) => h.name === 'kohenGadol')).toHaveLength(1);
+    // Twenty humans as before the Levite role; the two Duchan walkers are the Levites.
+    expect(placements.filter((p) => p.kind === 'human')).toHaveLength(20);
+    const levites = sys.humans.filter((h) => h.name === 'levi');
+    expect(levites).toHaveLength(2);
+    for (const l of levites) expect(l.userData.walker, 'a Levite walks the Duchan').toBeTruthy();
+    expect(sys.humans.filter((h) => h.name === 'kohen' && h.userData.walker)).toHaveLength(2);
+    // A walker starts where it is placed (the slaughter lane's pair half a loop apart).
+    for (const p of placements.filter((q) => q.path)) {
+      const g = sys.humans.find((h) => h.position.x === p.x && h.position.z === p.z);
+      expect(g, `walker at ${p.x}, ${p.z}`).toBeTruthy();
+      const { pos } = g.userData.walker.at(g.userData.walker.s);
+      expect(Math.hypot(pos.x - p.x, pos.z - p.z), 'start on the path at the placement').toBeLessThan(1e-6);
+    }
     expect(placements.filter((p) => p.kind === 'human').length + placements.filter((p) => p.kind !== 'human').length).toBe(placements.length);
 
     const near = sys.humans[0];
@@ -307,6 +366,88 @@ describe('CharacterSystem', () => {
     sys.dispose();
   });
 
+  it('writes a cylindrical uv1 and a tangent round each limb for the fold map, skin tangents from the atlas', async () => {
+    sys = new CharacterSystem(scene, stubTex, { loader: diskLoader });
+    await sys.load();
+    const { skin: bounds, scene: src } = sys.models.kohen;
+    const hand = src.getObjectByName('hand_l').getWorldPosition(new THREE.Vector3());
+    const upperarm = src.getObjectByName('upperarm_l').getWorldPosition(new THREE.Vector3());
+    let body;
+    src.traverse((o) => { if (o.isSkinnedMesh && o.name !== 'Hair' && o.name !== 'Eyes' && !body) body = o; });
+    const painted = sys.models.kohen.roles.kohen.get(body.geometry.uuid);
+    const p0 = body.geometry.attributes.position, uv0 = body.geometry.attributes.uv;
+    const { uv1, tangent, normal } = painted.attributes;
+    expect(uv1.itemSize).toBe(2);
+    expect(tangent.itemSize).toBe(4);
+    expect(uv1.count).toBe(p0.count);
+    // The unpainted geometry's own tangents, for the skin comparison.
+    const ref = body.geometry.clone();
+    ref.computeTangents();
+    const refTan = ref.attributes.tangent;
+    const v = new THREE.Vector3(), t = new THREE.Vector3(), n = new THREE.Vector3(), radial = new THREE.Vector3();
+    let torso = 0, arm = 0, leg = 0, skinN = 0;
+    for (let i = 0; i < p0.count; i++) {
+      v.fromBufferAttribute(p0, i);
+      const skinV = v.y > bounds.headY || v.y < bounds.ankleY || Math.abs(v.x) > hand.x - 0.01;
+      if (skinV) {
+        // Skin keeps the atlas uv in uv1 and the atlas tangent.
+        expect(uv1.getX(i)).toBe(uv0.getX(i));
+        expect(uv1.getY(i)).toBe(uv0.getY(i));
+        expect(tangent.getX(i)).toBe(refTan.getX(i));
+        skinN++;
+        continue;
+      }
+      t.fromBufferAttribute(tangent, i);
+      n.fromBufferAttribute(normal, i);
+      expect(t.length()).toBeCloseTo(1, 4);
+      expect(Math.abs(t.dot(n)), `tangent ${i} not on the surface`).toBeLessThan(1e-4);
+      expect(tangent.getW(i)).toBe(1);
+      const u = uv1.getX(i), vv = uv1.getY(i);
+      if (Math.abs(v.x) < 0.12 && v.y > 1.15 && v.y < 1.35 && Math.abs(v.z) > 0.05) {
+        // Torso: v is height in tiles of 0.25 m, u the angle round the body (4 tiles), the
+        // tangent runs round the body (horizontal, perpendicular to the radial direction).
+        expect(vv).toBeCloseTo(v.y / 0.25, 5);
+        expect(Math.abs(u)).toBeLessThanOrEqual(2);
+        radial.set(v.x, 0, v.z).normalize();
+        expect(Math.abs(t.y)).toBeLessThan(0.35);
+        expect(Math.abs(t.dot(radial))).toBeLessThan(0.35);
+        torso++;
+      } else if (v.x > upperarm.x + 0.08 && v.x < hand.x - 0.08 && v.y > 1.3) {
+        // Left arm: v runs along the bone from the shoulder, u round it (1 tile).
+        expect(vv).toBeCloseTo((v.x - upperarm.x) / 0.25, 1);
+        expect(Math.abs(u)).toBeLessThanOrEqual(0.5);
+        expect(Math.abs(t.x)).toBeLessThan(0.35); // round the arm, not along it
+        arm++;
+      } else if (v.y > 0.3 && v.y < 0.7 && Math.abs(v.x) > 0.05) {
+        expect(vv).toBeCloseTo(v.y / 0.25, 5);
+        expect(Math.abs(u)).toBeLessThanOrEqual(1);
+        expect(Math.abs(t.y)).toBeLessThan(0.35);
+        leg++;
+      }
+    }
+    expect(skinN).toBeGreaterThan(500);
+    expect(torso).toBeGreaterThan(20);
+    expect(arm).toBeGreaterThan(20);
+    expect(leg).toBeGreaterThan(50);
+    sys.dispose();
+
+    // The garment material takes the fold map on uv channel 1 when the factory has it; the skin does not.
+    const folds = new THREE.Texture();
+    const tex = { get: (name) => (name === 'clothFolds' ? folds : null), manager: new THREE.LoadingManager() };
+    sys = new CharacterSystem(scene, tex, { loader: diskLoader });
+    await sys.load();
+    const k = sys.createKohen(0, 0, 0);
+    let mesh;
+    k.traverse((o) => { if (o.isSkinnedMesh && o.name !== 'Hair' && o.name !== 'Eyes' && !mesh) mesh = o; });
+    const [skinMat, garment] = mesh.material;
+    expect(garment.normalMap).toBe(folds);
+    expect(folds.channel).toBe(1);
+    expect(garment.normalScale.x).toBe(FOLD_SCALE);
+    expect(skinMat.normalMap).toBeNull();
+    expect(sys.materials.get('garment:kohen')).toBe(garment); // shared: no material per figure
+    sys.dispose();
+  });
+
   it('textures come from the manifest with a cache-buster, sRGB for colour, and are optional', async () => {
     const urls = [];
     const fakeLoader = { load: (url) => { urls.push(url); return new THREE.Texture(); } };
@@ -351,6 +492,115 @@ describe('CharacterSystem', () => {
     expect(plain.normalMap).toBeNull();
     expect(plain.color.getHex()).toBe(0xd9a878);
     expect(urls).toHaveLength(loaded);
+    sys.dispose();
+  });
+
+  it('dresses a Levite in plain white linen with a flat wool turban', async () => {
+    sys = new CharacterSystem(scene, stubTex, { loader: diskLoader });
+    await sys.load();
+    expect(ROLES).toEqual(['kohen', 'kohenGadol', 'levi', 'yisrael']);
+    expect(Object.keys(sys.models.kohen.roles).sort()).toEqual([...ROLES].sort());
+    const { skin: bounds, scene: src } = sys.models.kohen;
+    const hand = src.getObjectByName('hand_l').getWorldPosition(new THREE.Vector3());
+    let body;
+    src.traverse((o) => { if (o.isSkinnedMesh && o.name !== 'Hair' && o.name !== 'Eyes' && !body) body = o; });
+    const p0 = body.geometry.attributes.position;
+    const lc = sys.models.kohen.roles.levi.get(body.geometry.uuid).attributes.color;
+    const kc = sys.models.kohen.roles.kohen.get(body.geometry.uuid).attributes.color;
+    const hexAt = (a, i) => new THREE.Color(a.getX(i), a.getY(i), a.getZ(i)).getHex();
+    let garment = 0, avnet = 0;
+    for (let i = 0; i < p0.count; i++) {
+      const v = new THREE.Vector3().fromBufferAttribute(p0, i);
+      if (v.y > bounds.headY || v.y < bounds.ankleY || Math.abs(v.x) > hand.x - 0.01) continue;
+      expect(hexAt(lc, i), `levi vertex ${i}`).toBe(0xf2eee4); // linen everywhere: no band
+      if (hexAt(kc, i) === 0x7a2e3e) avnet++;
+      garment++;
+    }
+    expect(garment).toBeGreaterThan(1000);
+    expect(avnet, 'the kohen has the avnet where the Levite has none').toBeGreaterThan(20);
+
+    const l = sys.createKohen(0, 0, 0, { role: 'levi' });
+    expect(l.name).toBe('levi');
+    const parts = [];
+    l.traverse((o) => { if (o.isMesh && !o.isSkinnedMesh) parts.push(o); });
+    expect(parts.map((p) => p.geometry.userData.key)).toEqual(['leviTurban']); // one draw call
+    const turban = parts[0];
+    expect(turban.material).not.toBe(sys.materials.get('hat:linen'));
+    expect(turban.material.color.getHex()).toBe(0xefeae0);
+    expect(turban.material.roughness).toBeGreaterThan(0.9);
+    expect(turban.userData.lodPart).toBe(true);
+    l.updateMatrixWorld(true);
+    const top = sys.models.kohen.headTop;
+    expect(turban.getWorldPosition(new THREE.Vector3()).y).toBeCloseTo(top - LEVI_TURBAN.drop, 5);
+    // Flat and wide: wider than the migba'as (27 cm) and about a third of its height (20 cm).
+    turban.geometry.computeBoundingBox();
+    const bb = turban.geometry.boundingBox;
+    expect(bb.max.x - bb.min.x).toBeGreaterThan(0.28);
+    expect(bb.max.z - bb.min.z).toBeGreaterThan(bb.max.x - bb.min.x); // follows the skull, longer in z
+    expect(bb.max.y - bb.min.y).toBeLessThan(0.09);
+    expect(bb.max.y - bb.min.y).toBeGreaterThan(0.08);
+    expect(bb.max.y + top - LEVI_TURBAN.drop, 'the dome tops out just above the crown').toBeLessThan(top + 0.01);
+    // The kohen's cap is the migba'as; its material is the linen, and the garment materials differ per role.
+    const k = sys.createKohen(2, 0, 0);
+    const keys = (g) => { const n = []; g.traverse((o) => { if (o.isMesh && !o.isSkinnedMesh) n.push(o.geometry.userData.key); }); return n; };
+    expect(keys(k)).toEqual(['migbaas']);
+    expect(sys.materials.get('garment:levi')).toBeTruthy();
+    expect(sys.materials.get('garment:levi')).not.toBe(sys.materials.get('garment:kohen'));
+    sys.dispose();
+  });
+
+  it('a goat is the sheep in hide colours with horns and a beard on its head bone; the bull draws in one call', async () => {
+    sys = new CharacterSystem(scene, stubTex, { loader: diskLoader });
+    await sys.load();
+    const goat = sys.createAnimal('goat', 0, 0, 0);
+    const sheep = sys.createAnimal('sheep', 3, 0, 0);
+    const bull = sys.createAnimal('bull', 6, 0, 0);
+    const meshes = (g) => { const m = []; g.traverse((o) => { if (o.isMesh) m.push(o); }); return m; };
+    const names = (g) => meshes(g).filter((o) => !o.isSkinnedMesh).map((o) => o.geometry.userData.key);
+    expect(names(goat)).toEqual(['goatParts']);
+    expect(names(sheep)).toEqual([]);
+    expect(names(bull)).toEqual([]);
+    expect(meshes(bull)).toHaveLength(1);
+    expect(meshes(bull)[0].material.vertexColors).toBe(true);
+    expect(meshes(bull)[0].material.map).toBeNull();
+    expect(meshes(goat).filter((o) => o.isSkinnedMesh).map((o) => o.material.map === null)).toEqual([true, true]); // no wool map (stubTex has none either way)
+    const goatSkin = meshes(goat).filter((o) => o.isSkinnedMesh).map((o) => o.material.color.getHex()).sort((a, b) => a - b);
+    const sheepSkin = meshes(sheep).filter((o) => o.isSkinnedMesh).map((o) => o.material.color.getHex()).sort((a, b) => a - b);
+    expect(goatSkin).toEqual([0x5a4432, 0x8b6f4e]); // hide, and the face/legs a shade darker: not a black-faced sheep
+    expect(sheepSkin).toEqual([0x2b2118, 0xede6d6]);
+    // The parts hang on the Head bone, at the bone, and follow it (LOD part, this system's cull).
+    const parts = meshes(goat).find((o) => !o.isSkinnedMesh);
+    expect(parts.parent.isBone).toBe(true);
+    expect(parts.parent.name).toBe('Head');
+    expect(parts.userData.lodPart).toBe(true);
+    expect(parts.userData.noCull).toBe(true);
+    goat.updateMatrixWorld(true);
+    const head = goat.getObjectByName('Head').getWorldPosition(new THREE.Vector3());
+    expect(parts.getWorldPosition(new THREE.Vector3()).distanceTo(head)).toBeLessThan(1e-5);
+    expect(head.y).toBeCloseTo(0.88 * 0.95, 1); // the root's goat scale carries the bone and the parts
+    // Horns above the crown (0.95 unscaled) and swept back, the beard below the chin and forward.
+    parts.geometry.computeBoundingBox();
+    const bb = parts.geometry.boundingBox; // in the bone's frame: y up along the head, offsets from GOAT_PARTS
+    expect(bb.max.y).toBeGreaterThan(GOAT_PARTS.horn[1] + 0.05);
+    expect(bb.min.y).toBeLessThan(GOAT_PARTS.beard[1] - GOAT_PARTS.beardLength + 0.01);
+    expect(bb.max.z).toBeGreaterThan(GOAT_PARTS.beard[2] - 0.03);
+    expect(parts.geometry.attributes.color).toBeTruthy();
+    expect(parts.geometry.attributes.uv).toBeUndefined();
+    expect(parts.geometry.groups.length).toBeLessThanOrEqual(1); // one draw call
+    // In metres in the world, whatever the armature's scale: the horns span ~30 cm and rise
+    // above the crown (0.95 unscaled, 0.90 at the goat's 0.95 y scale), the beard hangs below the chin.
+    const world = new THREE.Box3().setFromObject(parts);
+    expect(world.max.x - world.min.x).toBeGreaterThan(0.25);
+    expect(world.max.x - world.min.x).toBeLessThan(0.45);
+    expect(world.max.y).toBeGreaterThan(0.95);
+    expect(world.min.y).toBeLessThan(0.62);
+    // The kohen's hat is unaffected (unit-scaled rig): 27 cm across.
+    const k = sys.createKohen(9, 0, 0);
+    k.updateMatrixWorld(true);
+    const hat = k.getObjectByProperty('geometry', sys.geometries.find((g) => g.userData.key === 'migbaas'));
+    const hb = new THREE.Box3().setFromObject(hat);
+    expect(hb.max.x - hb.min.x).toBeCloseTo(0.27, 1);
+    expect(hat.scale.x).toBeCloseTo(1, 6);
     sys.dispose();
   });
 
@@ -443,6 +693,14 @@ describe('makeWalker', () => {
     const g = new THREE.Group();
     g.userData.baseY = 2;
     const w = makeWalker([[0, 0], [10, 0]], false, 1);
+    expect(w.s).toBeGreaterThanOrEqual(0);
+    expect(w.s).toBeLessThanOrEqual(10);
+    // A start point is projected onto the path: on it, off it, and past its end.
+    expect(makeWalker([[0, 0], [10, 0]], false, 1, [3, 0]).s).toBeCloseTo(3, 6);
+    expect(makeWalker([[0, 0], [10, 0]], false, 1, [4, 2]).s).toBeCloseTo(4, 6);
+    expect(makeWalker([[0, 0], [10, 0]], false, 1, [14, 0]).s).toBeCloseTo(10, 6);
+    expect(makeWalker([[0, 0], [10, 0], [10, 10], [0, 10]], true, 1, [10, 3]).s).toBeCloseTo(13, 6);
+    expect(makeWalker([[0, 0], [10, 0], [10, 10], [0, 10]], true, 1, [0, 4]).s).toBeCloseTo(36, 6);
     w.s = 9.5;
     w.step(1, g);
     expect(w.dir).toBe(-1);

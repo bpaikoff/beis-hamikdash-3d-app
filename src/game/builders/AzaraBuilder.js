@@ -470,18 +470,52 @@ export class AzaraBuilder extends CourtBuilder {
       this.floorA(m.x1, m.x2, zBath + stepsRun, zDoor, F, this.mat.floor, 'beis_hatevilah passage');
       this.flightMergedA({ axis: 'z', span: [m.x1, m.x2], from: zBath + stepsRun, to: zBath, yBase: F, bottom, steps: 4, rise, mat: sm, name: 'beis_hatevilah passage steps' });
       const spring = F + m.h - 1.5;
-      this.wallA(m.x2, m.x2 + 0.5, zBath, zDoor, GROUND, spring, wm);
-      for (const r of [1.5, 2]) {
-        const geo = new THREE.CylinderGeometry(r * AMAH, r * AMAH, (zDoor - zBath) * AMAH, 24, 1, true, 0, Math.PI);
-        geo.rotateZ(Math.PI / 2).rotateY(Math.PI / 2);
-        const vault = new THREE.Mesh(geo, stoneDS);
-        vault.position.set(...this.pt(m.xc, spring, (zDoor + zBath) / 2));
-        vault.castShadow = true;
-        vault.receiveShadow = true;
-        vault.name = 'beis_hatevilah passage vault';
-        this.scene.add(vault);
+      const zStep = zBath + stepsRun; // -40: where the four steps begin
+      // The vault steps up with the floor: over the four steps its springing rises by
+      // their two amos (the crown 5 amos over the top step as over the passage floor; at
+      // one height the top step had 1.35 m of head room), with a diaphragm face at the
+      // step closing the crescent between the two profiles (the north walker, round 6).
+      const rise2 = stepsRun;
+      this.wallA(m.x2, m.x2 + 0.5, zStep, zDoor, GROUND, spring, wm);
+      this.wallA(m.x2, m.x2 + 0.5, zBath, zStep, GROUND, spring + rise2, wm);
+      for (const [za, zb, y] of [[zStep, zDoor, spring], [zBath, zStep, spring + rise2]]) {
+        for (const r of [1.5, 2]) {
+          const geo = new THREE.CylinderGeometry(r * AMAH, r * AMAH, (zb - za) * AMAH, 24, 1, true, 0, Math.PI);
+          geo.rotateZ(Math.PI / 2).rotateY(Math.PI / 2);
+          const vault = new THREE.Mesh(geo, stoneDS);
+          vault.position.set(...this.pt(m.xc, y, (za + zb) / 2));
+          vault.castShadow = true;
+          vault.receiveShadow = true;
+          vault.name = 'beis_hatevilah passage vault';
+          this.scene.add(vault);
+        }
       }
-      this.decoA(m.x2 - 3, m.x2, zDoor, zDoor + 0.1, F, F + m.h - 0.5, this.mat.cedar); // the door's leaf, folded against the bay's west wall
+      {
+        // The diaphragm at the step, in the x-y plane: the upper outer profile (r 2 over
+        // the raised springing) down to the lower springing, less the lower inner profile.
+        const rI = 1.5 * AMAH;
+        const rO = 2 * AMAH;
+        const dy = rise2 * AMAH;
+        const face = new THREE.Shape();
+        face.moveTo(-rO, 0);
+        face.lineTo(-rO, dy);
+        face.absarc(0, dy, rO, Math.PI, 0, true);
+        face.lineTo(rO, 0);
+        face.lineTo(rI, 0);
+        face.absarc(0, 0, rI, 0, Math.PI, false);
+        face.lineTo(-rO, 0);
+        const geo = new THREE.ExtrudeGeometry(face, { depth: 0.1 * AMAH, bevelEnabled: false });
+        const diaphragm = new THREE.Mesh(geo, stoneDS);
+        diaphragm.position.set(...this.pt(m.xc, spring, zStep));
+        diaphragm.castShadow = true;
+        diaphragm.receiveShadow = true;
+        diaphragm.name = 'beis_hatevilah passage vault step';
+        this.scene.add(diaphragm);
+      }
+      // The door's leaf, swung open against the bay's west wall beside the opening, on the
+      // vestibule side (it stood in the opening before the north walker's pass).
+      const leaf = this.decoA(m.x2, m.x2 + 3, zDoor + ROOM_WALL_T, zDoor + ROOM_WALL_T + 0.1, F, F + m.h - 0.5, this.mat.cedar);
+      leaf.name = 'beis_hatevilah passage door leaf';
       // Lamps on either side (Middot 1:9): stone brackets, copper lamps, a still flame.
       const flame = new THREE.MeshStandardMaterial({ color: 0x201008, emissive: 0xffa040, emissiveIntensity: 2.5, roughness: 1 });
       const brackets = [];

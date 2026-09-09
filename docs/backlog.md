@@ -63,7 +63,9 @@ stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
   under the Heichal and `?at=beis_avtinas` onto the court; `pickSpawn` now runs four passes
   (level with sight; a step up with sight; any depth below with sight, so the Avtinas storey
   is looked up at from the Har HaBayis plaza; near the level without sight, so the sealed
-  ta'im are seen from the Heichal floor) before that rule. Still open: `?at=pesach_haheichal`
+  ta'im are seen from the Heichal floor) before that rule; both now stand on a floor but the
+  views are poor (`taim` faces the Heichal's gold wall, `beis_avtinas` looks at the stone wall
+  with the storey above the frame): hand `cam` views for both. Still open: `?at=pesach_haheichal`
   stands inside the Heichal facing the doorway from behind (the front candidate on the Ulam
   flight is a step off level and the sides fail sight); a hand `cam` would restore the view
   from the steps. `?at=lishkas_haetz` stands

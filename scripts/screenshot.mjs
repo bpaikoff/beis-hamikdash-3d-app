@@ -10,6 +10,7 @@
  *   node scripts/screenshot.mjs --mobile --card                          # keep the hotspot card open
  *   node scripts/screenshot.mjs --budget hero=1200            # exit 1 when a view draws more calls
  *   node scripts/screenshot.mjs --time dusk                    # ?time= for every view
+ *   node scripts/screenshot.mjs --at yachin,kiyor              # ?at= spawns for entry ids (views at_<id>)
  *
  * Views are addressed with ?cam=x,y,z,yaw,pitch (world metres, degrees; yaw 0 faces -z,
  * west; a positive yaw turns toward -x, south, and a negative one toward +x, north:
@@ -114,6 +115,9 @@ const log = (m) => console.log(`[${new Date().toISOString().slice(11, 19)}] ${m}
 const args = process.argv.slice(2);
 const opt = (k, d) => (args.includes(k) ? args[args.indexOf(k) + 1] : d);
 const only = opt('--only');
+// `--at id,id`: ad-hoc views of the `?at=` spawn for content entries (round 6 spawn audit),
+// named at_<id>; with --only absent these are captured instead of the fixed list.
+const atIds = (opt('--at', '') || '').split(',').filter(Boolean);
 const outDir = opt('--out', 'screenshots/auto');
 // Phone: a 390x844 portrait viewport with touch (pointer: coarse), so TouchControls mounts
 // and the HUD takes its small-screen layout. Frames are suffixed _mobile.
@@ -161,7 +165,8 @@ page.on('pageerror', (e) => console.error('page error:', e.message));
 
 const results = [];
 try {
-  for (const v of VIEWS) {
+  const views = atIds.length ? atIds.map((id) => ({ name: `at_${id}`, at: id })) : VIEWS;
+  for (const v of views) {
     if (only && !only.split(',').includes(v.name)) continue;
     log(`view ${v.name}: goto`);
     const where = v.tour

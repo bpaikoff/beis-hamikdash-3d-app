@@ -60,10 +60,14 @@ export default function BeisHamikdash3D() {
     const game = new TempleGame(containerRef.current, store);
     gameRef.current = game;
     // `?at=<id>`: the game spawns beside the item; open its card once the first frame is in.
+    // An entry of another period (Yachin, Boaz, the Aron) switches the period so it is built.
     const at = new URLSearchParams(window.location.search).get('at');
     if (at && byId[at]) {
       game.ready.then(() => {
-        if (!game.disposed && !store.getState().error) store.setState({ selected: at });
+        if (game.disposed || store.getState().error) return;
+        const periods = byId[at].period;
+        if (periods?.length && !periods.includes(store.getState().period)) store.setState({ period: periods[0] });
+        store.setState({ selected: at });
       });
     }
     // "Take the tour" on the start screen: begin once the first frame is in.

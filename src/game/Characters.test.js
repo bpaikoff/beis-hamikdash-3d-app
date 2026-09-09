@@ -379,7 +379,7 @@ describe('CharacterSystem', () => {
     const { uv1, tangent, normal } = painted.attributes;
     expect(uv1.itemSize).toBe(2);
     expect(tangent.itemSize).toBe(4);
-    expect(uv1.count).toBe(p0.count);
+    expect(uv1.count).toBeGreaterThanOrEqual(p0.count); // seam vertices are duplicated across the cylindrical wrap
     // The unpainted geometry's own tangents, for the skin comparison.
     const ref = body.geometry.clone();
     ref.computeTangents();
@@ -390,9 +390,8 @@ describe('CharacterSystem', () => {
       v.fromBufferAttribute(p0, i);
       const skinV = v.y > bounds.headY || v.y < bounds.ankleY || Math.abs(v.x) > hand.x - 0.01;
       if (skinV) {
-        // Skin keeps the atlas uv in uv1 and the atlas tangent.
-        expect(uv1.getX(i)).toBe(uv0.getX(i));
-        expect(uv1.getY(i)).toBe(uv0.getY(i));
+        // Skin keeps the atlas tangent (its own normal map reads it); its uv1 is cylindrical
+        // like the garment's, for the garment triangles at the collar, cuffs and hem.
         expect(tangent.getX(i)).toBe(refTan.getX(i));
         skinN++;
         continue;

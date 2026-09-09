@@ -74,7 +74,7 @@ export function clothFoldsHeight(rand, p = CLOTH_FOLDS) {
 /**
  * Tangent-space normal map pixels (RGBA, +u red, +v green, wrapped finite differences) of
  * a tileable height field; `depth` scales the slopes (with the canvas row order of the
- * other generators: green is height rising toward the row above).
+ * other generators: green is height rising toward the row below, the OpenGL convention under flipY).
  * @returns {Uint8ClampedArray} size * size * 4
  */
 export function heightToNormal(h, size, depth = 1) {
@@ -84,7 +84,7 @@ export function heightToNormal(h, size, depth = 1) {
     const up = ((y - 1 + size) % size) * size, down = ((y + 1) % size) * size, row = y * size;
     for (let x = 0; x < size; x++) {
       const dx = (h[row + (x - 1 + size) % size] - h[row + (x + 1) % size]) * k;
-      const dy = (h[up + x] - h[down + x]) * k;
+      const dy = (h[down + x] - h[up + x]) * k; // OpenGL green: +v is toward row 0 under flipY, so the normal leans away from a rise there
       const len = Math.hypot(dx, dy, 1);
       const i = (row + x) * 4;
       out[i] = (dx / len + 1) * 127.5;
@@ -751,7 +751,7 @@ export class TextureFactory {
       for (let x = 1; x < 255; x++) {
         const i = y * 256 + x;
         const dx = (noise[i - 1] - noise[i + 1]) * 2;
-        const dy = (noise[i - 256] - noise[i + 256]) * 2;
+        const dy = (noise[i + 256] - noise[i - 256]) * 2; // OpenGL green under flipY
         img.data[i*4] = Math.floor((dx + 1) * 127.5);
         img.data[i*4+1] = Math.floor((dy + 1) * 127.5);
         img.data[i*4+2] = 255;

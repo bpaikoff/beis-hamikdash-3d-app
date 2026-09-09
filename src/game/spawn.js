@@ -47,7 +47,9 @@ function readCam(q) {
   const cam = q.get('cam');
   if (!cam) return null;
   const [x, y, z, yaw = 0, pitch = 0] = cam.split(',').map(Number);
-  return [x, y, z].every(Number.isFinite) ? { pos: [x, y, z], yaw, pitch } : null;
+  return [x, y, z].every(Number.isFinite)
+    ? { pos: [x, y, z], yaw: Number.isFinite(yaw) ? yaw : 0, pitch: Number.isFinite(pitch) ? pitch : 0 }
+    : null;
 }
 
 /**
@@ -244,7 +246,18 @@ export function pickSpawn(entry, player) {
   const fronts = entry.geometry?.kind === 'gate' ? [front, wrap(front + 180)] : [front];
   const candidates = spawnCandidates(entry, { front, axis });
   const fromY = base + CONFIG.PLAYER_HEIGHT + 0.3;
-  for (const above of [CONFIG.STEP_HEIGHT, SPAWN.above]) {
+  // Passes, strictest first. When nothing in the ring stands near the entry's level with a
+  // view of it, a floor any depth below is accepted (Beis Avtinas' storey, 21.5 amos up, is
+  // looked up at from the Cheil), then a floor near the level with no line of sight (the
+  // ta'im are sealed cells beside the Heichal: stand in the Heichal), before readSpawn's old
+  // rule, which for both dropped the player 11 m onto whatever lay below.
+  const passes = [
+    { above: CONFIG.STEP_HEIGHT, below: SPAWN.below, sight: true },
+    { above: SPAWN.above, below: SPAWN.below, sight: true },
+    { above: SPAWN.above, below: Infinity, sight: true },
+    { above: SPAWN.above, below: SPAWN.below, sight: false },
+  ];
+  for (const { above, below, sight } of passes) {
     let best = null;
     for (const c of candidates) {
       const [cx, , cz] = c.pos;
@@ -254,12 +267,12 @@ export function pickSpawn(entry, player) {
       // Probed from head height over the base: a mass taller than that puts the probe inside it.
       const p = player.probe(cx, cz, fromY);
       if (p.inside) continue;
-      if (p.y > base + above || p.y < base - SPAWN.below) continue;
+      if (p.y > base + above || p.y < base - below) continue;
       if (!levelGround(player, cx, cz, p.y, Math.sin(c.bearing * DEG), Math.cos(c.bearing * DEG), fromY)) continue;
       if (insideOtherRoom(entry, cx, cz, p.y)) continue;
       _eye.set(cx, p.y + CONFIG.PLAYER_HEIGHT, cz);
       if (player.collides(_eye)) continue;
-      if (!lineOfSight(player, _eye, _target, entry, axis) && !lineOfSight(player, _eye, _mid, entry, axis)) continue;
+      if (sight && !lineOfSight(player, _eye, _target, entry, axis) && !lineOfSight(player, _eye, _mid, entry, axis)) continue;
       best = { c, off, y: _eye.y };
       if (off === 0) break;
     }

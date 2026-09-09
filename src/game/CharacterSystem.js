@@ -228,7 +228,7 @@ function garmentUv(x, y, z, limbs, uv, tan) {
     uv.set((angle / (2 * Math.PI)) * FOLD_TILES.arm, along / FOLD_TILE);
     // +u: the angle's increasing direction, cos * e1 - sin * e2.
     tan.copy(_e1).multiplyScalar(Math.cos(angle)).addScaledVector(_e2, -Math.sin(angle));
-    return;
+    return FOLD_TILES.arm;
   }
   const leg = y < limbs.crotchY;
   const cx = leg ? (x > 0 ? limbs.thighX[0] : limbs.thighX[1]) : 0;
@@ -236,6 +236,26 @@ function garmentUv(x, y, z, limbs, uv, tan) {
   const angle = Math.atan2(x - cx, z); // 0 at the front (+z), the seam at the back
   uv.set((angle / (2 * Math.PI)) * tiles, y / FOLD_TILE);
   tan.set(Math.cos(angle), 0, -Math.sin(angle));
+  return tiles;
+}
+
+/**
+ * Append copies of the vertices in `dups` (source index -> new index, in insertion order)
+ * to every attribute of `g`; the copies' uv1 u is shifted by `shift[k]`, so a triangle
+ * across the cylindrical seam can reference the same vertex on the other side of it.
+ */
+function appendVertices(g, dups, shift) {
+  const srcIds = Array.isArray(dups) ? dups : [...dups.keys()];
+  const extra = srcIds.length;
+  if (!extra) return;
+  for (const [name, attr] of Object.entries(g.attributes)) {
+    const size = attr.itemSize;
+    const arr = new attr.array.constructor((attr.count + extra) * size);
+    arr.set(attr.array);
+    srcIds.forEach((src, k) => arr.set(attr.array.subarray(src * size, (src + 1) * size), (attr.count + k) * size));
+    if (name === 'uv1') srcIds.forEach((src, k) => { arr[(attr.count + k) * size] += shift[k]; });
+    g.setAttribute(name, new THREE.BufferAttribute(arr, size, attr.normalized));
+  }
 }
 
 /** Distance from a garment vertex to the nearest skin boundary (neck, ankle, wrist planes). */
@@ -289,6 +309,8 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
   }
   const uv1 = g.attributes.uv1, tangent = g.attributes.tangent;
   const uv = new THREE.Vector2(), tan = new THREE.Vector3();
+  // Per vertex, the tile count of the limb frame its uv1 was written in (0 for skin).
+  const tilesAt = new Float32Array(folds ? pos.count : 0);
   for (let i = 0; i < pos.count; i++) {
     const px = pos.getX(i), y = pos.getY(i), pz = pos.getZ(i), x = Math.abs(px);
     let hex;
@@ -297,6 +319,14 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
       // at the collar or cuff must not bleed tan into the cloth, so it takes the cloth colour.
       hex = role === 'yisrael' ? WOOL : LINEN;
       skin[i] = 1;
+      // A garment triangle at the collar, a cuff or the hem reads this vertex's uv1 with the
+      // garment material, so it too gets the cylindrical uv (the skin material's maps are on
+      // `uv`, so nothing on the skin changes); its tangent stays the atlas one for the skin's
+      // own normal map.
+      if (folds) {
+        tilesAt[i] = garmentUv(px, y, pz, limbs, uv, tan);
+        uv1.setXY(i, uv.x, uv.y);
+      }
     } else {
       if (role === 'yisrael') hex = x < 0.32 && y > waist[0] && y < waist[1] ? WOOL_BELT : y < hemY ? WOOL_HEM : WOOL;
       else if (role === 'kohenGadol' && x < (limbs?.shoulderX ?? 0.3) && y > 0.5 && y < 1.5) hex = TECHEILES; // sleeveless: ends at the shoulder joint
@@ -311,7 +341,7 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
         pos.setXYZ(i, px + n.x * puff, y + n.y * puff, pz + n.z * puff);
       }
       if (folds) {
-        garmentUv(px, y, pz, limbs, uv, tan);
+        tilesAt[i] = garmentUv(px, y, pz, limbs, uv, tan);
         uv1.setXY(i, uv.x, uv.y);
         // Keep the tangent perpendicular to the flattened normal; handedness +1.
         tan.addScaledVector(n, -tan.dot(n)).normalize();
@@ -332,7 +362,41 @@ export function paintHuman(geometry, role, bounds = { headY: 1.56, ankleY: -Infi
     const a = src[t * 3], b = src[t * 3 + 1], d = src[t * 3 + 2];
     (skin[a] + skin[b] + skin[d] >= 2 ? skinTris : garmentTris).push(a, b, d);
   }
-  const index = pos.count > 65535 ? new Uint32Array(src.length) : new Uint16Array(src.length);
+  if (folds) {
+    // The cylindrical u wraps at the back of each limb (+tiles/2 meets -tiles/2): a garment
+    // triangle with vertices on both sides of that seam would squeeze every fold of the tile
+    // into its own width. Its vertices on the negative side reference a copy with u + tiles
+    // (the map repeats, so the copy samples the same texel and the seam stays invisible).
+    const dups = new Map(); // "vertex:shift" -> the copy's index
+    const shift = [];
+    const copyOf = (i, by) => {
+      const key = `${i}:${by}`;
+      if (!dups.has(key)) { dups.set(key, pos.count + dups.size); shift.push(by); }
+      return dups.get(key);
+    };
+    const srcOf = [];
+    for (let t = 0; t < garmentTris.length; t += 3) {
+      const tiles = tilesAt[garmentTris[t]];
+      if (!tiles || tilesAt[garmentTris[t + 1]] !== tiles || tilesAt[garmentTris[t + 2]] !== tiles) continue; // a skin edge or a sleeve / skirt seam: no cylinder to wrap
+      const us = [0, 1, 2].map((k) => uv1.getX(garmentTris[t + k]));
+      // The three u's on the circle: the widest gap between them is where the triangle is
+      // not; the vertices before that gap move up a tile so the three become contiguous.
+      const m = us.map((u) => ((u % tiles) + tiles) % tiles);
+      const o = [0, 1, 2].sort((a, b) => m[a] - m[b]);
+      const gaps = [m[o[1]] - m[o[0]], m[o[2]] - m[o[1]], m[o[0]] + tiles - m[o[2]]];
+      const widest = gaps.indexOf(Math.max(...gaps));
+      const lifted = widest === 0 ? [o[0]] : widest === 1 ? [o[0], o[1]] : [];
+      for (let k = 0; k < 3; k++) {
+        const target = m[k] + (lifted.includes(k) ? tiles : 0);
+        const by = Math.round(target - us[k]);
+        if (by) garmentTris[t + k] = copyOf(garmentTris[t + k], by);
+      }
+    }
+    for (const key of dups.keys()) srcOf.push(Number(key.split(':')[0]));
+    appendVertices(g, srcOf, shift);
+  }
+  const count = g.attributes.position.count;
+  const index = count > 65535 ? new Uint32Array(src.length) : new Uint16Array(src.length);
   index.set(skinTris, 0);
   index.set(garmentTris, skinTris.length);
   g.setIndex(new THREE.BufferAttribute(index, 1));
@@ -631,7 +695,7 @@ export class CharacterSystem {
     const table = {
       sheep: { White: [0xede6d6, 'sheepWool'], Black: [0x2b2118], Pink: [0x9c6a62] },
       goat: { White: [0x8b6f4e, 'goatHide'], Black: [0x5a4432], Pink: [0x6b4a3a] },
-      bull: { Painted: [0xf0e4d4, null, true], White: [0x4a3222, 'bullHide'], Black: [0x1e1512], Pink: [0x3a2a22] },
+      bull: { Painted: [0xf0e4d4, null, true] },
     };
     const [color, texName, vertexColors = false] = table[type]?.[part] ?? [0x888888];
     return this.material(`animal:${type}:${part}`, () => {

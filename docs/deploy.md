@@ -40,7 +40,9 @@ while CI is red.
    _railway-verify.mikdash  TXT     railway-verify=<token shown by Railway>
    ```
 
-   Re-adding the domain in Railway changes the CNAME target and the token.
+   Re-adding the domain in Railway changes the CNAME target and the token. Once both
+   records resolve, `mutation { customDomainIssueCertificate(id: "<customDomain id>") }`
+   on the GraphQL API verifies and issues at once instead of waiting for Railway's poll.
 
    If the DNS host proxies traffic (e.g. Cloudflare orange cloud), set the
    record to DNS-only until Railway has issued the certificate, then proxy if

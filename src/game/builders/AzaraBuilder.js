@@ -575,7 +575,9 @@ export class AzaraBuilder extends CourtBuilder {
       const embers = new THREE.Mesh(this.box(0.9 * AMAH, 0.1 * AMAH, 0.9 * AMAH, sm), new THREE.MeshStandardMaterial({ color: 0x301008, emissive: 0xff6020, emissiveIntensity: 1.8, roughness: 1 }));
       embers.position.set(...this.pt(hx, Y + 0.55, hz));
       this.scene.add(embers);
-      this.decoA(m.x2, m.x2 + 3, b.z2 - t, b.z2 - t + 0.1, Y, Y + m.h - 0.5, this.mat.cedar); // the door's leaf, folded inside
+      // The door's leaf, folded inside against the east wall's inner face (it sat inside
+      // the wall's thickness before round 7, its back face flush with the wall's).
+      this.decoA(m.x2, m.x2 + 3, b.z2 - t - 0.1, b.z2 - t, Y, Y + m.h - 0.5, this.mat.cedar);
     }, { part: 'bath-house' });
   }
 
@@ -1087,8 +1089,9 @@ export class AzaraBuilder extends CourtBuilder {
       const rail = (x1, x2, z1, z2) => {
         for (const ry of [0.4, 0.9]) this.decoA(x1, x2, z1, z2, y + ry, y + ry + 0.12, this.mat.cedar);
       };
-      rail(x - s, x + s, z - s, z - s + 0.15);
-      rail(x - s, x + s, z + s - 0.15, z + s);
+      // The rails along x stop at the rails along z (overlapping ends shared faces and z-fought).
+      rail(x - s + 0.15, x + s - 0.15, z - s, z - s + 0.15);
+      rail(x - s + 0.15, x + s - 0.15, z + s - 0.15, z + s);
       rail(x - s, x - s + 0.15, z - s, z + s);
       rail(x + s - 0.15, x + s, z - s, z + s);
       for (const [px, pz] of [[x - s, z - s], [x - s, z + s], [x + s, z - s], [x + s, z + s]]) this.decoA(px - 0.1, px + 0.1, pz - 0.1, pz + 0.1, y, y + 1.1, this.mat.cedar);

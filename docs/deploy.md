@@ -27,11 +27,20 @@ while CI is red.
 
 1. Service -> Settings -> Networking -> **Custom Domain** -> `mikdash.tzadek.ai`.
    Railway shows a CNAME target (something like `xxxx.up.railway.app`).
-2. At the DNS host for `tzadek.ai`, add:
+2. At the DNS host for `tzadek.ai` (Cloudflare), add **both** records Railway shows.
+   The dashboard shows them together; the GraphQL `domains` query lists only the
+   CNAME, the TXT is in `customDomains.status.verificationDnsHost` /
+   `verificationToken`. Without the TXT the domain stays `verified: false`, the
+   certificate sits in "validating ownership" indefinitely and Railway's edge answers
+   `{"message":"Application not found"}` for the host (2026-09-09: twelve hours lost
+   to this).
 
    ```
-   mikdash   CNAME   <target shown by Railway>
+   mikdash                  CNAME   <target shown by Railway, e.g. ujdxqm65.up.railway.app>
+   _railway-verify.mikdash  TXT     railway-verify=<token shown by Railway>
    ```
+
+   Re-adding the domain in Railway changes the CNAME target and the token.
 
    If the DNS host proxies traffic (e.g. Cloudflare orange cloud), set the
    record to DNS-only until Railway has issued the certificate, then proxy if

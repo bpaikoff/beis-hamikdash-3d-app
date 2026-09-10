@@ -97,8 +97,8 @@ function inWall(player, x, y, z) {
  * beyond the opening's width on both sides (1, 2 and 4 m past it, at mid-height, on the
  * gate's own line and a quarter of the wall's thickness either side of it) lie inside
  * the wall along the wall's run and not along the passage; the direction with more of
- * them in a wall is the run (a door beside the gate, as the Palhedrin's off the Water
- * Gate, takes a sample or two out of the wall). 'z' (a gate in a wall running along x,
+ * them in a wall is the run (a door beside the gate, as Lishkas Palhedrin's bay off Shaar
+ * HaKorban, takes a sample or two out of the wall). 'z' (a gate in a wall running along x,
  * faced from the east) when there is no player or the walls say nothing.
  */
 export function entryAxis(entry, player) {
@@ -276,7 +276,13 @@ export function pickSpawn(entry, player) {
       best = { c, off, y: _eye.y };
       if (off === 0) break;
     }
-    if (best) return { pos: [best.c.pos[0], best.y, best.c.pos[2]], yaw: best.c.yaw, pitch: best.c.pitch, bearing: best.c.bearing, scale: best.c.scale, front };
+    if (best) {
+      // A floor well below the entry (the Avtinas storey from the court): aim at the entry's mid-height.
+      const eyeY = best.y + CONFIG.PLAYER_HEIGHT;
+      const dy = _mid.y - eyeY;
+      const pitch = dy > 2 ? Math.round(THREE.MathUtils.radToDeg(Math.atan2(dy, Math.hypot(tx - best.c.pos[0], tz - best.c.pos[2])))) : best.c.pitch;
+      return { pos: [best.c.pos[0], best.y, best.c.pos[2]], yaw: best.c.yaw, pitch, bearing: best.c.bearing, scale: best.c.scale, front };
+    }
   }
   return null;
 }

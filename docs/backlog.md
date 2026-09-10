@@ -123,6 +123,15 @@ stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
   Palhedrin's west end (z -79) faces the Nitzotz Soreg opening across the 2.5-amah lane;
   `?at=beis_avtinas` still needs a hand `cam`. `?cam=` captures race the camera placement
   under CPU load: capture screenshots after the walk batches, never during.
+  Code review (part 2) left three quality items: `buildNitzotzWicket` and
+  `buildLishkasPalhedrin` share a two-flight Cheil stair tower worth a `cheilStairTowerA`
+  helper; four test files carry the same ~130-line PlayerController walker harness
+  (`R7Flip`, `R6North`, `R6Moked`, `AzarahRoutes`) that belongs in a shared
+  `builders/testWalker.js`; `R7Flip.test.js`'s "drops at most 1.5 amos" samples only the gap
+  midpoints (the sweep's real maximum edge drop is 0.5 amos because the body radius keeps
+  the centre 0.6 amah from a wall end). Palhedrin also stands across the west 6 amos of
+  Shaar HaNitzotz's Cheil front (its doors are closed, 16 amos up); shifting it to
+  z -73..-57 would need the bay and the Korban jamb reworked.
 
 ## Characters (Sprint 4, round 5)
 

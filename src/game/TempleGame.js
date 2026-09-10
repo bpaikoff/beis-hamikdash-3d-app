@@ -6,6 +6,7 @@ import { PlayerController } from './PlayerController.js';
 import { CharacterSystem, templePlacements } from './CharacterSystem.js';
 import { ParticleSystem } from './ParticleSystem.js';
 import { Daylight } from './Daylight.js';
+import { Ambience } from './Audio.js';
 import { DistanceCuller } from './lod.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -100,6 +101,13 @@ export class TempleGame {
       this.daylight?.set(t);
       this.particles?.setTimeOfDay(t);
     });
+    // The ambience (game/Audio.js). The context is created on the first enable, which the
+    // HUD does from a click or the `M` key (browsers need a gesture); a remembered `sound:
+    // true` is applied once the scene is up, from the start screen's own click.
+    this.audio = new Ambience();
+    this.audio.setVolume(store.getState().volume);
+    this.unsubSound = store.subscribe((s) => s.sound, (on) => this.audio?.setEnabled(on));
+    this.unsubVolume = store.subscribe((s) => s.volume, (v) => this.audio?.setVolume(v));
     this.ready = this.init().catch((e) => {
       console.error(e);
       store.setState({ loading: null, error: e.message });
@@ -197,6 +205,7 @@ export class TempleGame {
       // Altar fire on top of the ma'aracha (the altar is 10 amos high).
       const [fx, fy, fz] = at('mizbeach');
       this.particles.createFire(fx, fy + 10 * AMAH, fz, 4);
+      this.audio.fire = [fx, fy + 10 * AMAH, fz];
       // The Menorah's lamps and the coals of the golden altar: KeilimBuilder leaves named
       // anchors inside the period groups; the flames hang on them and toggle with the vessel.
       const wicks = [];
@@ -231,6 +240,7 @@ export class TempleGame {
     }
 
     this.setupControls();
+    if (this.store.getState().sound) this.audio.start(); // remembered on: the Enter click was the gesture
     this.hotspotLabels = new Hotspots(this.camera, this.container, this.store); // HUD: in-scene labels
     if (isTouchDevice()) this.touch = new TouchControls(this.container, this.player); // HUD: joystick + drag-look
     const q = new URLSearchParams(window.location.search);
@@ -256,6 +266,10 @@ export class TempleGame {
       /** The sun/sky rig: `.time`, `.set('dusk')` (or write store.timeOfDay). */
       get daylight() {
         return this.game.daylight;
+      },
+      /** The ambience mixer (game/Audio.js): `.running`, `.gains` (the last per-layer mix). */
+      get audio() {
+        return this.game.audio;
       },
       get player() {
         return this.game.player;
@@ -378,6 +392,7 @@ export class TempleGame {
       if (e.code === 'ShiftLeft') p.isRun = true;
       if (e.code === 'Space') { e.preventDefault(); p.jump(); }
       if (e.code === 'KeyG') p.toggleDebug((debug) => this.store.setState({ debug }));
+      if (e.code === 'KeyM' && !e.repeat) this.store.setState((s) => ({ sound: !s.sound })); // HUD: ambience on/off
     });
     this.on(document, 'keyup', (e) => {
       if (e.code === 'KeyW' || e.code === 'ArrowUp') p.moveF = false;
@@ -455,6 +470,7 @@ export class TempleGame {
     this.characters.update(delta, this.camera, this.container.clientHeight || 720);
     this.particles.update(delta, this.camera);
     this.checkLocation();
+    this.audio.update(delta, { area: this.currentArea, timeOfDay: this.store.getState().timeOfDay, listener: this.camera.position });
     if (this.sky) this.sky.position.copy(this.camera.position);
     this.culler?.update(this.camera, this.container.clientHeight || 720);
     this.frameCount = (this.frameCount ?? 0) + 1;
@@ -486,6 +502,10 @@ export class TempleGame {
     cancelAnimationFrame(this.raf);
     this.unsubPeriod?.();
     this.unsubTime?.();
+    this.unsubSound?.();
+    this.unsubVolume?.();
+    this.audio?.dispose();
+    this.audio = null;
     this.resizeObserver?.disconnect();
     for (const off of this.listeners) off();
     this.listeners = [];

@@ -291,6 +291,56 @@ canvas {
   direction: ltr;
 }
 
+/* The bottom-right stack: the speaker toggle over the key hint. */
+.hud-bottom-end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* Sound toggle (game/Audio.js): a speaker button and, while on, a volume slider. */
+.sound-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  pointer-events: auto;
+}
+
+.sound-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.sound-toggle button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sound-toggle.on button {
+  color: var(--gold);
+}
+
+.sound-toggle input[type='range'] {
+  width: 80px;
+  accent-color: var(--gold);
+}
+
 /* Controls hint */
 .controls-hint {
   background: var(--panel-bg);
@@ -1373,7 +1423,8 @@ canvas {
 }
 
 /* The panel runs to the bottom edge; the key hint would sit under it. */
-.ask-open .controls-hint {
+.ask-open .controls-hint,
+.ask-open .sound-toggle {
   display: none;
 }
 

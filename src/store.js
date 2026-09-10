@@ -3,7 +3,7 @@
  *
  * Two kinds of state live here:
  *  - ordinary state (loading, location, nearbyKli, selected, focused, debug, locked, period,
- *    timeOfDay, lang, askOpen, askQuestion, askSeq) read with
+ *    timeOfDay, sound, volume, lang, askOpen, askQuestion, askSeq) read with
  *    `useStore(selector)`; components re-render only when their slice changes;
  *  - `frame` (player position / heading), written every animation frame. Never select it
  *    from a component: subscribe with `store.subscribe(s => s.frame, fn)` and write to a
@@ -13,6 +13,9 @@ import { createStore } from 'zustand/vanilla';
 import { subscribeWithSelector } from 'zustand/middleware';
 import { useStore as useZustandStore } from 'zustand';
 import { parseTimeOfDay } from './game/sun.js';
+import { loadAudioPrefs, saveAudioPrefs } from './game/Audio.js';
+
+const audioPrefs = loadAudioPrefs();
 
 export const initialFrame = { x: 0, y: 0, z: 62, yaw: 0, elev: 0 };
 
@@ -29,6 +32,8 @@ export const store = createStore(
     period: 'bayis_sheni', // 'bayis_sheni' | 'bayis_rishon'
     // 'dawn' | 'morning' | 'afternoon' | 'dusk': where the sun stands (game/sun.js); `?time=dusk` presets it
     timeOfDay: parseTimeOfDay(typeof window !== 'undefined' ? window.location.search : ''),
+    sound: audioPrefs.sound, // the ambience plays (game/Audio.js; the HUD speaker / `M` toggles it; remembered)
+    volume: audioPrefs.volume, // 0..1 master volume of the ambience (remembered)
     lang: 'en', // HUD language for descriptions
     askOpen: false, // the "Ask the poskim" panel is open
     askQuestion: null, // question the panel is streaming (or showing)
@@ -49,5 +54,9 @@ export const openAsk = (question) =>
   store.setState((s) => ({ askOpen: true, askQuestion: String(question ?? '').trim(), askSeq: s.askSeq + 1 }));
 
 export const closeAsk = () => store.setState({ askOpen: false });
+
+export const toggleSound = () => store.setState((s) => ({ sound: !s.sound }));
+
+store.subscribe((s) => [s.sound, s.volume], ([sound, volume]) => saveAudioPrefs({ sound, volume }));
 
 export const useStore = (selector) => useZustandStore(store, selector);

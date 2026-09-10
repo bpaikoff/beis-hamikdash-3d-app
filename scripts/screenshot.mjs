@@ -31,6 +31,7 @@ const VIEWS = [
   { name: 'ulam_facade', at: 'maalos_ulam' },        // the 12 steps and the Ulam front
   { name: 'heichal_interior', at: 'heichal' },       // looking west across the Heichal
   { name: 'kodesh_hakodashim', at: 'even_hashtiya' },
+  { name: 'even_hashtiya_close', cam: '0,11.95,-64.8,0,-28' }, // kneeling 1.7 m east of the stone, looking down at it
   // The altar fire from the south-east of the Ezras Kohanim, ~25 m from the ma'aracha,
   // with bloom on (the flame core is tuned to cross the bloom threshold).
   { name: 'altar_fire', cam: '-22,9.75,0,-63,9', bloom: true },

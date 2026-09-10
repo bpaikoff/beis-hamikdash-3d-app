@@ -343,7 +343,7 @@
       "legacyId": "evenHashtiya",
       "icon": "🪨",
       "area": "kodesh_hakodashim",
-      "geometry": {"kind": "box", "w": 3, "d": 3, "h": 0.19, "notes": "flat stone rising 3 etzbaos (about 3/4 tefach) above the floor; footprint not given in the sources."}
+      "geometry": {"kind": "box", "w": 3, "d": 3, "h": 0.125, "notes": "an outcrop of the bedrock about 3 amos across, its top 3 etzbaos (3/24 amah, three-quarters of a tefach) above the floor at the centre (Yoma 5:2); footprint and shape not given in the sources, so the irregular outline and the low relief are a reconstruction."}
     },
     {
       "id": "yachin",

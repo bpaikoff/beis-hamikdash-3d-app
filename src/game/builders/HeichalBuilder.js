@@ -3,6 +3,7 @@ import { BaseBuilder } from './BaseBuilder.js';
 import { instance, instancePositions } from '../instanced.js';
 import { AMAH } from '../../content/units.js';
 import { byId, worldPos, levelWorldY } from '../../content/index.js';
+import { outcropGeometry } from './outcrop.js';
 
 // ============================================================================
 // HEICHAL BUILDER - the 12 Ulam steps, the Ulam, the Heichal, the ta'im, the
@@ -67,6 +68,20 @@ const SECTION = {
   zWestTa: [-165, -171], // western ta 6
   zBack: -176, // its wall 5
   ulamEndWallT: 5, // assumed equal to the front wall (not given in Middot); inside the 100 (Middot 4:7: 70 + 15 + 15)
+};
+
+/**
+ * The Kodesh HaKodashim's light: how much of the sky's image-based light its floor and
+ * gold panels keep (the Heichal's materials use 1) and the tint that puts them in shade
+ * (the point lights do not cast shadows, so the Heichal's light would otherwise reach
+ * through the parochos undimmed), and the one warm lamp LightingBuilder
+ * hangs east of the stone: candela (physical units, inverse-square), its height above
+ * the floor and its distance east of the stone toward the parochos, both in amos.
+ */
+export const KHK_LIGHT = {
+  floorEnv: 0.3, floorTint: 0xb4b0a8, // the white marble in shade
+  goldEnv: 0.08, goldTint: 0xa89a68, goldRoughness: 2.4, // deep gold in shade, a broad soft lamp reflection
+  color: 0xffd090, candela: 12, height: 2.4, eastOfStone: 6,
 };
 
 export class HeichalBuilder extends BaseBuilder {
@@ -375,8 +390,9 @@ export class HeichalBuilder extends BaseBuilder {
     const gold = this.mat.goldEng;
     const t = 0.15;
     const panel = (name, bounds) => this.block(g, bounds, gold, { name, shadow: false });
-    panel('heichal-panel-s', { x: [b.minX, b.minX + t], y: [U, U + ceilH], z: [zEastIn, zWestIn] });
-    panel('heichal-panel-n', { x: [b.maxX - t, b.maxX], y: [U, U + ceilH], z: [zEastIn, zWestIn] });
+    // The side panels stop at the parochos; the Kodesh HaKodashim carries its own (dimmer) pair.
+    panel('heichal-panel-s', { x: [b.minX, b.minX + t], y: [U, U + ceilH], z: [zEastIn, khk.maxZ] });
+    panel('heichal-panel-n', { x: [b.maxX - t, b.maxX], y: [U, U + ceilH], z: [zEastIn, khk.maxZ] });
     panel('heichal-panel-e-s', { x: [b.minX, -dw], y: [U, U + ceilH], z: [zEastIn, zEastIn - t] });
     panel('heichal-panel-e-n', { x: [dw, b.maxX], y: [U, U + ceilH], z: [zEastIn, zEastIn - t] });
     panel('heichal-panel-e-top', { x: [-dw, dw], y: [U + dh, U + ceilH], z: [zEastIn, zEastIn - t] });
@@ -487,6 +503,11 @@ export class HeichalBuilder extends BaseBuilder {
   // --------------------------------------------------------------------------
   // Kodesh HaKodashim 20 x 20 (Middot 4:7), west wall 6 thick, Even HaShtiya three
   // etzbaos above the floor at its centre (Mishnah Yoma 5:2).
+  //
+  // A windowless room behind two curtains (Yoma 5:1): its floor and gold panels are
+  // the Heichal's materials with most of the sky's image-based light taken away, so
+  // the room reads dim and still beside the Heichal, and one warm lamp between the
+  // parochos and the stone stands for what light reached it from the east.
   // --------------------------------------------------------------------------
   buildKodeshHaKodashim() {
     const e = byId.kodesh_hakodashim;
@@ -497,27 +518,43 @@ export class HeichalBuilder extends BaseBuilder {
     const ceilH = e.geometry.h; // 40
     const { wallT } = SECTION;
     const base = U - FT;
-    this.floorAt(g, U, [b.minX - 0.1, b.maxX + 0.1], [b.maxZ + 0.1, b.minZ + 0.1], this.mat.marbleW, 'kodesh-hakodashim');
+    const dim = (m, envMapIntensity, tint) => Object.assign(m.clone(), { envMapIntensity, color: new THREE.Color(tint) });
+    const floor = dim(this.mat.marbleW, KHK_LIGHT.floorEnv, KHK_LIGHT.floorTint);
+    const gold = dim(this.mat.goldEng, KHK_LIGHT.goldEnv, KHK_LIGHT.goldTint);
+    gold.roughness = KHK_LIGHT.goldRoughness;
+    this.floorAt(g, U, [b.minX - 0.1, b.maxX + 0.1], [b.maxZ + 0.1, b.minZ + 0.1], floor, 'kodesh-hakodashim');
     this.block(g, { x: [b.minX - wallT, b.maxX + wallT], y: [base, U + H], z: [b.minZ, b.minZ - wallT] }, this.mat.stonePolished, {
       wall: true,
       name: 'heichal-west-wall',
     });
-    this.block(g, { x: [b.minX, b.maxX], y: [U, U + ceilH], z: [b.minZ, b.minZ + 0.15] }, this.mat.goldEng, {
-      name: 'khk-panel-w',
-      shadow: false,
-    });
-    this.scene.add(g);
+    const t = 0.15;
+    const panel = (name, bounds) => this.block(g, bounds, gold, { name, shadow: false });
+    panel('khk-panel-w', { x: [b.minX, b.maxX], y: [U, U + ceilH], z: [b.minZ, b.minZ + t] });
+    panel('khk-panel-s', { x: [b.minX, b.minX + t], y: [U, U + ceilH], z: [b.maxZ, b.minZ] });
+    panel('khk-panel-n', { x: [b.maxX - t, b.maxX], y: [U, U + ceilH], z: [b.maxZ, b.minZ] });
+    this.scene.add(g); // the lamp is LightingBuilder's (`khkLamp`, KHK_LIGHT)
 
+    // The stone: an outcrop of the bedrock, not masonry (Yoma 54b: the floor of the
+    // world). One seeded mesh (outcrop.js) with an irregular outline, a rounded edge and
+    // a low noised top; its centre vertex is exactly geometry.h above the floor and the
+    // mesh is the walkable surface, so a probe at the centre reads the content height.
     const s = byId.even_hashtiya;
     const sg = tagEntry(new THREE.Group(), s);
-    const sw = s.geometry.w / 2;
-    const sd = s.geometry.d / 2;
-    this.block(
-      sg,
-      { x: [s.position.x - sw, s.position.x + sw], y: [U, U + s.geometry.h], z: [s.position.z + sd, s.position.z - sd] },
-      this.mat.stone,
-      { floor: true, name: 'even-hashtiya' }
-    );
+    const stone = this.mat.bedrock;
+    const geo = outcropGeometry({
+      radius: (s.geometry.w / 2) * A,
+      height: s.geometry.h * A,
+      seed: 0x5e7a,
+      tileMetres: this.tileMetresFor(stone),
+    });
+    const m = new THREE.Mesh(geo, stone);
+    m.position.set(this.F.x(s.position.x), yAmos(U), this.F.z(s.position.z));
+    m.castShadow = true;
+    m.receiveShadow = true;
+    m.name = 'even-hashtiya';
+    m.userData = { isFloor: true, name: 'even-hashtiya' };
+    this.floors.push(m);
+    sg.add(m);
     this.scene.add(sg);
   }
 

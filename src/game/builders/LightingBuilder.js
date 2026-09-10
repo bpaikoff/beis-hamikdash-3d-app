@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { CONFIG } from '../../config.js';
 import { BaseBuilder } from './BaseBuilder.js';
 import { byId, worldPos } from '../../content/index.js';
+import { AMAH } from '../../content/units.js';
+import { KHK_LIGHT } from './HeichalBuilder.js';
 
 // ============================================================================
 // LIGHTING BUILDER - Scene lighting setup
@@ -46,5 +48,14 @@ export class LightingBuilder extends BaseBuilder {
     heichalLight.position.set(hx, hy + 9, hz);
     heichalLight.name = 'heichalLight';
     this.scene.add(heichalLight);
+
+    // Kodesh HaKodashim: a windowless room behind the parochos (Yoma 5:1), far from the
+    // Heichal's light. One dim warm lamp between the curtains and the Even HaShtiya, so
+    // the stone is lit from the east and reads in the dark (KHK_LIGHT, HeichalBuilder).
+    const khkLamp = new THREE.PointLight(KHK_LIGHT.color, KHK_LIGHT.candela, 0, 2);
+    const [sx, sy, sz] = worldPos(byId.even_hashtiya); // the stone's centre at floor level
+    khkLamp.position.set(sx, sy + KHK_LIGHT.height * AMAH, sz + KHK_LIGHT.eastOfStone * AMAH);
+    khkLamp.name = 'khkLamp';
+    this.scene.add(khkLamp);
   }
 }

@@ -37,14 +37,15 @@ Content model, geometry conventions and the review log: `docs/content.md`. Open 
 npm run lint && npm test -- --run && npm run build     # 0 errors, all tests, build green
 node scripts/verify_refs.mjs                           # when content changed
 node scripts/fetch_assets.mjs --verify                 # when assets/manifests changed (no network)
-node scripts/walk.mjs --list                           # ~88 routes across scripts/walk-routes/*.mjs
+node scripts/walk.mjs --list                           # ~100 routes across scripts/walk-routes/*.mjs
 node scripts/walk.mjs --route a,b,c --port 43xx --out DIR     # ≤ 24 routes per process
 node scripts/walk.mjs --fuzz 40 --fuzz-walk 3 --seed N --area <id> --port 43xx --out DIR
 node scripts/screenshot.mjs --port 43xx --out DIR --budget hero=1200   # then Read the PNGs
 ```
 
 - Walk all routes in at most three parallel processes on distinct ports; more than
-  ~24 routes in one process, or many long outside routes, trips the 15-minute watchdog.
+  ~20 routes in one process, or several long Har HaBayis / outside routes together, trips
+  the 15-minute watchdog (round-robin the route list into batches so the long ones spread).
 - Run fuzz **after** the route batches, one area at a time: under CPU contention the
   3-second stuck timer and the watchdog give false failures. A step that fails in a
   batch and passes alone is a load flake; note it, do not chase it.
@@ -121,8 +122,10 @@ them to read their output file and finish; each agent uses its own port range.
 
 ## Round 7 notes (2026-09-10)
 
-- Gate frames stand `FRAME_PROUD` (5 mm) proud of wall faces and reveals; a coplanar-wood
-  probe (`WoodCoplanar.test.js`) guards it. All factory textures get mips + anisotropy in
+- Gate frames stand `FRAME_PROUD` (5 mm) proud of wall faces and reveals; `frameInset`
+  buries a frame that shares a pier with a gate; leaves on thin walls are flat panels on
+  the face (`LEAF_T`). A coplanar-wood probe and a no-flat-box probe (`WoodCoplanar.test.js`)
+  guard both. All factory textures get mips + anisotropy in
   `TextureFactory.finish()`.
 - Even HaShtiya is `builders/outcrop.js` (walkable mesh floor); KhK lighting in `KHK_LIGHT`.
 - FX: `ParticleSystem.createSmokeColumn/createHaze` (`?fx=0` off); ambient sound `Audio.js`

@@ -111,6 +111,19 @@ stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
   removed to stay at 20 humans). Open: the haze barely registers in software captures; no
   dedicated kevesh-walker screenshot view (`--at kevesh` shows him).
 
+- Round 7 flip (Avtinas south over the Water Gate, Palhedrin north west of the Korban
+  gate) and its walker: `CourtBuilder.gateA` gained `frameInset` (a frame buried inside a
+  neighbouring gate's jamb, used for Palhedrin's bay into the Korban passage) and flat
+  leaves (`LEAF_T` 5 cm against the wall face) where a wall is too thin to fold a leaf into
+  the reveal — the old zero-thickness folded leaves z-fought on Palhedrin's Cheil door, the
+  Gazis north door and the Beis HaMoked gate. Open: the Beis HaMoked gate's gold leaves
+  (5 x 19.5 amos each) now hang on the hall's court face and the east one overhangs the
+  frontage steps at threshold height (physically right for a swung leaf; look at it in a
+  `beis_hamoked` view); the Avtinas rooftop mikveh (wall top y 30) is seen, not entered;
+  Palhedrin's west end (z -79) faces the Nitzotz Soreg opening across the 2.5-amah lane;
+  `?at=beis_avtinas` still needs a hand `cam`. `?cam=` captures race the camera placement
+  under CPU load: capture screenshots after the walk batches, never during.
+
 ## Characters (Sprint 4, round 5)
 
 Round 5 (2026-09-06) replaced the mannequin: `kohen.glb` is the Quaternius Universal Base

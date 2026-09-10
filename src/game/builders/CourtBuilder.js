@@ -24,6 +24,15 @@ export const GROUND = levels.har_habayis - 0.5;
 const FRAME_T = 1;
 /** Door leaf thickness, amos. */
 const DOOR_T = 0.5;
+/**
+ * A gate frame stands this much proud of the wall (amos; 5 mm): its jambs into the
+ * opening, its lintel below the soffit, and its faces beyond the wall's faces (a chamber
+ * wall is as thick as the frame). A face flush with the wall's is drawn over it and
+ * z-fights past ~40 m (the wood flicker of round 7; WoodCoplanar.test.js). The frame's
+ * outer ends are pulled in by the same amount so they stay buried in the wall beside a
+ * neighbouring opening.
+ */
+const FRAME_PROUD = 0.01;
 /** Thickness of a gable's leaning slabs, amos (wallRunA `gable`; a stone slab, not a plank). */
 const GABLE_T = 1;
 /** How far a gable's slabs are buried in the notch above them, amos (2.5 cm: no shared face, no visible gap). */
@@ -341,12 +350,17 @@ export class CourtBuilder extends BaseBuilder {
     const mid = (a1 + a2) / 2;
     const rect = (s, e, c1, c2) => (along === 'x' ? [s, e, c1, c2] : [c1, c2, s, e]);
     if (frame) {
+      const P = FRAME_PROUD;
+      const c1 = mid - FRAME_T / 2 - P;
+      const c2 = mid + FRAME_T / 2 + P;
+      const lintelTop = Math.min(floor + h + FRAME_T, frameTop - P);
+      const lintel = lintelTop > floor + h + 1e-6;
+      const jambTop = lintel ? floor + h - P : floor + h; // the jambs end where the lintel begins
       const parts = [
-        this.frameBox(...rect(at - w / 2 - FRAME_T, at - w / 2, mid - FRAME_T / 2, mid + FRAME_T / 2), floor, floor + h, frame),
-        this.frameBox(...rect(at + w / 2, at + w / 2 + FRAME_T, mid - FRAME_T / 2, mid + FRAME_T / 2), floor, floor + h, frame),
+        this.frameBox(...rect(at - w / 2 - FRAME_T + P, at - w / 2 + P, c1, c2), floor, jambTop, frame),
+        this.frameBox(...rect(at + w / 2 - P, at + w / 2 + FRAME_T - P, c1, c2), floor, jambTop, frame),
       ];
-      const lintelTop = Math.min(floor + h + FRAME_T, frameTop);
-      if (lintelTop > floor + h + 1e-6) parts.push(this.frameBox(...rect(at - w / 2 - FRAME_T, at + w / 2 + FRAME_T, mid - FRAME_T / 2, mid + FRAME_T / 2), floor + h, lintelTop, frame));
+      if (lintel) parts.push(this.frameBox(...rect(at - w / 2 - FRAME_T + P, at + w / 2 + FRAME_T - P, c1, c2), floor + h - P, lintelTop, frame));
       const geo = BufferGeometryUtils.mergeGeometries(parts, false);
       for (const p of parts) p.dispose();
       const m = new THREE.Mesh(geo, frame);

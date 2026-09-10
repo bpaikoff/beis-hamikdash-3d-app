@@ -309,10 +309,12 @@ export class HeichalBuilder extends BaseBuilder {
     // the opening on each side, each one above a further amah wider, a course of
     // stones between each; they project from the facade.
     // Five distinct widths, so five meshes with correctly tiled cedar (they are on the facade).
+    // The lowest beam's underside is the lintel's soffit: it hangs 0.01 amah (5 mm) below
+    // it so the two faces are not drawn over each other (round 7, WoodCoplanar.test.js).
     for (let i = 0; i < 5; i++) {
       const w = doorW + 2 * (i + 1);
       const y0 = U + doorH + 2 * i;
-      this.block(g, { x: [-w / 2, w / 2], y: [y0, y0 + 1], z: [zFront + 1, zFront - 1] }, this.mat.cedar, { name: `ulam-melatra-${i + 1}` });
+      this.block(g, { x: [-w / 2, w / 2], y: [i === 0 ? y0 - 0.01 : y0, y0 + 1], z: [zFront + 1, zFront - 1] }, this.mat.cedar, { name: `ulam-melatra-${i + 1}` });
     }
 
     // Middot 3:8: cedar beams from the Ulam wall to the Heichal wall so the front
@@ -322,8 +324,11 @@ export class HeichalBuilder extends BaseBuilder {
     for (let x = -40; x <= 40; x += 10) ties.push([this.F.x(x), yAmos(U + doorH + 12.5), this.F.z((zIn + zBack) / 2)]);
     g.add(instancePositions(tieGeo, this.mat.cedar, ties, { name: 'ulam-tie-beams' }));
 
-    // Ceiling at the top of the 100-amah hall (also spans the Heichal east wall)
-    this.block(g, { x: [-xEnd, xEnd], y: [U + H - 1, U + H], z: [zFront, zBack - SECTION.wallT] }, this.mat.cedar, {
+    // Ceiling at the top of the 100-amah hall (also spans the Heichal east wall), 0.01 amah
+    // (5 mm) inside the walls' outer faces and top so its cedar rim is never flush with
+    // the stone (a flush rim z-fought along the top of the facade; round 7).
+    const I = 0.01;
+    this.block(g, { x: [-xEnd + I, xEnd - I], y: [U + H - 1 + I, U + H - I], z: [zFront - I, zBack - SECTION.wallT + I] }, this.mat.cedar, {
       name: 'ulam-ceiling',
     });
 

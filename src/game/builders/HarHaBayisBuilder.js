@@ -159,8 +159,10 @@ export class HarHaBayisBuilder extends CourtBuilder {
     this.group('soreg', () => {
       run('z', r.x1, r.z1, r.z2, gapsSouth);
       run('z', r.x2, r.z1, r.z2, gapsNorth);
-      run('x', r.z1, r.x1, r.x2, gapsWest);
-      run('x', r.z2, r.x1, r.x2, gapsEast);
+      // The runs along x stop at the runs along z (0.3 thick): overlapping rails shared
+      // their top and bottom faces at the corners and z-fought.
+      run('x', r.z1, r.x1 + 0.3, r.x2 - 0.3, gapsWest);
+      run('x', r.z2, r.x1 + 0.3, r.x2 - 0.3, gapsEast);
       const postMesh = instance(this.box(0.2 * AMAH, h * AMAH, 0.2 * AMAH, this.mat.cedar), this.mat.cedar, posts, { name: 'soreg posts', castShadow: false });
       postMesh.userData.lodDistance = 160; // the rails carry the line; the posts are detail (game/lod.js)
       this.scene.add(postMesh);

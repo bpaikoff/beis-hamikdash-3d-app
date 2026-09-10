@@ -242,11 +242,12 @@ describe('court builders', () => {
     for (const z of [-64.5, -51.5]) expect(solidAt(70, 23, z), `wall under the storey slab z ${z}`).toBe(true);
     expect(solidAt(70.5, 10, -58), 'korban gate leaves').toBe(true);
     expect(solidAt(69, 10, -58), 'korban gate reveal').toBe(false);
-    // The gate's frame keeps its lintel between the gate's top (22.5) and the storey's slab (23.2).
+    // The gate's frame keeps its lintel between the gate's top (22.5) and the storey's slab
+    // (23.2), stopping 0.01 amah short of the slab (CourtBuilder FRAME_PROUD, round 7).
     const lintel = built.scene.getObjectByName('korban_gate frame');
     expect(lintel, 'korban gate frame').toBeTruthy();
     const frameBox = new THREE.Box3().setFromObject(lintel);
-    expect(frameBox.max.y).toBeCloseTo(toWorld({ x: 0, y: 23.2, z: 0 })[1], 2);
+    expect(frameBox.max.y).toBeCloseTo(toWorld({ x: 0, y: 23.2 - 0.01, z: 0 })[1], 3);
     // Balustrades between the stair tower's flights, open at the landing that joins each pair.
     expect(solidAt(66, 5, -44.75)).toBe(true);
     expect(solidAt(70, 5, -46.5)).toBe(true);

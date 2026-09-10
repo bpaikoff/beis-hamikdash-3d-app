@@ -11,6 +11,7 @@ import { AskPanel } from './components/AskPanel.jsx';
 import { LockOverlay } from './components/LockOverlay.jsx';
 import { StartScreen } from './components/StartScreen.jsx';
 import { TourCard } from './components/TourCard.jsx';
+import { SoundToggle } from './components/SoundToggle.jsx';
 import { store, useStore } from './store.js';
 import { byId } from './content/index.js';
 import { byTourId } from './content/tours/index.js';
@@ -154,12 +155,16 @@ export default function BeisHamikdash3D() {
                   </>
                 )}
               </div>
-              <div className="controls-hint" lang="en">
-                <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move •{' '}
-                <kbd>Space</kbd> Jump •{' '}
-                <kbd>Shift</kbd> Run •{' '}
-                <kbd>Mouse</kbd> Look •{' '}
-                <kbd>Esc</kbd> Release
+              <div className="hud-bottom-end">
+                <SoundToggle />
+                <div className="controls-hint" lang="en">
+                  <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move •{' '}
+                  <kbd>Space</kbd> Jump •{' '}
+                  <kbd>Shift</kbd> Run •{' '}
+                  <kbd>Mouse</kbd> Look •{' '}
+                  <kbd>M</kbd> Sound •{' '}
+                  <kbd>Esc</kbd> Release
+                </div>
               </div>
             </div>
           </div>

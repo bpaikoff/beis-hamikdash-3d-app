@@ -1,5 +1,24 @@
 import * as THREE from 'three';
-import { Flame, Embers, Smoke, flicker } from './Flame.js';
+import { Flame, Embers, Smoke, Motes, flicker } from './Flame.js';
+
+/**
+ * Sprite budget of the round-7 atmosphere (`?fx=0` leaves it out): the Tamid's smoke
+ * column over the altar (two point clouds, a dense core and a thin outer veil) and the
+ * Heichal's incense haze with its dust motes. Four draw calls, 400 sprites.
+ */
+export const FX_BUDGET = { columnCore: 120, columnVeil: 80, haze: 80, motes: 120 };
+
+/**
+ * The smoke column's tint by time of day: the fresh smoke over the fire is lit from below.
+ * By day it is a warm grey that greys out within the first tenth of the rise; with the sun
+ * on the horizon the fire is the brightest thing in the court and the lower column glows
+ * orange for a quarter of its rise (Avos 5:5: the column stood straight, so it is the
+ * glow, not the shape, that changes).
+ */
+export const COLUMN_GLOW = {
+  day: { hot: [0.5, 0.42, 0.36], hotSpan: 0.1 },
+  night: { hot: [1.6, 0.62, 0.22], hotSpan: 0.25 },
+};
 
 /**
  * Soft radial sprite shared by every particle system: white centre fading to transparent,
@@ -147,6 +166,93 @@ export class ParticleSystem {
     return g;
   }
 
+  /**
+   * The Tamid's smoke column (Tamid 2:5, Avos 5:5): from the fire at (x, y, z) a dense
+   * core rises straight up (no drift: the column never bent) for `rise` metres and thins
+   * as the puffs grow and fade, with a wider, fainter veil around it. `size` is the fuel
+   * bed's width, as for createFire. Visible from the courts and over the walls from the
+   * mount; `setTimeOfDay` makes it glow from the fire below at dawn and dusk.
+   */
+  createSmokeColumn(x, y, z, size = 4, rise = 36) {
+    const g = new THREE.Group();
+    g.name = 'smoke-column';
+    g.position.set(x, y, z);
+    this.scene.add(g);
+    const glow = COLUMN_GLOW.day;
+    const core = new Smoke(this.sprite, {
+      count: FX_BUDGET.columnCore,
+      rise,
+      spread: size * 0.11,
+      drift: [0, 0, 0],
+      size: size * 0.45,
+      grow: 5,
+      life: 16,
+      opacity: 0.22,
+      color: 0x76767c,
+      hot: glow.hot,
+      hotSpan: glow.hotSpan,
+      seed: 51,
+    });
+    const veil = new Smoke(this.sprite, {
+      count: FX_BUDGET.columnVeil,
+      rise: rise * 0.85,
+      spread: size * 0.25,
+      drift: [0, 0, 0],
+      size: size * 0.8,
+      grow: 4,
+      life: 14,
+      opacity: 0.09,
+      color: 0x8a8a90,
+      hot: glow.hot,
+      hotSpan: glow.hotSpan,
+      seed: 52,
+    });
+    this.attach(g, core, 0, size * 0.9, 0);
+    this.attach(g, veil, 0, size * 1.1, 0);
+    this.column = g;
+    return g;
+  }
+
+  /**
+   * The Heichal's incense haze: a thin, slow cloud hanging over the golden altar's
+   * anchor (it rises only a few metres and lingers) and dust motes turning in the light
+   * of the doorway, in a box about (mx, my, mz) with half extents `box`.
+   */
+  createHaze(anchor, o = {}) {
+    const { motesAt = null, box = [4, 2, 8] } = o;
+    const haze = new Smoke(this.sprite, {
+      count: FX_BUDGET.haze,
+      rise: 3,
+      spread: 2.2,
+      drift: [0, 0, 0],
+      size: 1.8,
+      grow: 1.4,
+      life: 26,
+      opacity: 0.045,
+      color: 0x9b98a6,
+      hot: [0.6, 0.58, 0.64],
+      hotSpan: 0.2,
+      seed: 53,
+    });
+    this.attach(anchor, haze, 0, 1.0, 0);
+    let motes = null;
+    if (motesAt) {
+      const g = new THREE.Group();
+      g.name = 'haze';
+      g.position.set(...motesAt);
+      this.scene.add(g);
+      motes = this.attach(g, new Motes({ count: FX_BUDGET.motes, box, size: 0.022, opacity: 0.35, seed: 54 }));
+    }
+    return { haze, motes };
+  }
+
+  /** Retint the smoke column for the light: it glows from the fire at dawn and dusk. */
+  setTimeOfDay(time) {
+    if (!this.column) return;
+    const glow = time === 'dawn' || time === 'dusk' ? COLUMN_GLOW.night : COLUMN_GLOW.day;
+    for (const c of this.column.children) c.setGlow?.(glow.hot, glow.hotSpan);
+  }
+
   /** A free-standing smoke column (soft grey sprites rising and fading). */
   createSmoke(x, y, z, size = 0.5) {
     const smoke = new Smoke(this.sprite, {
@@ -250,7 +356,8 @@ export class ParticleSystem {
       l.light.dispose();
     }
     this.lights = [];
-    for (const g of [...this.scene.children]) if (g.name === 'fire') this.scene.remove(g);
+    this.column = null;
+    for (const g of [...this.scene.children]) if (g.name === 'fire' || g.name === 'smoke-column' || g.name === 'haze') this.scene.remove(g);
     this.sprite?.dispose();
     this.sprite = null;
   }

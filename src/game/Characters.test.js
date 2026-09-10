@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {
   CharacterSystem, CHARACTER_FILES, CLIPS, LIMITS, ANIMATE_RADIUS, LOD, FIGURE_RADIUS,
-  templePlacements, makeWalker, figureTier, lodK, skinBounds, paintHuman, textureUrl, FOLD_SCALE, ROLES, LEVI_TURBAN, SUDAR, GOAT_PARTS,
+  templePlacements, makeWalker, WALKER_MAX_STEP, figureTier, lodK, skinBounds, paintHuman, textureUrl, FOLD_SCALE, ROLES, LEVI_TURBAN, SUDAR, GOAT_PARTS,
 } from './CharacterSystem.js';
 import { PlayerController } from './PlayerController.js';
 import { TempleBuilder } from './TempleBuilder.js';
@@ -223,14 +223,21 @@ describe('CharacterSystem', () => {
     expect(sys.humans.length).toBeLessThanOrEqual(LIMITS.humans);
     expect(sys.animals.length).toBe(LIMITS.animals);
     expect(sys.doves.length).toBe(LIMITS.doves);
-    expect(sys.humans.filter((h) => h.userData.walker)).toHaveLength(4);
+    expect(sys.humans.filter((h) => h.userData.walker)).toHaveLength(5);
     expect(sys.humans.filter((h) => h.name === 'kohenGadol')).toHaveLength(1);
     // Twenty humans as before the Levite role; the two Duchan walkers are the Levites.
     expect(placements.filter((p) => p.kind === 'human')).toHaveLength(20);
     const levites = sys.humans.filter((h) => h.name === 'levi');
     expect(levites).toHaveLength(2);
     for (const l of levites) expect(l.userData.walker, 'a Levite walks the Duchan').toBeTruthy();
-    expect(sys.humans.filter((h) => h.name === 'kohen' && h.userData.walker)).toHaveLength(2);
+    expect(sys.humans.filter((h) => h.name === 'kohen' && h.userData.walker)).toHaveLength(3);
+    // Round 7: the procession. One kohen climbs the kevesh (a ground-following ping-pong
+    // path), two stand at the kiyor facing it, one stands on the Ulam steps' top rovad.
+    const kevesh = placements.find((p) => p.ground);
+    expect(kevesh, 'the kevesh walker').toBeTruthy();
+    expect(kevesh.closed ?? false).toBe(false);
+    expect(kevesh.path[1][0] - kevesh.path[0][0]).toBeGreaterThan(15); // the 16 m ramp and its approach
+    expect(placements.filter((p) => p.kind === 'human' && p.clip === 'talk')).toHaveLength(3);
     // A walker starts where it is placed (the slaughter lane's pair half a loop apart).
     for (const p of placements.filter((q) => q.path)) {
       const g = sys.humans.find((h) => h.position.x === p.x && h.position.z === p.z);
@@ -731,6 +738,43 @@ describe('CharacterSystem', () => {
 });
 
 describe('makeWalker', () => {
+  it('follows the floor probe when given one, ignoring a probe that jumps', () => {
+    // A 10 m path over a ramp rising 0.3 per metre from x 2 to x 8.
+    const ramp = (x) => 5 + Math.min(Math.max(x - 2, 0), 6) * 0.3;
+    const probes = [];
+    const w = makeWalker([[0, 0], [10, 0]], false, 2, [0, 0], (x, z, feetY) => {
+      probes.push(feetY);
+      return ramp(x);
+    });
+    const g = new THREE.Group();
+    g.position.set(0, 5, 0);
+    g.userData = { baseY: 5 };
+    for (let i = 0; i < 60; i++) w.step(1 / 60, g); // 2 m
+    expect(g.position.y).toBeCloseTo(5, 5);
+    for (let i = 0; i < 90; i++) w.step(1 / 60, g); // 5 m
+    expect(g.position.y).toBeCloseTo(ramp(5), 5);
+    expect(probes.at(-1)).toBeCloseTo(ramp(5 - 2 / 60), 5); // probed from the previous height
+    for (let i = 0; i < 120; i++) w.step(1 / 60, g); // 9 m
+    expect(g.position.y).toBeCloseTo(ramp(8), 5);
+    // A probe that jumps more than WALKER_MAX_STEP (fell through a seam) is ignored.
+    w.floorAt = () => -50;
+    w.step(1 / 60, g);
+    expect(g.position.y).toBeCloseTo(ramp(8), 5);
+    w.floorAt = () => NaN;
+    w.step(1 / 60, g);
+    expect(g.position.y).toBeCloseTo(ramp(8), 5);
+    w.floorAt = () => ramp(8) + WALKER_MAX_STEP * 0.5;
+    w.step(1 / 60, g);
+    expect(g.position.y).toBeCloseTo(ramp(8) + WALKER_MAX_STEP * 0.5, 5);
+    // Without a probe the feet stay at baseY.
+    const flat = makeWalker([[0, 0], [10, 0]], false, 2, [0, 0]);
+    const f = new THREE.Group();
+    f.position.set(0, 5, 0);
+    f.userData = { baseY: 5 };
+    for (let i = 0; i < 300; i++) flat.step(1 / 60, f);
+    expect(f.position.y).toBe(5);
+  });
+
   it('ping-pongs on an open path and wraps on a closed loop', () => {
     const g = new THREE.Group();
     g.userData.baseY = 2;
@@ -780,11 +824,38 @@ describe('in the built Temple', () => {
       check(label, p.x, p.y, p.z);
       if (!p.path) continue;
       const w = makeWalker(p.path, p.closed ?? false, 1);
+      // A ground walker's floor is wherever the probe finds it, rising smoothly from its
+      // level (the kevesh: 0.28 per metre); a flat walker's is its level throughout.
+      let feetY = p.y;
       for (let s = 0; s <= w.total; s += 0.25) {
         const { pos } = w.at(s);
-        check(`${label} walk`, pos.x, p.y, pos.z);
+        if (p.ground) {
+          const f = temple.floorUnder(pos.x, pos.z, feetY);
+          expect(f.inside, `${label} walk at (${pos.x.toFixed(1)}, ${pos.z.toFixed(1)}) is inside a solid`).toBe(false);
+          expect(f.y - feetY, `${label} walk at (${pos.x.toFixed(1)}, ${pos.z.toFixed(1)}) floor ${f.y.toFixed(2)} from ${feetY.toFixed(2)}`).toBeGreaterThanOrEqual(-0.01);
+          expect(f.y - feetY, `${label} walk step at (${pos.x.toFixed(1)}, ${pos.z.toFixed(1)})`).toBeLessThan(0.12);
+          feetY = f.y;
+        } else {
+          check(`${label} walk`, pos.x, p.y, pos.z);
+        }
       }
+      if (p.ground) expect(feetY - p.y, `${label} climbs the kevesh (9 amos)`).toBeCloseTo(4.5, 1);
     }
+  });
+
+  it('a ground-following walker climbs the kevesh with the real floor probe', () => {
+    const p = templePlacements().find((q) => q.ground);
+    const w = makeWalker(p.path, false, 1, [p.x, p.z], (x, z, feetY) => temple.floorUnder(x, z, feetY).y);
+    const g = new THREE.Group();
+    g.position.set(p.x, p.y, p.z);
+    g.userData = { baseY: p.y };
+    let top = p.y;
+    for (let i = 0; i < 60 * 30; i++) {
+      w.step(1 / 60, g);
+      top = Math.max(top, g.position.y);
+    }
+    expect(top).toBeCloseTo(p.y + 4.5, 1); // the ma'aracha level, 9 amos up
+    expect(g.position.y).toBeLessThan(top); // and on its way back down
   });
 
   it('the doves fly in open air', () => {

@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { byId, worldPos, levelWorldY } from '../content/index.js';
+import { AMAH } from '../content/units.js';
 import { mulberry32 } from './random.js';
 import manifest from '../../public/assets/characters/manifest.json';
 
@@ -530,6 +531,10 @@ export class CharacterSystem {
     // No default loader without a DOM (tests): ImageLoader needs `document`.
     this.textureLoader = opts.textureLoader ?? (typeof document === 'undefined' ? null : new THREE.TextureLoader(tex?.manager));
     this.textures = opts.textures ?? CHARACTER_TEXTURES;
+    // Floor probe for the walkers, `(x, z, feetY) => floorY` (TempleGame passes the
+    // PlayerController's floorUnder): a path walker's feet follow the ground, so a loop up
+    // the kevesh climbs it. Without one (tests without a temple) walkers stay on their level.
+    this.floorAt = opts.floorAt ?? null;
     this.loadedTextures = []; // the skin/hair/eye maps, disposed with the system
     this.models = {}; // name -> { scene, animations, bones? } (the source; instances are clones)
     this.humans = [];
@@ -743,7 +748,8 @@ export class CharacterSystem {
    * @param {boolean | {role?: 'kohen'|'kohenGadol'|'levi'|'yisrael', clip?: 'idle'|'talk'|'walk',
    *   facing?: number, path?: number[][], closed?: boolean, speed?: number}} [opts]
    *   `true` is shorthand for the Kohen Gadol. `path` is a polyline of [x, z] the figure
-   *   walks (closed loop or ping-pong) at `speed` m/s with the walk clip.
+   *   walks (closed loop or ping-pong) at `speed` m/s with the walk clip, its feet on the
+   *   floor the system's `floorAt` probe finds (so a path may climb the kevesh).
    */
   createKohen(x, y, z, opts = {}) {
     if (this.humans.length >= LIMITS.humans) {
@@ -787,7 +793,7 @@ export class CharacterSystem {
     g.userData = { type: 'human', role, mixer, action, baseY: y, parts: lodParts(root), tier: 'full' };
     if (o.path && o.path.length >= 2) {
       const speed = o.speed ?? 1.1;
-      g.userData.walker = makeWalker(o.path, o.closed ?? false, speed, [x, z]);
+      g.userData.walker = makeWalker(o.path, o.closed ?? false, speed, [x, z], this.floorAt);
       if (action) action.timeScale = speed / CLIP_SPEED.kohen;
     }
     this.scene.add(g);
@@ -1030,8 +1036,20 @@ function lodParts(root) {
   return parts;
 }
 
-/** A figure moving along a polyline of [x, z] at `speed`, turning toward its direction of travel. */
-export function makeWalker(points, closed, speed, start = null) {
+/**
+ * How far the floor under a walker may change in one step before the probe is distrusted
+ * (a ray that fell through a seam, or found a floor below a ledge): the feet then stay
+ * where they were. Larger than any real slope's rise per frame (the kevesh rises 0.28 per
+ * metre), smaller than a fall.
+ */
+export const WALKER_MAX_STEP = 0.6;
+
+/**
+ * A figure moving along a polyline of [x, z] at `speed`, turning toward its direction of
+ * travel. With `floorAt(x, z, feetY)` the feet follow the ground (probed from the last
+ * height, as the player is); without it they stay at the figure's `baseY`.
+ */
+export function makeWalker(points, closed, speed, start = null, floorAt = null) {
   const pts = points.map(([x, z]) => new THREE.Vector2(x, z));
   const segs = [];
   const n = closed ? pts.length : pts.length - 1;
@@ -1055,7 +1073,7 @@ export function makeWalker(points, closed, speed, start = null) {
       acc += seg.len;
     }
   }
-  const w = { s: s0, dir: 1, total, closed, speed, points: pts };
+  const w = { s: s0, dir: 1, total, closed, speed, points: pts, floorAt };
   /** Position at arc length s (0..total) and the segment heading. */
   w.at = (s, out = new THREE.Vector3()) => {
     let rest = Math.min(Math.max(s, 0), total);
@@ -1074,8 +1092,15 @@ export function makeWalker(points, closed, speed, start = null) {
     if (closed) w.s = ((w.s % total) + total) % total;
     else if (w.s >= total) { w.s = total; w.dir = -1; }
     else if (w.s <= 0) { w.s = 0; w.dir = 1; }
+    const prevY = g.position.y;
     const { pos, yaw } = w.at(w.s, g.position);
-    pos.y = g.userData.baseY;
+    pos.y = prevY;
+    if (w.floorAt) {
+      const y = w.floorAt(pos.x, pos.z, prevY);
+      if (Number.isFinite(y) && Math.abs(y - prevY) <= WALKER_MAX_STEP) pos.y = y;
+    } else {
+      pos.y = g.userData.baseY;
+    }
     const target = w.dir > 0 ? yaw : yaw + Math.PI;
     // Turn smoothly (shortest way round) toward the direction of travel.
     let d = target - g.rotation.y;
@@ -1113,9 +1138,28 @@ export function templePlacements() {
   // Kohanim around the altar (x north/south of it, z east of it); the altar spans
   // x -8..8, z -19..-3 and the kevesh lies south of it.
   const [ax, , az] = at('mizbeach');
-  for (const [dx, dz, facing] of [[10, 10, S], [-10, 10, N], [14, -2, S], [-14, 6, N], [-26, 2, N], [3, 9.5, W], [-4, 10, W]]) {
+  for (const [dx, dz, facing] of [[10, 10, S], [14, -2, S], [-4, 10, W]]) {
     human(ax + dx, kohanimY, az + dz, { facing });
   }
+  // The kevesh (Middot 3:3): a kohen climbs it from the court, a metre and a half before
+  // its foot (x -46 amos), along its axis to the walkway at the edge of the ma'aracha
+  // (the 28-amah tier reaches x -14; the keranos and the walkway take an amah each, so he
+  // stops at x -12.5 amos, 3.5 m from the fire's centre), and comes back down. `ground`
+  // marks the walker whose feet follow the slope (the system's floorAt probe).
+  const [kx, , kz] = at('kevesh');
+  const foot = kx - (byId.kevesh.geometry.d / 2) * AMAH - 1.5; // 1.5 m before the ramp
+  const walkway = ax - (byId.mizbeach.geometry.w / 2 - 3.5) * AMAH; // -12.5 amos
+  human(foot, kohanimY, kz, { path: [[foot, kz], [walkway, kz]], speed: 0.8, ground: true });
+  // Two kohanim at the kiyor (Middot 3:6; Tamid 1:4: the first service of the day is the
+  // washing of hands and feet), on its east side clear of its cistern rim (0.85 amos out
+  // from the laver's 1.5-amah body) and of the muchni on its south, facing the basin.
+  const [wx, , wz] = at('kiyor');
+  human(wx + 1.25, kohanimY, wz + 1.2, { clip: 'talk', facing: Math.atan2(-1.25, -1.2) });
+  human(wx - 1.2, kohanimY, wz + 1.35, { facing: Math.atan2(1.2, -1.35) });
+  // A kohen on the top rovad of the Ulam steps (Middot 3:6: the 4-amah landing against
+  // the Ulam wall, z -72 .. -76), south of the axis, facing the court.
+  const [ux, , uz] = at('maalos_ulam', 0, 0, 'ulam');
+  human(ux - 5, levelWorldY('ulam'), uz - 4.3, { facing: 0.2 });
   // The slaughter lane: a loop between the altar's north face and the rings, out to the tables.
   human(ax + 9.5, kohanimY, az + 7, { path: [[ax + 9.5, az + 7], [ax + 9.5, az - 7], [ax + 24.5, az - 7], [ax + 24.5, az + 7]], closed: true, speed: 1.15 });
   human(ax + 24.5, kohanimY, az - 7, { path: [[ax + 9.5, az + 7], [ax + 9.5, az - 7], [ax + 24.5, az - 7], [ax + 24.5, az + 7]], closed: true, speed: 1.05 });

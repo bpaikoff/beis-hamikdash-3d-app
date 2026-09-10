@@ -4,13 +4,14 @@ import {
   Flame,
   Embers,
   Smoke,
+  Motes,
   noise1,
   flicker,
   flameRamp,
   FLAME_FRAG,
   NOISE_GLSL,
 } from './Flame.js';
-import { ParticleSystem } from './ParticleSystem.js';
+import { ParticleSystem, FX_BUDGET, COLUMN_GLOW } from './ParticleSystem.js';
 
 /** The flame only reads the camera's world position. */
 const stubCamera = (x, y, z) => ({ position: new THREE.Vector3(x, y, z) });
@@ -215,5 +216,70 @@ describe('ParticleSystem', () => {
     expect(scene.getObjectByName('flame')).toBeUndefined();
     expect(scene.getObjectByName('smoke')).toBeUndefined();
     expect(wick.children).toHaveLength(0);
+  });
+
+  it('raises the Tamid smoke column straight up within the sprite budget and glows it at dusk', () => {
+    const scene = new THREE.Scene();
+    const ps = new ParticleSystem(scene);
+    const column = ps.createSmokeColumn(0, 13.05, -11, 4);
+    expect(scene.getObjectByName('smoke-column')).toBe(column);
+    const clouds = column.children.filter((c) => c.name === 'smoke');
+    expect(clouds).toHaveLength(2); // two draw calls: the core and the veil
+    const sprites = clouds.reduce((n, c) => n + c.geometry.attributes.position.count, 0);
+    expect(sprites).toBe(FX_BUDGET.columnCore + FX_BUDGET.columnVeil);
+    expect(sprites).toBeLessThanOrEqual(200);
+    for (const c of clouds) {
+      // Avos 5:5: the column never bent. No wind, a narrow spawn, a tall rise.
+      expect(c.material.uniforms.uDrift.value.length()).toBe(0);
+      expect(c.material.uniforms.uSpread.value).toBeLessThan(1.1);
+      expect(c.material.uniforms.uRise.value).toBeGreaterThanOrEqual(30);
+      expect(c.material.uniforms.uGrow.value).toBeGreaterThanOrEqual(4); // thins with height
+      expect(c.material.uniforms.uOpacity.value).toBeLessThan(0.25);
+      expect(c.material.blending).toBe(THREE.NormalBlending);
+    }
+    // The column starts above the flames (the fire stands ~6 m over a 4 m bed).
+    expect(clouds[0].position.y).toBeGreaterThan(3);
+    // By day the fresh smoke is a warm grey; at dusk the fire lights it orange further up.
+    const hot = () => clouds.map((c) => c.material.uniforms.uColorHot.value.r);
+    const span = () => clouds.map((c) => c.material.uniforms.uHotSpan.value);
+    expect(hot()).toEqual([COLUMN_GLOW.day.hot[0], COLUMN_GLOW.day.hot[0]]);
+    ps.setTimeOfDay('dusk');
+    expect(hot()).toEqual([COLUMN_GLOW.night.hot[0], COLUMN_GLOW.night.hot[0]]);
+    expect(span()[0]).toBeGreaterThan(COLUMN_GLOW.day.hotSpan);
+    ps.setTimeOfDay('morning');
+    expect(hot()[1]).toBe(COLUMN_GLOW.day.hot[0]);
+    ps.update(0.5, stubCamera(-22, 9.75, 0));
+    ps.dispose();
+    expect(scene.getObjectByName('smoke-column')).toBeUndefined();
+    expect(ps.column).toBeNull();
+  });
+
+  it('hangs the incense haze on the golden altar and scatters motes in the doorway light', () => {
+    const scene = new THREE.Scene();
+    const ps = new ParticleSystem(scene);
+    const coals = new THREE.Object3D();
+    scene.add(coals);
+    const { haze, motes } = ps.createHaze(coals, { motesAt: [0, 13.25, -46], box: [4, 1.6, 4.5] });
+    expect(coals.children).toContain(haze);
+    expect(haze.geometry.attributes.position.count).toBe(FX_BUDGET.haze);
+    expect(haze.material.uniforms.uRise.value).toBeLessThan(5); // lingers low
+    expect(haze.material.uniforms.uOpacity.value).toBeLessThan(0.1); // thin
+    expect(haze.material.uniforms.uDrift.value.length()).toBe(0);
+    expect(motes).toBeInstanceOf(Motes);
+    expect(motes.geometry.attributes.position.count).toBe(FX_BUDGET.motes);
+    expect(motes.parent.name).toBe('haze');
+    expect(motes.parent.position.z).toBe(-46);
+    const pos = motes.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      expect(Math.abs(pos.getX(i))).toBeLessThanOrEqual(4);
+      expect(Math.abs(pos.getY(i))).toBeLessThanOrEqual(1.6);
+      expect(Math.abs(pos.getZ(i))).toBeLessThanOrEqual(4.5);
+    }
+    // The whole atmosphere is four draw calls and 400 sprites.
+    expect(Object.values(FX_BUDGET).reduce((a, b) => a + b, 0)).toBe(400);
+    ps.update(0.1, stubCamera(0, 12.75, -44));
+    ps.dispose();
+    expect(scene.getObjectByName('haze')).toBeUndefined();
+    expect(coals.children).toHaveLength(0);
   });
 });

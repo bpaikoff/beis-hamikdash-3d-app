@@ -385,6 +385,7 @@ export class TempleGame {
   setupControls() {
     const p = this.player;
     this.on(document, 'keydown', (e) => {
+      this.audio?.applyState();
       if (this.tour?.active) return; // the rail drives the camera; the TourCard owns the keys
       if (e.code === 'KeyW' || e.code === 'ArrowUp') p.moveF = true;
       if (e.code === 'KeyS' || e.code === 'ArrowDown') p.moveB = true;
@@ -403,7 +404,7 @@ export class TempleGame {
       if (e.code === 'ShiftLeft') p.isRun = false;
     });
     this.on(document, 'mousemove', (e) => p.onMouseMove(e));
-    this.on(this.container, 'click', () => this.requestLock());
+    this.on(this.container, 'click', () => { this.audio?.applyState(); this.requestLock(); }); // a gesture: resume a context the autoplay policy held
     this.on(document, 'pointerlockchange', () => {
       p.isLocked = document.pointerLockElement === this.container;
       this.store.setState({ locked: p.isLocked });

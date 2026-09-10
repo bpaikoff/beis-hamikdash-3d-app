@@ -11,6 +11,7 @@
  */
 import { createStore } from 'zustand/vanilla';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { shallow } from 'zustand/shallow';
 import { useStore as useZustandStore } from 'zustand';
 import { parseTimeOfDay } from './game/sun.js';
 import { loadAudioPrefs, saveAudioPrefs } from './game/Audio.js';
@@ -57,6 +58,7 @@ export const closeAsk = () => store.setState({ askOpen: false });
 
 export const toggleSound = () => store.setState((s) => ({ sound: !s.sound }));
 
-store.subscribe((s) => [s.sound, s.volume], ([sound, volume]) => saveAudioPrefs({ sound, volume }));
+// Shallow-compared: a fresh array/object selector would fire on every frame write.
+store.subscribe((s) => ({ sound: s.sound, volume: s.volume }), (prefs) => saveAudioPrefs(prefs), { equalityFn: shallow });
 
 export const useStore = (selector) => useZustandStore(store, selector);

@@ -793,7 +793,7 @@ export class CharacterSystem {
     g.userData = { type: 'human', role, mixer, action, baseY: y, parts: lodParts(root), tier: 'full' };
     if (o.path && o.path.length >= 2) {
       const speed = o.speed ?? 1.1;
-      g.userData.walker = makeWalker(o.path, o.closed ?? false, speed, [x, z], this.floorAt);
+      g.userData.walker = makeWalker(o.path, o.closed ?? false, speed, [x, z], o.ground ? this.floorAt : null);
       if (action) action.timeScale = speed / CLIP_SPEED.kohen;
     }
     this.scene.add(g);

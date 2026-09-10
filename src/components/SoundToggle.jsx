@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { store, useStore, toggleSound } from '../store.js';
 
 /**
@@ -8,11 +9,23 @@ import { store, useStore, toggleSound } from '../store.js';
 export function SoundToggle() {
   const sound = useStore((s) => s.sound);
   const volume = useStore((s) => s.volume);
+  const ref = useRef(null);
+  // The game container locks the pointer on any native click and React's delegated handler
+  // runs after it (see AskPanel), so the toggle swallows its clicks natively and toggles there.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const swallow = (e) => e.stopPropagation();
+    const onButton = (e) => { e.stopPropagation(); toggleSound(); };
+    const btn = el.querySelector('button');
+    el.addEventListener('click', swallow);
+    btn?.addEventListener('click', onButton);
+    return () => { el.removeEventListener('click', swallow); btn?.removeEventListener('click', onButton); };
+  }, []);
   return (
-    <div className={`panel sound-toggle${sound ? ' on' : ''}`} lang="en">
+    <div ref={ref} className={`panel sound-toggle${sound ? ' on' : ''}`} lang="en">
       <button
         type="button"
-        onClick={toggleSound}
         aria-pressed={sound}
         aria-label={sound ? 'Mute the ambience' : 'Play the ambience'}
         title={sound ? 'Sound on (M)' : 'Sound off (M)'}

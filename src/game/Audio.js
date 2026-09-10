@@ -200,7 +200,7 @@ export class Ambience {
 
   setVolume(v) {
     this.volume = Math.min(1, Math.max(0, Number(v) || 0));
-    if (this.master) this.master.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.05);
+    if (this.master && this.ctx) this.master.gain.setTargetAtTime(this.volume, this.ctx.currentTime, 0.05);
   }
 
   /** Run while enabled and the tab is visible, suspended otherwise. */
@@ -409,6 +409,7 @@ export class Ambience {
     this.ctx = null;
     this.enabled = false;
     this.layers = null;
+    this.master = null;
     ctx?.close?.()?.catch?.(() => {});
   }
 }

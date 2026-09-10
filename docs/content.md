@@ -93,15 +93,19 @@ Conventions:
   carry `outsideWall` and reach the Cheil's outer edge (x ±83.5, the Soreg line) and no
   further. Lishkas HaEtz is the next room west of the Gazis, in the band of its chol half
   and the Cheil (x −67.5 .. −83.5, z −118 .. −148), behind the Golah and beyond the Gazis
-  (Middot 5:4, Abba Shaul), entered from the Gazis' chol half. Palhedrin is in the Cheil
-  beside the Water Gate in the south (the arrangement Yoma 19a raises and leaves unproved;
-  Rambam 5:17 and Meiri put it north) with its floor at the Cheil level and an internal
-  stair to a landing at the court level whose door opens into the Water Gate passage;
-  Beis Avtinas is an upper storey on the north wall over the Korban gate, reached by a
-  stair tower beside the gate (`geometry.stair`). Both stairs and the north/south
-  assignment are reconstructions. The Kohen Gadol's first immersion was on the Water
-  Gate's roof 'beside his chamber' (Yoma 31a), which chamber the Bavli leaves open and
-  Meiri and Yerushalmi Yoma 1:5 take as Beis Avtinas.
+  (Middot 5:4, Abba Shaul), entered from the Gazis' chol half. Since round 7 Beis Avtinas
+  is the upper storey on the south wall over the Water Gate (Yerushalmi Yoma 1:5; Meiri
+  Yoma 19a), x -73.5 .. -61.5, z -24 .. -8, floor y 24, reached by a stair tower in the
+  court beside the gate's west jamb (z -32 .. -23, `geometry.stair`), with the Kohen
+  Gadol's first-immersion mikveh on the wall top against its east wall (Yoma 31a, 'on the
+  roof of the Water Gate, beside his chamber'; the wall top is not walkable). Palhedrin is
+  a chamber of its own in the north Cheil west of Shaar HaKorban (x 73.5 .. 81, z -79 ..
+  -63; Meiri; Rambam 5:17 makes it the Lishkas HaEtz, which this model keeps south) with
+  its floor at the Cheil level and an internal stair, on the Nitzotz tower's plan, to a
+  landing at the court level whose door opens through a bay into the Korban gate passage.
+  Yoma 19a raises the opposite arrangement (Palhedrin south by the Water Gate) and rejects
+  its reasoning; rounds A to 6 built that one. Both stairs, Palhedrin's site and the
+  north/south assignment are reconstructions (`meta.disputes`).
 - Sub-rooms listed under a parent's `children` (Beis HaMoked's four) are flattened by
   `src/content/index.js` into `entries` and `byId` with `parent` set: they keep their own
   id, name, desc, position and sources and inherit type, area, period, icon and questions,

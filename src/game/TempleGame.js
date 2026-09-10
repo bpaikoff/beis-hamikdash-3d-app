@@ -180,7 +180,8 @@ export class TempleGame {
     if (this.disposed) return;
 
     await this.setLoading('Placing Kohanim and animals...');
-    this.characters = new CharacterSystem(this.scene, this.tex);
+    // Walkers' feet follow the floor the player's probe finds (the kohen on the kevesh).
+    this.characters = new CharacterSystem(this.scene, this.tex, { floorAt: (x, z, feetY) => this.player.floorUnder(x, z, feetY).y });
     // The model files (public/assets/characters/) load once through the shared manager;
     // placements derive from the content JSON (CharacterSystem.templePlacements) so they
     // follow the geometry when it moves, and Characters.test.js probes every spot.

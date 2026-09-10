@@ -25,6 +25,12 @@ const FRAME_T = 1;
 /** Door leaf thickness, amos. */
 const DOOR_T = 0.5;
 /**
+ * Thickness of a leaf swung open against a wall's face (amos; 5 cm), for a door in a wall
+ * too thin to fold its leaves inside the reveal (a chamber's 1-amah wall). A leaf folded
+ * into a reveal with no depth left was a zero-thickness box whose two faces z-fought.
+ */
+const LEAF_T = 0.1;
+/**
  * A gate frame stands this much proud of the wall (amos; 5 mm): its jambs into the
  * opening, its lintel below the soffit, and its faces beyond the wall's faces (a chamber
  * wall is as thick as the frame). A face flush with the wall's is drawn over it and
@@ -32,7 +38,7 @@ const DOOR_T = 0.5;
  * outer ends are pulled in by the same amount so they stay buried in the wall beside a
  * neighbouring opening.
  */
-const FRAME_PROUD = 0.01;
+export const FRAME_PROUD = 0.01;
 /** Thickness of a gable's leaning slabs, amos (wallRunA `gable`; a stone slab, not a plank). */
 const GABLE_T = 1;
 /** How far a gable's slabs are buried in the notch above them, amos (2.5 cm: no shared face, no visible gap). */
@@ -297,7 +303,9 @@ export class CourtBuilder extends BaseBuilder {
    * 'closed' (a collidable leaf across the opening) or undefined; `threshold` adds a
    * walkable slab through the wall at `floor`. `solidAbove` makes the wall over the
    * opening collide too (an opening below a court floor, whose lintel is that floor's
-   * wall face); `frameTop` caps the frame's lintel (see gateA).
+   * wall face); `frameTop` caps the frame's lintel, `frameInset` buries the frame inside
+   * a neighbouring opening's frame, `leafSide` says which face open leaves fold against
+   * in a thin wall (see gateA).
    *
    * `gable: { rise, t?, proud?, mat? }` builds the wall over the opening with no lintel:
    * two stone slabs lean from the opening's top corners and meet at a ridge `rise` above
@@ -345,20 +353,28 @@ export class CourtBuilder extends BaseBuilder {
    * Gate furniture inside an opening: merged frame, doors, threshold slab. `frameTop`
    * (amos) caps the frame's lintel, for a gate under a storey whose floor slab is the
    * lintel: the jambs still rise to the opening's top, the lintel is cut or dropped.
+   * `frameInset` (amos) pulls the frame's two faces in and sinks its feet by that much,
+   * for an opening whose jamb stands in the same amah of wall as a neighbouring gate's
+   * (Lishkas Palhedrin's bay beside Shaar HaKorban): 2 x FRAME_PROUD buries this frame's
+   * faces 5 mm inside the other's where the two jambs overlap, so no two cedar faces share
+   * a plane (WoodCoplanar.test.js). Open leaves fold into the reveals where the wall is
+   * thick enough; in a wall thinner than a leaf plus an amah they swing back against the
+   * wall's face on `leafSide` (+1: the `a2` face, -1: the `a1` face), LEAF_T thick.
    */
-  gateA({ along, across: [a1, a2], at, w, floor, h, frame, frameTop = Infinity, doors, doorMat, threshold, thresholdMat, name }) {
+  gateA({ along, across: [a1, a2], at, w, floor, h, frame, frameTop = Infinity, frameInset = 0, doors, doorMat, leafSide = 1, threshold, thresholdMat, name }) {
     const mid = (a1 + a2) / 2;
     const rect = (s, e, c1, c2) => (along === 'x' ? [s, e, c1, c2] : [c1, c2, s, e]);
     if (frame) {
       const P = FRAME_PROUD;
-      const c1 = mid - FRAME_T / 2 - P;
-      const c2 = mid + FRAME_T / 2 + P;
+      const c1 = mid - FRAME_T / 2 - P + frameInset;
+      const c2 = mid + FRAME_T / 2 + P - frameInset;
+      const foot = floor - frameInset;
       const lintelTop = Math.min(floor + h + FRAME_T, frameTop - P);
       const lintel = lintelTop > floor + h + 1e-6;
       const jambTop = lintel ? floor + h - P : floor + h; // the jambs end where the lintel begins
       const parts = [
-        this.frameBox(...rect(at - w / 2 - FRAME_T + P, at - w / 2 + P, c1, c2), floor, jambTop, frame),
-        this.frameBox(...rect(at + w / 2 - P, at + w / 2 + FRAME_T - P, c1, c2), floor, jambTop, frame),
+        this.frameBox(...rect(at - w / 2 - FRAME_T + P, at - w / 2 + P, c1, c2), foot, jambTop, frame),
+        this.frameBox(...rect(at + w / 2 - P, at + w / 2 + FRAME_T - P, c1, c2), foot, jambTop, frame),
       ];
       if (lintel) parts.push(this.frameBox(...rect(at - w / 2 - FRAME_T + P, at + w / 2 + FRAME_T - P, c1, c2), floor + h - P, lintelTop, frame));
       const geo = BufferGeometryUtils.mergeGeometries(parts, false);
@@ -373,11 +389,23 @@ export class CourtBuilder extends BaseBuilder {
     if (doors === 'closed') {
       this.wallA(...rect(at - w / 2, at + w / 2, mid - DOOR_T / 2, mid + DOOR_T / 2), floor, floor + h - FRAME_T / 2, leaf);
     } else if (doors === 'open') {
-      // Two leaves folded back against the reveals, leaving the opening clear.
       const depth = Math.min(w / 2, a2 - a1 - 1);
-      for (const side of [-1, 1]) {
-        const s = at + side * (w / 2 - DOOR_T);
-        this.decoA(...rect(Math.min(s, s + side * DOOR_T), Math.max(s, s + side * DOOR_T), mid - depth / 2, mid + depth / 2), floor, floor + h - FRAME_T / 2, leaf);
+      const top = floor + h - FRAME_T / 2;
+      if (depth >= DOOR_T) {
+        // Two leaves folded back against the reveals, leaving the opening clear.
+        for (const side of [-1, 1]) {
+          const s = at + side * (w / 2 - DOOR_T);
+          this.decoA(...rect(Math.min(s, s + side * DOOR_T), Math.max(s, s + side * DOOR_T), mid - depth / 2, mid + depth / 2), floor, top, leaf);
+        }
+      } else {
+        // A thin wall: the leaves swing back flat against its face beside the opening,
+        // each as wide as half the opening, covering the jamb's proud face.
+        const face = leafSide > 0 ? a2 : a1;
+        const [f1, f2] = leafSide > 0 ? [face, face + LEAF_T] : [face - LEAF_T, face];
+        for (const side of [-1, 1]) {
+          const s = at + side * (w / 2);
+          this.decoA(...rect(Math.min(s, s + side * (w / 2)), Math.max(s, s + side * (w / 2)), f1, f2), floor, top, leaf);
+        }
       }
     }
     if (threshold) this.floorA(...rect(at - w / 2, at + w / 2, a1, a2), floor, thresholdMat ?? this.mat.stonePolished, name);
@@ -499,7 +527,9 @@ export class CourtBuilder extends BaseBuilder {
     };
     for (const f of Object.keys(faces)) {
       if (skip.includes(f)) continue;
-      const openings = doors.filter((d) => d.face === f).map((d) => ({ ...d, floor: d.floor ?? floor + LIP, name: d.name ?? name }));
+      // Open leaves in a chamber's thin wall swing back against its outer face (n/e: the far side of the across extent).
+      const outer = f === 'n' || f === 'e' ? 1 : -1;
+      const openings = doors.filter((d) => d.face === f).map((d) => ({ ...d, floor: d.floor ?? floor + LIP, name: d.name ?? name, leafSide: d.leafSide ?? outer }));
       this.wallRunA({ ...faces[f], y1, y2: floor + h, mat: wm, openings });
     }
     if (roof === 'walk') this.floorA(x1, x2, z1, z2, floor + h + 1, roofMat ?? wm, `${name ?? 'room'} roof`);

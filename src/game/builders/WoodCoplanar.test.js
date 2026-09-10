@@ -17,9 +17,10 @@ const TOL = 1e-3; // metres: two planes closer than this are "the same"
 // and a band narrower than this (the 5 mm the frames stand proud, doubled where two
 // frames meet through a wall, or a frame's foot on a leaf's at floor level) is buried.
 const MIN_OVERLAP = 0.02;
-// Palhedrin is rebuilt north of the Korban gate in round 7 (r7/flip); its old bay, upper
-// door and stair are excluded until that lands. Drop this after the merge.
-const EXCLUDE = /palhedrin/;
+// Names excluded from the wood assertion (none since the r7/flip merge: Palhedrin's bay
+// frame is buried inside Shaar HaKorban's with `frameInset`, and open leaves in a thin
+// wall fold against its face instead of into a reveal with no depth).
+const EXCLUDE = /$^/;
 
 let scene;
 let mat;
@@ -131,6 +132,18 @@ describe('coplanar faces in the built scene', () => {
   it('decomposes the scene into a few thousand axis-aligned boxes', () => {
     const { boxes } = coplanarPairs(scene);
     expect(boxes).toBeGreaterThan(1000);
+  });
+
+  it('no visible box is flat (a zero extent draws two coincident faces that fight each other)', () => {
+    // gateA's open leaves in a 1-amah chamber wall were folded into a reveal with no depth
+    // left: a box 0 thick (Lishkas Palhedrin's Cheil door, the Gazis' north door).
+    const flat = [];
+    scene.traverse((o) => {
+      const pr = o.isMesh && o.visible && o.geometry?.parameters;
+      if (!pr || !('width' in pr && 'height' in pr && 'depth' in pr)) return;
+      if (pr.width < 1e-6 || pr.height < 1e-6 || pr.depth < 1e-6) flat.push(`${o.name || o.parent?.name || '(unnamed)'} ${pr.width.toFixed(3)} x ${pr.height.toFixed(3)} x ${pr.depth.toFixed(3)} at (${o.position.x.toFixed(2)}, ${o.position.y.toFixed(2)}, ${o.position.z.toFixed(2)})`);
+    });
+    expect(flat).toEqual([]);
   });
 
   it('no wood face shares a plane with another face that looks the same way', () => {

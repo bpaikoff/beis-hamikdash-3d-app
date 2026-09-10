@@ -98,7 +98,10 @@ export const routes = {
   // goes in through the Beis HaMoked's Cheil door into its vestibule (stairs.mjs walks the stair).
   cheil: [
     amos(0, 165, HB),
-    at('cheil', CH), // in through the opening opposite the Ezras Nashim gate
+    // In through the Soreg opening opposite the Ezras Nashim gate, to a tight point in the
+    // strip (z 153 .. 157): a leg reached 1.2 m short from the opening still stands in the
+    // Soreg's line and the turn north then catches on the opening's post (x 5).
+    amos(0, 154.5, { ...CH, reach: 0.3 }),
     amos(78.5, 155, CH),
     amos(78.5, 2, CH), // north strip, up to the Beis HaMoked
     amos(78.5, 155, CH),

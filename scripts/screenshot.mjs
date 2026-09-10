@@ -65,6 +65,12 @@ const VIEWS = [
   // above on the left; and the Avtinas storey and its tower over the Water Gate from the court.
   { name: 'palhedrin_north', cam: '39.5,1.75,-19,8,12' },
   { name: 'avtinas_south', cam: '-12.5,9.75,-1,82,24' },
+  // The round 7 walker's views: Palhedrin's lower flight from the entry strip inside its
+  // Cheil door (x 78.5, z -64.3 amos, eye on the pavement, looking west up the treads to the
+  // turn landing), and the Avtinas stair tower with its court door from the court to its
+  // north-east (x -45, z -40 amos, looking south-west; the storey's corbels over the gate).
+  { name: 'palhedrin_stair_foot', cam: '39.25,1.75,-24.15,0,6' },
+  { name: 'avtinas_tower_court', cam: '-22.5,9.75,-12,119,18' },
   { name: 'madichin_stair', cam: '28,9.75,-40,-53,5' }, // the stair to the terrace from inside the Madichin, with its balustrade
   // Guided tour stops (`?tour=<id>&stop=N`, N 1-based): the rail stands the camera at the
   // stop and the script waits for the tour to dwell there, so the card is in the frame.

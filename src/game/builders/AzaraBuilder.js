@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import * as BufferGeometryUtils from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { CHEIL_LIP, CourtBuilder, GROUND, LIP, ROOM_WALL_T, SLAB, STEP_RISE, WALL_T } from './CourtBuilder.js';
+import { CHEIL_LIP, CourtBuilder, FRAME_PROUD, GROUND, LIP, ROOM_WALL_T, SLAB, STEP_RISE, WALL_T } from './CourtBuilder.js';
 import { instance } from '../instanced.js';
 import { AMAH } from '../../content/units.js';
 import { entries } from '../../content/index.js';
@@ -277,7 +277,9 @@ export class AzaraBuilder extends CourtBuilder {
           this.gateOpening('nitzotz_gate', 'z', { labels: ['shaar_yechonya'] }),
           { at: (nBay.z1 + nBay.z2) / 2, w: nBay.z2 - nBay.z1, h: nBay.h, floor: this.yKohanim, threshold: true, name: 'nitzotz wicket passage' }, // round 6
           ...(av ? av.cuts : [this.gateOpening('korban_gate', 'z')]),
-          { at: (pBay.z1 + pBay.z2) / 2, w: pBay.z2 - pBay.z1, h: pBay.h, floor: this.yKohanim, threshold: true, frame: this.mat.cedar, entry: 'lishkas_palhedrin', name: 'lishkas_palhedrin passage' }, // round 7
+          // Round 7. The bay's east jamb stands in the amah of wall that carries the gate's west
+          // jamb: its frame is buried 2 x FRAME_PROUD inside the gate's so no two cedar faces share a plane.
+          { at: (pBay.z1 + pBay.z2) / 2, w: pBay.z2 - pBay.z1, h: pBay.h, floor: this.yKohanim, threshold: true, frame: this.mat.cedar, frameInset: 2 * FRAME_PROUD, entry: 'lishkas_palhedrin', name: 'lishkas_palhedrin passage' },
           this.gateOpening('shaar_hanashim', 'z'),
           { at: (z1 + z2) / 2, w: z2 - z1, cut: true },
         ],

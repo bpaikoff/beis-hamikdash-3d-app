@@ -171,9 +171,11 @@ export const routes = {
     on(78.5, -88.25, -12),
     p(78.5, -85.5, C, { reach: 0.4 }), // the entry strip inside the wicket
     p(78.5, -81.5, C, { reach: 0.4 }), // out through the wicket onto the Cheil
-    p(78.5, -78, C),
+    p(82.4, -80.5, C, { reach: 0.4 }), // to the lane along the Soreg (Lishkas Palhedrin, round 7, fills x 73.5 .. 81 at z -79 .. -63)
+    p(82.4, -78, C, { reach: 0.4 }),
     p(90, -78, HB), // out opposite Shaar HaNitzotz
-    p(78.5, -78, C),
+    p(82.4, -78, C, { reach: 0.4 }),
+    p(82.4, -80.5, C, { reach: 0.4 }),
     p(78.5, -81.5, C, { reach: 0.4 }),
     p(78.5, -85.5, C, { reach: 0.4 }),
     on(78.5, -88.25, -12),
@@ -201,7 +203,7 @@ export const routes = {
     p(90, -58, HB),
     p(78.5, -58, C),
     p(82.4, -60, C, { reach: 0.4 }),
-    p(82.4, -104, C, { reach: 0.4 }), // past the tower (x to 81, z -99 .. -83)
+    p(82.4, -104, C, { reach: 0.4 }), // past Lishkas Palhedrin (round 7: x to 81, z -79 .. -63) and the tower (x to 81, z -99 .. -83)
     p(78.5, -106, C),
     p(82.4, -104, C, { reach: 0.4 }),
     p(82.4, -60, C, { reach: 0.4 }),

@@ -93,15 +93,19 @@ Conventions:
   carry `outsideWall` and reach the Cheil's outer edge (x ±83.5, the Soreg line) and no
   further. Lishkas HaEtz is the next room west of the Gazis, in the band of its chol half
   and the Cheil (x −67.5 .. −83.5, z −118 .. −148), behind the Golah and beyond the Gazis
-  (Middot 5:4, Abba Shaul), entered from the Gazis' chol half. Palhedrin is in the Cheil
-  beside the Water Gate in the south (the arrangement Yoma 19a raises and leaves unproved;
-  Rambam 5:17 and Meiri put it north) with its floor at the Cheil level and an internal
-  stair to a landing at the court level whose door opens into the Water Gate passage;
-  Beis Avtinas is an upper storey on the north wall over the Korban gate, reached by a
-  stair tower beside the gate (`geometry.stair`). Both stairs and the north/south
-  assignment are reconstructions. The Kohen Gadol's first immersion was on the Water
-  Gate's roof 'beside his chamber' (Yoma 31a), which chamber the Bavli leaves open and
-  Meiri and Yerushalmi Yoma 1:5 take as Beis Avtinas.
+  (Middot 5:4, Abba Shaul), entered from the Gazis' chol half. Since round 7 Beis Avtinas
+  is the upper storey on the south wall over the Water Gate (Yerushalmi Yoma 1:5; Meiri
+  Yoma 19a), x -73.5 .. -61.5, z -24 .. -8, floor y 24, reached by a stair tower in the
+  court beside the gate's west jamb (z -32 .. -23, `geometry.stair`), with the Kohen
+  Gadol's first-immersion mikveh on the wall top against its east wall (Yoma 31a, 'on the
+  roof of the Water Gate, beside his chamber'; the wall top is not walkable). Palhedrin is
+  a chamber of its own in the north Cheil west of Shaar HaKorban (x 73.5 .. 81, z -79 ..
+  -63; Meiri; Rambam 5:17 makes it the Lishkas HaEtz, which this model keeps south) with
+  its floor at the Cheil level and an internal stair, on the Nitzotz tower's plan, to a
+  landing at the court level whose door opens through a bay into the Korban gate passage.
+  Yoma 19a raises the opposite arrangement (Palhedrin south by the Water Gate) and rejects
+  its reasoning; rounds A to 6 built that one. Both stairs, Palhedrin's site and the
+  north/south assignment are reconstructions (`meta.disputes`).
 - Sub-rooms listed under a parent's `children` (Beis HaMoked's four) are flattened by
   `src/content/index.js` into `entries` and `byId` with `parent` set: they keep their own
   id, name, desc, position and sources and inherit type, area, period, icon and questions,
@@ -268,6 +272,49 @@ after the first frame, `?tour=tamid&stop=5` starts at a stop (1-based); the star
   with the altar, the kevesh wedge and the Duchan) and the tour's transitions.
 
 ## Review log
+
+### 2026-09-10 — Round 7 (Beis Avtinas south, Lishkas Palhedrin north)
+
+Decision: Yoma 19a leaves the sides of the Kohen Gadol's two chambers open (its suggestion
+that Palhedrin was the southern one beside the Water Gate is rejected); the model follows the
+sources that commit: Meiri (Yoma 19a) states Palhedrin north and Beis Avtinas south beside
+the Water Gate, Yerushalmi Yoma 1:5 puts Beis Avtinas over the Water Gate, Rambam Beis
+HaBechirah 5:17 and Bartenura (Middot 5:4) make Palhedrin the Lishkas HaEtz, north on their
+text. Content: `beis_avtinas.position` x 67.5 -> -67.5, z -58 -> -16 (the storey over
+`water_gate`, floor y 24 unchanged; `geometry.stair` "from the court beside the Water
+Gate"); `lishkas_palhedrin.position` x -78.5 -> 78.5, z -29 -> -65.5 (the entry strip
+inside its Cheil door), `outsideWall` south -> north, `geometry.w` 10 -> 7.5 (x 73.5 .. 81,
+z -79 .. -63, so the Cheil lane along the Soreg stays 2.5 amos); notes and descriptions on
+both, on `water_gate` and `korban_gate`, a new `meta.disputes` entry, `Jerusalem Talmud
+Yoma 1:5` added to the sources (verify_refs: 197 refs, 0 bad). The model keeps Lishkas
+HaEtz south with the printed Mishnah, so Palhedrin's northern site, size, stair and bay are
+a reconstruction, as are the Avtinas tower and the storey's size; Middot 1:1's three
+Kohanim watch-posts no longer all lie north (the Mishnah does not say they do).
+
+Builders (`AzaraBuilder`): `avtinasWall(side)` cuts whichever court wall carries the storey
+and its tower and builds the run under the floor slab with the gate's capped lintel;
+`avtinasTower` is side-aware (south: west of the storey at z -32 .. -23, sharing its west
+wall, court door on the tower's west face x -65 .. -62.5, flights mirrored); the
+first-immersion mikveh moves from the wall top over the gate to the wall top against the
+storey's east wall (y 30, over the gate's east jamb; not walkable, seen only).
+`buildLishkasPalhedrin` builds the chamber on the Nitzotz tower's plan (`buildNitzotzWicket`):
+a 2.5 x 6 Cheil door in its east wall at x 78.5, a 3 x 3 entry strip, a lower flight of 16
+half-amah steps along the Soreg side (x 77 .. 80) west to a landing across the west end, an
+upper flight along the wall side (x 73.5 .. 76.5) back east to the landing at the court
+level, which opens through a 3-amah bay (z -67 .. -64, cedar frame) beside Shaar HaKorban's
+west jamb into the passage. The old southern room and its Water Gate bay are removed (the
+bay is closed, not reused: the tower's court door is on the court side). Tests:
+`CourtBuilders.test.js` (storey interior, wall under it, Water Gate lintel at 23.2, Korban
+lintel back at 23.5, band walls, Palhedrin's walls, door, bay and the lane) and
+`AzarahRoutes.test.js` (Palhedrin's strip, treads, landings and bay; the tower's landings
+and the storey floor; the lane >= 0.8 m). Routes: `azarah_palhedrin`, `azarah_avtinas`,
+`azarah_hug_avtinas`, `r3_avtinas_storey` rewritten at the new positions; `azarah_kohanim`
+(x -60 past the tower), `azarah_hug_south` (round the tower), `azarah_hug_north` and
+`azarah_gates_north` (no tower), `cheil`, `cheil_ring`, `soreg_openings`, `r6n_tadi_to_nitzotz`,
+`r6n_cheil_nashim_to_moked_door`, `r6n_cheil_blocked`, `r6_nitzotz_wicket` (the Soreg
+opening opposite Shaar HaNitzotz now gives onto the lane at x 82.4, since Palhedrin's west
+end stands opposite it). Screenshots: `avtinas_storey` re-aimed, new `palhedrin_north` and
+`avtinas_south`. No tour stop visited either chamber.
 
 ### 2026-09-09 — Round 6 (Middot 1:9 passage, Nitzotz opening, second reading of Yoma 19a)
 

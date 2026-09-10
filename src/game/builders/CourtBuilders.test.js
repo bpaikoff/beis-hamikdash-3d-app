@@ -215,7 +215,9 @@ describe('court builders', () => {
     for (const id of ['water_gate', 'bechoros_gate', 'delek_gate', 'shaar_elyon', 'nitzotz_gate', 'korban_gate', 'shaar_hanashim']) {
       const g = byId[id];
       const s = Math.sign(g.position.x);
-      const { last } = walk([[s * 90, g.position.z], [s * 78.5, g.position.z]]);
+      // Round 7: Lishkas Palhedrin (x 73.5 .. 81, z -79 .. -63) fills the Cheil opposite Shaar HaNitzotz's opening up to the lane along the Soreg (x 81 .. 83.5).
+      const xIn = id === 'nitzotz_gate' ? 82.4 : 78.5;
+      const { last } = walk([[s * 90, g.position.z], [s * xIn, g.position.z]]);
       expect(last, id).toBeCloseTo(cheil, 1);
     }
     for (const id of ['shaar_maaravi_north', 'shaar_maaravi_south']) {
@@ -236,25 +238,34 @@ describe('court builders', () => {
       expect(solidAt(x, 1, 3), `klei shir lintel x ${x}`).toBe(true);
       expect(solidAt(x, -3, 3), `klei shir door x ${x}`).toBe(false);
     }
-    // The Beis Avtinas storey's interior (floor y 24) is clear of the north wall, which stands under its floor with the Korban gate in it.
-    for (const z of [-64, -58, -52]) expect(solidAt(70, 25, z), `storey interior z ${z}`).toBe(false);
-    for (const z of [-64.5, -51.5]) expect(solidAt(70, 10, z), `wall under the storey z ${z}`).toBe(true);
-    for (const z of [-64.5, -51.5]) expect(solidAt(70, 23, z), `wall under the storey slab z ${z}`).toBe(true);
-    expect(solidAt(70.5, 10, -58), 'korban gate leaves').toBe(true);
-    expect(solidAt(69, 10, -58), 'korban gate reveal').toBe(false);
-    // The gate's frame keeps its lintel between the gate's top (22.5) and the storey's slab
-    // (23.2), stopping 0.01 amah short of the slab (CourtBuilder FRAME_PROUD, round 7).
-    const lintel = built.scene.getObjectByName('korban_gate frame');
-    expect(lintel, 'korban gate frame').toBeTruthy();
+    // The Beis Avtinas storey's interior (floor y 24; round 7: over the Water Gate, x -73.5 .. -61.5, z -24 .. -8) is clear of the south wall, which stands under its floor with the gate in it.
+    for (const z of [-22, -16, -10]) expect(solidAt(-70, 25, z), `storey interior z ${z}`).toBe(false);
+    for (const z of [-22.5, -9.5]) expect(solidAt(-70, 10, z), `wall under the storey z ${z}`).toBe(true);
+    for (const z of [-22.5, -9.5]) expect(solidAt(-70, 23, z), `wall under the storey slab z ${z}`).toBe(true);
+    expect(solidAt(-70.5, 10, -16), 'water gate leaves').toBe(true);
+    expect(solidAt(-69, 10, -16), 'water gate reveal').toBe(false);
+    // The Korban gate, no longer under the storey, has its full frame with the lintel over the opening (2.5 + 20 + 1).
+    const korban = new THREE.Box3().setFromObject(built.scene.getObjectByName('korban_gate frame'));
+    expect(korban.max.y).toBeCloseTo(toWorld({ x: 0, y: 23.5, z: 0 })[1], 2);
+    // The gate's frame keeps its lintel between the gate's top (22.5) and the storey's slab (23.2).
+    const lintel = built.scene.getObjectByName('water_gate frame');
+    expect(lintel, 'water gate frame').toBeTruthy();
     const frameBox = new THREE.Box3().setFromObject(lintel);
+    // (stopping 0.01 amah short of the slab: CourtBuilder FRAME_PROUD, round 7)
     expect(frameBox.max.y).toBeCloseTo(toWorld({ x: 0, y: 23.2 - 0.01, z: 0 })[1], 3);
-    // Balustrades between the stair tower's flights, open at the landing that joins each pair.
-    expect(solidAt(66, 5, -44.75)).toBe(true);
-    expect(solidAt(70, 5, -46.5)).toBe(true);
-    expect(solidAt(66, 5, -48.25)).toBe(true);
-    expect(solidAt(71.25, 5, -44.75), 'landing 0').toBe(false);
-    expect(solidAt(63.75, 5, -46.5), 'landing 1').toBe(false);
-    expect(solidAt(67.5, 5, -43.9), 'flight 0').toBe(false);
+    // Balustrades between the stair tower's flights (x -73.5 .. -61.5, z -32 .. -23; bands of 1.75 from the door end z -31), open at the landing that joins each pair.
+    expect(solidAt(-66, 5, -29.25)).toBe(true);
+    expect(solidAt(-70, 5, -27.5)).toBe(true);
+    expect(solidAt(-66, 5, -25.75)).toBe(true);
+    expect(solidAt(-71.25, 5, -29.25), 'landing 0').toBe(false);
+    expect(solidAt(-63.75, 5, -27.5), 'landing 1').toBe(false);
+    expect(solidAt(-67.5, 5, -30.1), 'flight 0').toBe(false);
+    // Lishkas Palhedrin (round 7) closes the north Cheil at x 73.5 .. 81, z -79 .. -63, and leaves the lane to the Soreg open.
+    expect(solidAt(80.5, -12, -71), "Palhedrin's north wall").toBe(true);
+    expect(solidAt(82, -12, -71), 'the Cheil lane').toBe(false);
+    expect(solidAt(78.5, -12, -63.5), "Palhedrin's Cheil door").toBe(false);
+    expect(solidAt(70.5, 4, -65.5), "Palhedrin's bay through the north wall").toBe(false);
+    expect(solidAt(70.5, -5, -65.5), 'the wall under the bay').toBe(true);
   });
 
   it('climbs from the Cheil into Beis HaMoked and Lishkas HaGazis by their vestibules and switchback stairs', () => {

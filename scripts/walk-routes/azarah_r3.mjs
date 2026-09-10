@@ -23,7 +23,7 @@ const S = (x, z, o = {}) => p(x, z, K, { reach: 0.4, minY: 10, ...o });
  * gap between the slaughter tables (x 51.5 .. 52.5, z -27.5 .. -50.5) and between the
  * hanging pillars (x 57.5 .. 58.5, z -27.5 .. -49.5) now that they end at z -27.5
  * beside Beis HaMoked's corner (z -26), the Beis Avtinas storey at y 24 and its
- * 43-step tower, the 2.5-amah slot between the Ulam's north wing and the narrowed
+ * 43-step tower (over the Water Gate since round 7), the 2.5-amah slot between the Ulam's north wing and the narrowed
  * Madichin (x 50 .. 52.5 at z -92), the terrace parapet's return at z -108, and the
  * two Cheil stairs (GEO-D) with a `blocked` leg into every open side of every flight
  * and landing, and the kodesh / chol line in both chambers.
@@ -95,7 +95,7 @@ export const routes = {
 
   // (c) Every gap between the eight pillars (two amos wide, z -29.5, -32.5 .. -47.5),
   // zigzagging between the lane (x 55) and the strip under the wall (x 60.5, clear of
-  // the Beis Avtinas tower's wall at x 61.5 beside the last three), then the
+  // the north wall; the Beis Avtinas tower stood at x 61.5 beside the last three until round 6), then the
   // hall's west face (z -26) hugged from the tables' column to the court wall and back,
   // and the lane between that face and the first table / first pillar (z -27.5).
   r3_pillar_gaps: [
@@ -132,56 +132,57 @@ export const routes = {
     p(50, -24, K),
   ],
 
-  // (d) Beis Avtinas: up the tower's four flights (11, 11, 11, 10 half-amah steps) to
-  // the storey 21.5 amos over the court, round the storey floor (x 62.5 .. 72.5,
-  // z -65 .. -51) hugging its four walls, into each wall (the north wall stands over
-  // the Cheil, 37 amos below), into the tower's outer walls from the top landing, and
-  // down again.
+  // (d) Beis Avtinas (round 7: the storey over the Water Gate, x -73.5 .. -61.5,
+  // z -24 .. -8; its tower west of it, z -32 .. -23, court door on the west face): up the
+  // tower's four flights (11, 11, 11, 10 half-amah steps) to the storey 21.5 amos over
+  // the court, round the storey floor (x -72.5 .. -62.5, z -23 .. -9) hugging its four
+  // walls, into each wall (the south wall stands over the Cheil, 37 amos below), into the
+  // tower's outer walls from the top landing, and down again.
   r3_avtinas_storey: [
-    p(60, -30, K),
-    p(63.75, -38, K),
-    p(63.75, -43.9, K, { reach: 0.4 }),
-    p(67.5, -43.9, K, { reach: 0.4, minY: 1 }),
-    p(71.25, -44.75, K, { reach: 0.4, minY: 2.5 }),
-    p(67.5, -45.6, K, { reach: 0.4, minY: 3.5 }),
-    p(63.75, -46.5, K, { reach: 0.4, minY: 5 }),
-    p(67.5, -47.4, K, { reach: 0.4, minY: 6 }),
-    p(71.25, -48.25, K, { reach: 0.4, minY: 7.5 }),
-    p(67.5, -49.1, K, { reach: 0.4, minY: 8.5 }),
-    S(63.75, -49.1), // the top landing (x 62.5 .. 65, z -50 .. -48.25)
-    S(63.75, -47, { ...blocked, minY: 8 }), // the band wall at z -48.25: beyond it the second landing lies 10.5 amos down
-    S(63.75, -49.1),
-    S(61, -49.1, blocked), // the tower's south wall
-    S(63.75, -49.1),
-    S(63.75, -53), // through the storey door (x 62.5 .. 65, z -51 .. -50)
+    p(-60, -40, K),
+    p(-63.75, -38, K),
+    p(-63.75, -30.1, K, { reach: 0.4 }),
+    p(-67.5, -30.1, K, { reach: 0.4, minY: 1 }),
+    p(-71.25, -29.25, K, { reach: 0.4, minY: 2.5 }),
+    p(-67.5, -28.4, K, { reach: 0.4, minY: 3.5 }),
+    p(-63.75, -27.5, K, { reach: 0.4, minY: 5 }),
+    p(-67.5, -26.6, K, { reach: 0.4, minY: 6 }),
+    p(-71.25, -25.75, K, { reach: 0.4, minY: 7.5 }),
+    p(-67.5, -24.9, K, { reach: 0.4, minY: 8.5 }),
+    S(-63.75, -24.9), // the top landing (x -65 .. -62.5, z -25.75 .. -24)
+    S(-63.75, -27, { ...blocked, minY: 8 }), // the band wall at z -25.75: beyond it the second landing lies 10.5 amos down
+    S(-63.75, -24.9),
+    S(-61, -24.9, blocked), // the tower's north wall
+    S(-63.75, -24.9),
+    S(-63.75, -21), // through the storey door (x -65 .. -62.5, z -24 .. -23)
     at('beis_avtinas', { level: K, minY: 10 }),
-    S(61, -58, blocked), // the south wall (x 61.5 .. 62.5)
+    S(-61, -14, blocked), // the north wall (x -62.5 .. -61.5)
     at('beis_avtinas', { level: K, minY: 10 }),
-    S(75, -58, blocked), // the north wall (x 72.5 .. 73.5), over the Cheil
+    S(-75, -14, blocked), // the south wall (x -73.5 .. -72.5), over the Cheil
     at('beis_avtinas', { level: K, minY: 10 }),
-    S(67.5, -68, blocked), // the west wall (z -66 .. -65)
+    S(-67.5, -6, blocked), // the east wall (z -9 .. -8)
     at('beis_avtinas', { level: K, minY: 10 }),
-    S(67.5, -48, blocked), // the east wall (z -51 .. -50) beside the door
+    S(-67.5, -26, blocked), // the west wall (z -24 .. -23) beside the door
     at('beis_avtinas', { level: K, minY: 10 }),
-    S(63.3, -58),
-    S(63.3, -64.2),
-    S(71.7, -64.2),
-    S(71.7, -51.8),
-    S(63.3, -51.8),
-    S(63.3, -58),
+    S(-63.3, -14),
+    S(-63.3, -9.8),
+    S(-71.7, -9.8),
+    S(-71.7, -22.2),
+    S(-63.3, -22.2),
+    S(-63.3, -14),
     at('beis_avtinas', { level: K, minY: 10 }),
-    S(63.75, -53),
-    S(63.75, -49.1),
-    p(67.5, -49.1, K, { reach: 0.4, minY: 8.5 }),
-    p(71.25, -48.25, K, { reach: 0.4, minY: 7.5 }),
-    p(67.5, -47.4, K, { reach: 0.4, minY: 6 }),
-    p(63.75, -46.5, K, { reach: 0.4, minY: 5 }),
-    p(67.5, -45.6, K, { reach: 0.4, minY: 3.5 }),
-    p(71.25, -44.75, K, { reach: 0.4, minY: 2.5 }),
-    p(67.5, -43.9, K, { reach: 0.4, minY: 1 }),
-    p(63.75, -43.9, K, { reach: 0.4 }),
-    p(63.75, -38, K),
-    p(60, -30, K),
+    S(-63.75, -21),
+    S(-63.75, -24.9),
+    p(-67.5, -24.9, K, { reach: 0.4, minY: 8.5 }),
+    p(-71.25, -25.75, K, { reach: 0.4, minY: 7.5 }),
+    p(-67.5, -26.6, K, { reach: 0.4, minY: 6 }),
+    p(-63.75, -27.5, K, { reach: 0.4, minY: 5 }),
+    p(-67.5, -28.4, K, { reach: 0.4, minY: 3.5 }),
+    p(-71.25, -29.25, K, { reach: 0.4, minY: 2.5 }),
+    p(-67.5, -30.1, K, { reach: 0.4, minY: 1 }),
+    p(-63.75, -30.1, K, { reach: 0.4 }),
+    p(-63.75, -38, K),
+    p(-60, -40, K),
   ],
 
   // (e) The 2.5-amah slot between the Ulam's north wing (x 35 .. 50, z -76 .. -92) and

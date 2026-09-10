@@ -37,7 +37,8 @@ export const routes = {
     p(197.5, -20, HB),
     p(180, -25, HB),
     p(90, -78, HB),
-    p(78.5, -78, C), // in through the Soreg opening
+    p(82.4, -78, C, { reach: 0.4 }), // in through the Soreg opening onto the lane (Lishkas Palhedrin, round 7, fills x 73.5 .. 81 at z -79 .. -63)
+    p(82.4, -80.5, C, { reach: 0.4 }),
     p(78.5, -81.5, C, { reach: 0.4 }), // the wicket, in the tower's east face
     p(78.5, -85.5, C, { reach: 0.4 }), // the entry strip
     on(78.5, -88.25, -12), // the lower flight up
@@ -201,15 +202,15 @@ export const routes = {
     p(82.4, -41, C, { reach: 0.4 }), // the lane past the bath-house (x to 81.5)
     p(82.4, -53.5, C, { reach: 0.4 }),
     p(78.5, -58, C), // Shaar HaKorban's front
-    p(80, -80, C, { reach: 0.4 }),
-    p(82.4, -82, C, { reach: 0.4 }), // the lane past the tower (x to 81)
+    p(82.4, -60, C, { reach: 0.4 }), // the lane past Lishkas Palhedrin (round 7: x to 81, z -79 .. -63)
+    p(82.4, -82, C, { reach: 0.4 }), // and past the tower (x to 81)
     p(82.4, -100.5, C, { reach: 0.4 }),
     p(78.5, -104, C),
     p(76, -110, C), // the Cheil beyond the tower, against the wall
     p(78.5, -104, C),
     p(82.4, -100.5, C, { reach: 0.4 }),
     p(82.4, -82, C, { reach: 0.4 }),
-    p(80, -80, C, { reach: 0.4 }),
+    p(82.4, -60, C, { reach: 0.4 }),
     p(78.5, -58, C),
     p(82.4, -53.5, C, { reach: 0.4 }),
     p(82.4, -41, C, { reach: 0.4 }),
@@ -298,15 +299,23 @@ export const routes = {
     p(82.4, -53.5, C, { reach: 0.4 }),
     p(78.5, -56, C),
     p(78.5, -49, C, { ...blocked, minY: 0 }), // its west wall from Shaar HaKorban's front
+    p(75.5, -58, C),
+    p(75.5, -65, C, { ...blocked, minY: 0 }), // Lishkas Palhedrin's east wall beside its door (round 7)
     p(78.5, -58, C),
-    p(78.5, -78, C),
-    p(76, -80, C, { reach: 0.4 }),
+    p(82.4, -60, C, { reach: 0.4 }),
+    p(82.4, -70, C, { reach: 0.4 }),
+    p(78, -70, C, { ...blocked, minY: 0 }), // Palhedrin's north wall from the lane
+    p(82.4, -70, C, { reach: 0.4 }),
+    p(82.4, -80.5, C, { reach: 0.4 }),
+    p(76, -80.5, C, { reach: 0.4 }),
+    p(76, -78, C, { ...blocked, minY: 0 }), // Palhedrin's west wall from the gap
+    p(76, -80.5, C, { reach: 0.4 }),
     p(76, -85, C, { ...blocked, minY: 0 }), // the tower's east face beside the wicket
-    p(78.5, -80, C, { reach: 0.4 }),
+    p(78.5, -80.5, C, { reach: 0.4 }),
     p(78.5, -85.5, C, { reach: 0.4 }), // in at the wicket
     p(74, -85.5, C, { ...blocked, minY: 0 }), // the wall under the top landing, from the entry strip
     p(78.5, -85.5, C, { reach: 0.4 }),
-    p(78.5, -80, C, { reach: 0.4 }),
+    p(78.5, -80.5, C, { reach: 0.4 }),
     p(82.4, -82, C, { reach: 0.4 }),
     p(82.4, -92, C, { reach: 0.4 }),
     p(78, -92, C, { ...blocked, minY: 0 }), // the tower's north wall from the lane
@@ -317,7 +326,7 @@ export const routes = {
     p(78.5, -104, C),
     p(82.4, -100.5, C, { reach: 0.4 }),
     p(82.4, -82, C, { reach: 0.4 }),
-    p(78.5, -78, C),
+    p(82.4, -78, C, { reach: 0.4 }),
     p(90, -78, HB),
   ],
 };

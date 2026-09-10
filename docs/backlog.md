@@ -18,13 +18,14 @@ stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
   west of the gate with a 2 x 4 wicket; both are reconstructions (`meta.disputes`). Still
   open: the passage and bath stand ON the Cheil pavement because `HarHaBayisBuilder`'s
   mount and pavement are single slabs; a sunken passage needs a notch in those slabs.
-- Second reading of Yoma 19a (source reviewer, 2026-09-09): the Gemara raises and rejects
-  the reasoning that Palhedrin was the southern chamber and leaves the question open;
-  Rambam (Beis HaBechirah 5:17), Meiri (Yoma 19a) and Yerushalmi Yoma 1:5 put Beis Avtinas
-  over the Water Gate in the south and Palhedrin (= Lishkas HaEtz) in the north. The notes
-  now say so; the geometry still follows the rejected reading (Palhedrin south beside the
-  Water Gate, Avtinas over the Korban gate). Decision pending: flip them (Avtinas as the
-  aliyah over Shaar HaMayim with its stair; Palhedrin back beside Lishkas HaEtz).
+- Avtinas / Palhedrin (round 7, decided): Beis Avtinas is the aliyah over Shaar HaMayim
+  with its stair tower west of it (Yerushalmi Yoma 1:5, Meiri Yoma 19a) and the mikveh on
+  the wall top beside it; Lishkas Palhedrin is a chamber of its own in the north Cheil west
+  of Shaar HaKorban (x 73.5..81, z -79..-63) on the Nitzotz tower's plan. Still open: the
+  mikveh on the wall top (y 30) is not reachable (the wall top is not walkable; a door from
+  the storey would need six amos of stair); Palhedrin's site is a reconstruction (Rambam
+  makes it the Lishkas HaEtz, kept south here) and its west end faces the Soreg opening
+  opposite Shaar HaNitzotz across the 2.5-amah lane, which every north-Cheil route now uses.
 - The 16-amah drop from the Azarah chambers to the Cheil on the north and south is the
   eastern Cheil level (Middot 2:3, 2:5) carried round; no source gives those levels.
 

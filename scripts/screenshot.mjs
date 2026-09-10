@@ -47,7 +47,8 @@ const VIEWS = [
   { name: 'gazis_well', cam: '-31,9.8,-42,126,-15' },
   // Round 3: the kiyor (x -24) and the Ulam steps' south end from the east, the slaughter
   // tables and pillars (z -27 .. -51) from the south beside the rings, and the Beis
-  // Avtinas storey through its door from the top landing of the stair tower.
+  // Avtinas storey through its door from the top landing of the stair tower (round 7: the
+  // storey is over the Water Gate, the landing at x -63.75, z -24.9 amos, facing east).
   { name: 'kiyor_east', cam: '-14,9.75,-17,-15,-6' },
   // Round 4: the Sanhedrin's bench tiers from the Gazis well looking west-south-west, and
   // the Ulam steps low from the court's south lane beside the kiyor (their risers in profile).
@@ -58,7 +59,12 @@ const VIEWS = [
   // steps since round 6 and sees them in perspective with the Ulam front at a grazing angle).
   { name: 'ulam_steps_altar', cam: '0,14.25,-17.5,0,-24' },
   { name: 'slaughter_south', cam: '20,10.5,-5,-49,-8' },
-  { name: 'avtinas_storey', cam: '31.9,20.5,-16.6,0,-6' },
+  { name: 'avtinas_storey', cam: '-31.9,20.5,-4.45,180,-6' },
+  // Round 7: Lishkas Palhedrin in the north Cheil west of Shaar HaKorban (x 73.5 .. 81, z -79 ..
+  // -63): its east face with the Cheil door from the gate's front, the court wall and the gate
+  // above on the left; and the Avtinas storey and its tower over the Water Gate from the court.
+  { name: 'palhedrin_north', cam: '39.5,1.75,-19,8,12' },
+  { name: 'avtinas_south', cam: '-12.5,9.75,-1,82,24' },
   { name: 'madichin_stair', cam: '28,9.75,-40,-53,5' }, // the stair to the terrace from inside the Madichin, with its balustrade
   // Guided tour stops (`?tour=<id>&stop=N`, N 1-based): the rail stands the camera at the
   // stop and the script waits for the tour to dwell there, so the card is in the frame.

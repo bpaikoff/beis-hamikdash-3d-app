@@ -11,13 +11,15 @@ export const TEXTURE_NAMES = [
   'jerusalemStone', 'goldPolished', 'goldEngraved', 'copper', 'copperPatina', 'cedarWood',
   'acaciaWood', 'marbleWhite', 'marbleRose', 'techeiles', 'argaman', 'whiteLinen', 'paroches',
   'groundSand', 'floorTiles', 'mosaic', 'water', 'sheepWool', 'bullHide', 'goatHide', 'normalMap',
-  'clothFolds',
+  'clothFolds', 'bedrock', 'bedrockNormal', 'bedrockRough',
 ];
 
 /** Per-texture settings that apply to both the baked and the canvas path. */
 const META = {
   normalMap: { srgb: false },
   clothFolds: { srgb: false },
+  bedrockNormal: { srgb: false },
+  bedrockRough: { srgb: false },
 };
 
 /**
@@ -94,6 +96,133 @@ export function heightToNormal(h, size, depth = 1) {
     }
   }
   return out;
+}
+
+/** The Even HaShtiya's bedrock maps (`bedrock*`): one tile is BEDROCK.tileMetres of rock. */
+export const BEDROCK = { size: 512, tileMetres: 1.5, seed: 0x5e7a, depth: 2.4 };
+
+/**
+ * Seeded Perlin noise on a size x size grid that tiles: the lattice wraps every `scale`
+ * cells, so the octaves (whole multiples) wrap with it. In [0, 1].
+ * @returns {Float32Array} size * size
+ */
+export function perlinTileable(rand, size, scale = 4, octaves = 4, persistence = 0.5) {
+  const perm = new Uint8Array(512);
+  for (let i = 0; i < 256; i++) perm[i] = perm[i + 256] = Math.floor(rand() * 256);
+  const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
+  const lerp = (a, b, t) => a + t * (b - a);
+  const grad = (h, x, y) => (h & 1 ? -x : x) + (h & 2 ? -y : y);
+  const out = new Float32Array(size * size);
+  let amp = 1, freq = scale, max = 0;
+  for (let o = 0; o < octaves; o++) {
+    const F = freq;
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const nx = (x / size) * F, ny = (y / size) * F;
+        const X = Math.floor(nx), Y = Math.floor(ny);
+        const X0 = X % F, X1 = (X + 1) % F, Y0 = Y % F, Y1 = (Y + 1) % F;
+        const xf = nx - X, yf = ny - Y;
+        const u = fade(xf), v = fade(yf);
+        const aa = perm[perm[X0 & 255] + (Y0 & 255)], ab = perm[perm[X0 & 255] + (Y1 & 255)];
+        const ba = perm[perm[X1 & 255] + (Y0 & 255)], bb = perm[perm[X1 & 255] + (Y1 & 255)];
+        out[y * size + x] += lerp(lerp(grad(aa, xf, yf), grad(ba, xf - 1, yf), u), lerp(grad(ab, xf, yf - 1), grad(bb, xf - 1, yf - 1), u), v) * amp;
+      }
+    }
+    max += amp; amp *= persistence; freq *= 2;
+  }
+  for (let i = 0; i < out.length; i++) out[i] = (out[i] / max + 1) / 2;
+  return out;
+}
+
+const smoothstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+
+/**
+ * Seeded Worley (cellular) noise on a size x size grid with `cells` jittered points per
+ * axis, wrapping so it tiles. Returns the nearest and second-nearest point distances in
+ * cell units: `f2 - f1` is small along the polygonal boundaries (a crack network),
+ * `f1` alone is small at the points (pits).
+ * @returns {{f1: Float32Array, f2: Float32Array}} size * size each
+ */
+export function worleyTileable(rand, size, cells = 6) {
+  const px = new Float32Array(cells * cells), py = new Float32Array(cells * cells);
+  for (let i = 0; i < cells * cells; i++) { px[i] = rand(); py[i] = rand(); }
+  const f1 = new Float32Array(size * size), f2 = new Float32Array(size * size);
+  for (let y = 0; y < size; y++) {
+    const cy = (y / size) * cells;
+    const iy = Math.floor(cy);
+    for (let x = 0; x < size; x++) {
+      const cx = (x / size) * cells;
+      const ix = Math.floor(cx);
+      let a = Infinity, b = Infinity;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const jx = ix + dx, jy = iy + dy;
+          const k = ((jy + cells) % cells) * cells + ((jx + cells) % cells);
+          const ddx = jx + px[k] - cx, ddy = jy + py[k] - cy;
+          const d = Math.sqrt(ddx * ddx + ddy * ddy);
+          if (d < a) { b = a; a = d; } else if (d < b) b = d;
+        }
+      }
+      f1[y * size + x] = a;
+      f2[y * size + x] = b;
+    }
+  }
+  return { f1, f2 };
+}
+
+/**
+ * The bedrock height field: rolling weathered limestone (low-frequency Perlin) cut by a
+ * ridged-noise network of cracks and pocked with fine grain. Tileable. In [0, 1].
+ * @returns {Float32Array} size * size, row-major
+ */
+export function bedrockHeight(rand, size = BEDROCK.size) {
+  const body = perlinTileable(rand, size, 3, 6, 0.6);
+  const warp = perlinTileable(rand, size, 5, 2, 0.5);
+  const sparse = perlinTileable(rand, size, 2, 2, 0.5); // which stretches of the joint network survive
+  const joints = worleyTileable(rand, size, 4); // the polygonal joint network of weathered limestone
+  const fine = worleyTileable(rand, size, 11); // hairline cracks between the blocks
+  const pits = worleyTileable(rand, size, 9); // solution pits
+  const lumps = perlinTileable(rand, size, 8, 3, 0.5); // the knobbly weathered surface between the joints
+  const grain = perlinTileable(rand, size, 24, 2, 0.5);
+  const h = new Float32Array(size * size);
+  for (let i = 0; i < h.length; i++) {
+    const w = (warp[i] - 0.5) * 0.14; // bends and widens the crack lines so no edge is straight or even
+    const open = smoothstep(0.38, 0.62, sparse[i]); // most of the network is a hairline, a few fissures open
+    const crackA = smoothstep(0.09 + w, 0.0, joints.f2[i] - joints.f1[i]) * (0.15 + 0.85 * open);
+    const crackB = smoothstep(0.05 - w * 0.3, 0.0, fine.f2[i] - fine.f1[i]) * 0.3 * smoothstep(0.45, 0.7, warp[i]);
+    const pit = smoothstep(0.3 + w, 0.08, pits.f1[i]) * smoothstep(0.5, 0.75, sparse[i] + warp[i] - 0.5) * 0.6;
+    const b = Math.min(1, Math.max(0, (body[i] - 0.5) * 2 + 0.5)); // stretch: fBm sits near mid-grey
+    h[i] = 0.12 + 0.7 * b + 0.28 * (lumps[i] - 0.5) + 0.14 * (grain[i] - 0.5) - 0.42 * Math.max(crackA, crackB) - 0.3 * pit;
+  }
+  return h;
+}
+
+/**
+ * Colour (sRGB) and roughness (linear grey) pixels for a bedrock height field: dark
+ * warm grey-brown, darker in the cracks and lower ground, with a cooler grey mottle;
+ * the high, worn points are the smoothest (the faint sheen of a stone handled for
+ * centuries), the cracks the roughest.
+ * @returns {{color: Uint8ClampedArray, rough: Uint8ClampedArray}} size * size * 4 each
+ */
+export function bedrockPixels(h, size, rand) {
+  const mottle = perlinTileable(rand, size, 2, 3, 0.5);
+  const color = new Uint8ClampedArray(size * size * 4);
+  const rough = new Uint8ClampedArray(size * size * 4);
+  const low = [56, 50, 43], high = [124, 114, 100], cool = [104, 104, 100];
+  for (let i = 0; i < h.length; i++) {
+    const t = Math.min(1, Math.max(0, h[i]));
+    const m = smoothstep(0.35, 0.75, mottle[i]) * 0.45;
+    const speck = (rand() - 0.5) * 10;
+    for (let c = 0; c < 3; c++) {
+      const base = low[c] + (high[c] - low[c]) * t;
+      color[i * 4 + c] = base + (cool[c] - base) * m + speck;
+    }
+    color[i * 4 + 3] = 255;
+    const r = 0.97 - 0.32 * smoothstep(0.6, 0.92, t);
+    rough[i * 4] = rough[i * 4 + 1] = rough[i * 4 + 2] = r * 255;
+    rough[i * 4 + 3] = 255;
+  }
+  return { color, rough };
 }
 
 export const BAKED_PATH = '/textures/';
@@ -770,6 +899,41 @@ export class TextureFactory {
     img.data.set(heightToNormal(clothFoldsHeight(this.rand), size, CLOTH_FOLDS.depth));
     ctx.putImageData(img, 0, 0);
     return this.finish(new THREE.CanvasTexture(c), { srgb: false });
+  }
+
+  /** The shared bedrock height field and pixels (one seed for all three maps so they line up). */
+  bedrockMaps() {
+    if (!this._bedrock) {
+      const { size, seed } = BEDROCK;
+      const rand = mulberry32(seed);
+      const h = bedrockHeight(rand, size);
+      this._bedrock = { h, ...bedrockPixels(h, size, rand) };
+    }
+    return this._bedrock;
+  }
+
+  /** Canvas texture from RGBA pixels. */
+  pixelsTexture(px, size, srgb) {
+    const c = this.createCanvas(size, size), ctx = c.getContext('2d');
+    const img = ctx.createImageData(size, size);
+    img.data.set(px);
+    ctx.putImageData(img, 0, 0);
+    return this.finish(new THREE.CanvasTexture(c), { srgb });
+  }
+
+  /** Even HaShtiya bedrock colour (see BEDROCK). */
+  bedrock() {
+    return this.pixelsTexture(this.bedrockMaps().color, BEDROCK.size, true);
+  }
+
+  /** Its tangent-space normal map: linear data. */
+  bedrockNormal() {
+    return this.pixelsTexture(heightToNormal(this.bedrockMaps().h, BEDROCK.size, BEDROCK.depth), BEDROCK.size, false);
+  }
+
+  /** Its roughness map: linear grey, worn smooth on the high points. */
+  bedrockRough() {
+    return this.pixelsTexture(this.bedrockMaps().rough, BEDROCK.size, false);
   }
 
   /** Run the canvas generator for `name` (deterministic: seeded by the name). */

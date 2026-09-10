@@ -84,6 +84,18 @@ export class TempleBuilder {
       ground: pbr('sand', { roughness: 1.6, metalness: 0, fallback: { map: 'groundSand' }, fallbackProps: { roughness: 0.95 } }),
       floor: pbr('limestoneTiles', { roughness: 1.6, metalness: 0, fallback: { map: 'floorTiles' }, fallbackProps: { roughness: 0.6 } }),
       mosaic: new THREE.MeshStandardMaterial({ map: this.tex.get('mosaic'), roughness: 0.55 }),
+      // The Even HaShtiya: dark weathered bedrock (procedural, BEDROCK in TextureFactory), a
+      // strong normal map and a roughness map that leaves a faint sheen on the worn high points.
+      bedrock: new THREE.MeshStandardMaterial({
+        map: this.tex.get('bedrock'),
+        normalMap: this.tex.get('bedrockNormal'),
+        normalScale: new THREE.Vector2(1.6, 1.6),
+        roughnessMap: this.tex.get('bedrockRough'),
+        roughness: 1,
+        metalness: 0,
+        envMapIntensity: 0.35,
+        userData: { tileMetres: 1.5 }, // one BEDROCK tile covers the 1.5 m stone: nothing repeats
+      }),
       water: new THREE.MeshStandardMaterial({ map: this.tex.get('water'), roughness: 0.1, metalness: 0.3, transparent: true, opacity: 0.8 }),
       altar: new THREE.MeshStandardMaterial({ color: 0x5A4A40, roughness: 0.9 })
     };

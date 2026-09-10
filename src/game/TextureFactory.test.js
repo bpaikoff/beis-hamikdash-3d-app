@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { TextureFactory, TEXTURE_NAMES, BAKED_PATH, CLOTH_FOLDS, clothFoldsHeight, heightToNormal } from './TextureFactory.js';
+import { TextureFactory, TEXTURE_NAMES, BAKED_PATH, CLOTH_FOLDS, BEDROCK, clothFoldsHeight, heightToNormal, bedrockHeight, bedrockPixels } from './TextureFactory.js';
 import { mulberry32 } from './random.js';
 
 /** Stub the image loader: returns a bare Texture and settles on the next tick. */
@@ -17,10 +17,58 @@ function stubLoader(factory, { fail = [] } = {}) {
 }
 
 describe('TextureFactory (baked path)', () => {
-  it('lists 22 bakeable textures, each backed by a generator method', () => {
-    expect(TEXTURE_NAMES).toHaveLength(22);
+  it('lists 25 bakeable textures, each backed by a generator method', () => {
+    expect(TEXTURE_NAMES).toHaveLength(25);
     for (const n of TEXTURE_NAMES) expect(typeof TextureFactory.prototype[n], n).toBe('function');
-    expect(new Set(TEXTURE_NAMES).size).toBe(22);
+    expect(new Set(TEXTURE_NAMES).size).toBe(25);
+  });
+
+  it('bedrock is a seeded, tileable height field whose maps are darker and rougher in the cracks', () => {
+    const size = 64;
+    const h = bedrockHeight(mulberry32(3), size);
+    expect(h).toHaveLength(size * size);
+    expect(bedrockHeight(mulberry32(3), size)).toEqual(h);
+    expect(bedrockHeight(mulberry32(4), size)).not.toEqual(h);
+    // Tileable: the wrapped neighbours across each edge differ no more than neighbours inside.
+    let edge = 0, inner = 0;
+    for (let i = 0; i < size; i++) {
+      edge = Math.max(edge, Math.abs(h[i * size] - h[i * size + size - 1]), Math.abs(h[i] - h[(size - 1) * size + i]));
+      inner = Math.max(inner, Math.abs(h[i * size + 1] - h[i * size + 2]), Math.abs(h[size + i] - h[2 * size + i]));
+    }
+    expect(edge).toBeLessThanOrEqual(inner * 1.5 + 1e-3);
+    // Relief: a real spread of heights, with cracks cutting well below the body.
+    const sorted = Array.from(h).sort((a, b) => a - b);
+    expect(sorted[Math.floor(size * size * 0.95)] - sorted[Math.floor(size * size * 0.05)]).toBeGreaterThan(0.25);
+    const { color, rough } = bedrockPixels(h, size, mulberry32(5));
+    expect(color).toHaveLength(size * size * 4);
+    expect(rough).toHaveLength(size * size * 4);
+    // Dark, warm grey-brown: mean luminance well under mid grey, red >= green >= blue.
+    let r = 0, g = 0, b = 0, lumLow = 0, lumHigh = 0, nLow = 0, nHigh = 0, rLow = 0, rHigh = 0;
+    for (let i = 0; i < size * size; i++) {
+      r += color[i * 4]; g += color[i * 4 + 1]; b += color[i * 4 + 2];
+      expect(color[i * 4 + 3]).toBe(255);
+      expect(rough[i * 4]).toBe(rough[i * 4 + 1]);
+      const lum = color[i * 4] * 0.3 + color[i * 4 + 1] * 0.59 + color[i * 4 + 2] * 0.11;
+      if (h[i] < 0.35) { lumLow += lum; rLow += rough[i * 4]; nLow++; } else if (h[i] > 0.8) { lumHigh += lum; rHigh += rough[i * 4]; nHigh++; }
+    }
+    const n = size * size;
+    expect((r + g + b) / (3 * n)).toBeLessThan(110);
+    expect(r / n).toBeGreaterThan(g / n);
+    expect(g / n).toBeGreaterThan(b / n);
+    expect(nLow).toBeGreaterThan(0);
+    expect(nHigh).toBeGreaterThan(0);
+    expect(lumLow / nLow).toBeLessThan(lumHigh / nHigh - 20); // cracks darker than the worn tops
+    expect(rLow / nLow).toBeGreaterThan(rHigh / nHigh + 20); // and rougher: the sheen sits on the tops
+    expect(rHigh / nHigh).toBeGreaterThan(150); // but never glossy
+    const px = heightToNormal(h, size, BEDROCK.depth);
+    let rMean = 0, gMean = 0, bMin = 255, rVar = 0;
+    for (let i = 0; i < px.length; i += 4) { rMean += px[i]; gMean += px[i + 1]; bMin = Math.min(bMin, px[i + 2]); }
+    rMean /= n; gMean /= n;
+    for (let i = 0; i < px.length; i += 4) rVar += (px[i] - rMean) ** 2;
+    expect(Math.abs(rMean - 127.5)).toBeLessThan(3);
+    expect(Math.abs(gMean - 127.5)).toBeLessThan(3);
+    expect(Math.sqrt(rVar / n)).toBeGreaterThan(12); // a strong normal map, not a faint one
+    expect(bMin).toBeGreaterThan(127);
   });
 
   it('clothFolds is a seeded, tileable tangent-space map whose folds run along v', () => {

@@ -51,7 +51,7 @@ try {
   const names = await page.evaluate(() => window.__bake.names);
   for (const name of names) {
     if (only && name !== only) continue;
-    const q = name === 'normalMap' || name === 'clothFolds' ? Math.max(quality, 0.95) : quality; // normals hate lossy artifacts
+    const q = /normal|clothFolds|Rough$/i.test(name) ? Math.max(quality, 0.95) : quality; // normals and roughness hate lossy artifacts
     const { width, height, dataUrl } = await page.evaluate(([n, qq]) => window.__bake.render(n, qq), [name, q]);
     if (!dataUrl.startsWith('data:image/webp')) {
       console.error(`${name}: browser did not encode WebP`);

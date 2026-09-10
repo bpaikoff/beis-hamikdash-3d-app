@@ -11,6 +11,8 @@
  *   node scripts/screenshot.mjs --budget hero=1200            # exit 1 when a view draws more calls
  *   node scripts/screenshot.mjs --time dusk                    # ?time= for every view
  *   node scripts/screenshot.mjs --at yachin,kiyor              # ?at= spawns for entry ids (views at_<id>)
+ *   node scripts/screenshot.mjs --views walk.json              # an ad-hoc view list (same shape as VIEWS)
+ *   node scripts/screenshot.mjs --shadows --only hero          # shadow maps on (off by default: acne is invisible otherwise)
  *
  * Views are addressed with ?cam=x,y,z,yaw,pitch (world metres, degrees; yaw 0 faces -z,
  * west; a positive yaw turns toward -x, south, and a negative one toward +x, north:
@@ -19,7 +21,7 @@
  * window.__mikdash (draw calls, triangles) so before/after runs can be compared.
  */
 import { spawn } from 'node:child_process';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, readFileSync } from 'node:fs';
 import { chromium, devices } from '@playwright/test';
 
 const VIEWS = [
@@ -142,6 +144,12 @@ const CAPTURE_MS = Number(process.env.SCREENSHOT_CAPTURE_MS) || 90000;
 // `--at id,id`: ad-hoc views of the `?at=` spawn for content entries (round 6 spawn audit),
 // named at_<id>; with --only absent these are captured instead of the fixed list.
 const atIds = (opt('--at', '') || '').split(',').filter(Boolean);
+// `--views file.json`: an ad-hoc list of views (the shape of VIEWS) for a one-off series,
+// such as a walk toward a gate at several distances; captured instead of the fixed list.
+const viewsFile = opt('--views');
+// Shadow maps are off by default (the software rasteriser); `--shadows` turns them on so
+// shadow acne on the wood and the vaults shows in the frame.
+const shadows = args.includes('--shadows');
 const outDir = opt('--out', 'screenshots/auto');
 // Phone: a 390x844 portrait viewport with touch (pointer: coarse), so TouchControls mounts
 // and the HUD takes its small-screen layout. Frames are suffixed _mobile.
@@ -189,7 +197,11 @@ page.on('pageerror', (e) => console.error('page error:', e.message));
 
 const results = [];
 try {
-  const views = atIds.length ? atIds.map((id) => ({ name: `at_${id}`, at: id })) : VIEWS;
+  const views = atIds.length
+    ? atIds.map((id) => ({ name: `at_${id}`, at: id }))
+    : viewsFile
+      ? JSON.parse(readFileSync(viewsFile, 'utf8'))
+      : VIEWS;
   for (const v of views) {
     if (only && !only.split(',').includes(v.name)) continue;
     log(`view ${v.name}: goto`);
@@ -202,7 +214,7 @@ try {
     const bloom = v.bloom ? '' : '&bloom=0';
     const viewTime = v.time ?? timeOfDay;
     const time = viewTime ? `&time=${encodeURIComponent(viewTime)}` : '';
-    await page.goto(`${base}/?${where}&autostart=1&shadows=0${bloom}${time}`, { waitUntil: 'load', timeout: 60000 });
+    await page.goto(`${base}/?${where}&autostart=1&shadows=${shadows ? 1 : 0}${bloom}${time}`, { waitUntil: 'load', timeout: 60000 });
     // Older builds have no ?autostart; click through the start screen if it is there.
     const btn = page.locator('.start-btn');
     if (await btn.count()) await btn.first().click();

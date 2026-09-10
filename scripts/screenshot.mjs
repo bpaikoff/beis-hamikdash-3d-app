@@ -60,8 +60,8 @@ const VIEWS = [
   // Round 7: Lishkas Palhedrin in the north Cheil west of Shaar HaKorban (x 73.5 .. 81, z -79 ..
   // -63): its east face with the Cheil door from the gate's front, the court wall and the gate
   // above on the left; and the Avtinas storey and its tower over the Water Gate from the court.
-  { name: 'palhedrin_north', cam: '40.75,1.8,-16,15,4' },
-  { name: 'avtinas_south', cam: '-22,9.75,-6,120,18' },
+  { name: 'palhedrin_north', cam: '39.5,1.75,-19,8,12' },
+  { name: 'avtinas_south', cam: '-12.5,9.75,-1,82,24' },
   { name: 'madichin_stair', cam: '28,9.75,-40,-53,5' }, // the stair to the terrace from inside the Madichin, with its balustrade
   // Guided tour stops (`?tour=<id>&stop=N`, N 1-based): the rail stands the camera at the
   // stop and the script waits for the tour to dwell there, so the card is in the frame.

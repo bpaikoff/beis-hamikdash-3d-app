@@ -188,13 +188,51 @@ export const SMOKE_FRAG = /* glsl */ `
 uniform sampler2D map;
 uniform vec3 uColor;
 uniform vec3 uColorHot;
+uniform float uHotSpan;
 uniform float uOpacity;
 varying float vLife;
 void main() {
   float a = texture2D(map, gl_PointCoord).a;
   a *= smoothstep(0.0, 0.12, vLife) * pow(1.0 - vLife, 1.3) * uOpacity;
-  vec3 col = mix(uColorHot, uColor, smoothstep(0.0, 0.35, vLife));
+  vec3 col = mix(uColorHot, uColor, smoothstep(0.0, max(uHotSpan, 0.001), vLife));
   gl_FragColor = vec4(col, a);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+}
+`;
+
+export const MOTE_VERT = /* glsl */ `
+uniform float uTime;
+uniform vec3 uBox;
+uniform float uSize;
+uniform float uScale;
+attribute vec4 seed; // phase, speed, size, drift phase
+varying float vTwinkle;
+void main() {
+  vec3 p = position;
+  float tw = seed.w * 6.2832;
+  // Slow settling: each mote sinks through the box and wraps to the top.
+  p.y = uBox.y - mod(uBox.y - p.y + uTime * 0.02 * (0.5 + seed.y), 2.0 * uBox.y);
+  // Convection: a gentle wander of a few centimetres.
+  p.x += sin(uTime * 0.11 * seed.y + tw) * 0.25;
+  p.z += cos(uTime * 0.09 * seed.y + tw * 1.3) * 0.25;
+  vec4 mv = modelViewMatrix * vec4(p, 1.0);
+  gl_PointSize = max(uSize * (0.5 + 0.5 * seed.z) * uScale / -mv.z, 1.5);
+  gl_Position = projectionMatrix * mv;
+  // Motes turn in the light: they catch it for a moment and go dark.
+  vTwinkle = pow(0.5 + 0.5 * sin(uTime * (0.8 + 1.6 * seed.z) + seed.x * 40.0), 3.0);
+}
+`;
+
+export const MOTE_FRAG = /* glsl */ `
+uniform vec3 uColor;
+uniform float uOpacity;
+varying float vTwinkle;
+void main() {
+  vec2 c = gl_PointCoord - 0.5;
+  float r = length(c) * 2.0;
+  float a = (1.0 - smoothstep(0.2, 1.0, r)) * vTwinkle * uOpacity;
+  gl_FragColor = vec4(uColor, a);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }
@@ -493,6 +531,8 @@ export class Embers extends THREE.Points {
  * @param {number} [o.life=6] seconds
  * @param {number} [o.opacity=0.35]
  * @param {number} [o.color=0x6e6e72]
+ * @param {number[]} [o.hot=[0.55,0.38,0.28]] linear colour of a fresh puff (over the fire)
+ * @param {number} [o.hotSpan=0.35] fraction of the life over which `hot` fades to `color`
  * @param {number} [o.seed=3]
  */
 export class Smoke extends THREE.Points {
@@ -507,6 +547,8 @@ export class Smoke extends THREE.Points {
       life = 6,
       opacity = 0.35,
       color = 0x6e6e72,
+      hot = [0.55, 0.38, 0.28],
+      hotSpan = 0.35,
       seed = 3,
     } = o;
     const rand = mulberry32(seed);
@@ -544,7 +586,8 @@ export class Smoke extends THREE.Points {
         uScale: { value: 300 },
         uOpacity: { value: opacity },
         uColor: { value: new THREE.Color(color) },
-        uColorHot: { value: new THREE.Color(0.55, 0.38, 0.28) },
+        uColorHot: { value: new THREE.Color(...hot) },
+        uHotSpan: { value: hotSpan },
       },
       vertexShader: SMOKE_VERT,
       fragmentShader: SMOKE_FRAG,
@@ -555,6 +598,81 @@ export class Smoke extends THREE.Points {
     });
     super(geo, mat);
     this.name = 'smoke';
+    this.count = count;
+    this.time = rand() * 50;
+    mat.uniforms.uTime.value = this.time;
+    this.onBeforeRender = pointScaleHook;
+  }
+
+  /** Retint the fresh puffs (linear rgb) and how far up the life they keep it: the fire's glow on the smoke at night. */
+  setGlow(hot, hotSpan) {
+    const u = this.material.uniforms;
+    u.uColorHot.value.setRGB(...hot);
+    u.uHotSpan.value = hotSpan;
+  }
+
+  update(delta) {
+    this.time += delta;
+    this.material.uniforms.uTime.value = this.time;
+  }
+
+  dispose() {
+    this.removeFromParent();
+    this.geometry.dispose();
+    this.material.dispose(); // the sprite texture is shared and owned by ParticleSystem
+  }
+}
+
+/**
+ * Dust motes in a shaft of light: tiny points settling slowly through a box, wandering a
+ * little and catching the light in turns. GPU-animated from the time uniform like the rest.
+ *
+ * @param {object} [o]
+ * @param {number} [o.count=100]
+ * @param {number[]} [o.box=[3,2,3]] half extents (metres) about the origin
+ * @param {number} [o.size=0.02] mote diameter (metres); never below 1.5 px on screen
+ * @param {number} [o.opacity=0.4]
+ * @param {number[]} [o.color=[1,0.92,0.75]] linear
+ * @param {number} [o.seed=4]
+ */
+export class Motes extends THREE.Points {
+  constructor(o = {}) {
+    const { count = 100, box = [3, 2, 3], size = 0.02, opacity = 0.4, color = [1, 0.92, 0.75], seed = 4 } = o;
+    const rand = mulberry32(seed);
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(count * 3);
+    const sd = new Float32Array(count * 4);
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (rand() * 2 - 1) * box[0];
+      pos[i * 3 + 1] = (rand() * 2 - 1) * box[1];
+      pos[i * 3 + 2] = (rand() * 2 - 1) * box[2];
+      sd[i * 4] = rand();
+      sd[i * 4 + 1] = 0.6 + 0.8 * rand();
+      sd[i * 4 + 2] = rand();
+      sd[i * 4 + 3] = rand();
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('seed', new THREE.BufferAttribute(sd, 4));
+    geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), Math.hypot(...box) + 0.5);
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uBox: { value: new THREE.Vector3(...box) },
+        uSize: { value: size },
+        uScale: { value: 300 },
+        uOpacity: { value: opacity },
+        uColor: { value: new THREE.Color(...color) },
+      },
+      vertexShader: MOTE_VERT,
+      fragmentShader: MOTE_FRAG,
+      transparent: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+      toneMapped: true,
+    });
+    super(geo, mat);
+    this.name = 'motes';
+    this.count = count;
     this.time = rand() * 50;
     mat.uniforms.uTime.value = this.time;
     this.onBeforeRender = pointScaleHook;
@@ -568,6 +686,6 @@ export class Smoke extends THREE.Points {
   dispose() {
     this.removeFromParent();
     this.geometry.dispose();
-    this.material.dispose(); // the sprite texture is shared and owned by ParticleSystem
+    this.material.dispose();
   }
 }

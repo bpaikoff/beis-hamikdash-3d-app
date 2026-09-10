@@ -96,7 +96,10 @@ export class TempleGame {
       this.refreshHotspots();
       this.applyPeriod(period);
     });
-    this.unsubTime = store.subscribe((s) => s.timeOfDay, (t) => this.daylight?.set(t));
+    this.unsubTime = store.subscribe((s) => s.timeOfDay, (t) => {
+      this.daylight?.set(t);
+      this.particles?.setTimeOfDay(t);
+    });
     this.ready = this.init().catch((e) => {
       console.error(e);
       store.setState({ loading: null, error: e.message });
@@ -204,6 +207,19 @@ export class TempleGame {
       });
       wicks.forEach((w, i) => this.particles.createCandle(w, { light: i === 3 ? 6 : 0 }));
       if (coals) this.particles.createCoals(coals);
+      // The atmosphere (ParticleSystem.FX_BUDGET): the Tamid's smoke column and the
+      // Heichal's incense haze with its motes. `?fx=0` leaves them out (the fire stays).
+      if (new URLSearchParams(window.location.search).get('fx') !== '0') {
+        this.particles.createSmokeColumn(fx, fy + 10 * AMAH, fz, 4);
+        if (coals) {
+          // Motes in the light from the doorway: the eastern half of the Heichal (its
+          // interior is 20 x 40 amos), from head height to a few metres up.
+          const [hx, hy, hz] = at('heichal');
+          const half = (byId.heichal.geometry.d / 4) * AMAH; // 5 m: the eastern half
+          this.particles.createHaze(coals, { motesAt: [hx, hy + 2.2, hz + half], box: [4, 1.6, half - 0.5] });
+        }
+      }
+      this.particles.setTimeOfDay(this.store.getState().timeOfDay);
     }
     if (this.disposed) return;
 

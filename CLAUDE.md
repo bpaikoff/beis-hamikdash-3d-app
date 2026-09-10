@@ -119,6 +119,18 @@ them to read their output file and finish; each agent uses its own port range.
   `buildNitzotzWicket`) are probed by `R6Moked.test.js` and `R6North.test.js` with the
   real `PlayerController`; walk routes `r6_*`, `r6n_*`, `r6_court_*`.
 
+## Round 7 notes (2026-09-10)
+
+- Gate frames stand `FRAME_PROUD` (5 mm) proud of wall faces and reveals; a coplanar-wood
+  probe (`WoodCoplanar.test.js`) guards it. All factory textures get mips + anisotropy in
+  `TextureFactory.finish()`.
+- Even HaShtiya is `builders/outcrop.js` (walkable mesh floor); KhK lighting in `KHK_LIGHT`.
+- FX: `ParticleSystem.createSmokeColumn/createHaze` (`?fx=0` off); ambient sound `Audio.js`
+  (pure `layerGains` is unit-tested; the AudioContext starts on the first click).
+- Walkers with a `path` follow the floor (`CharacterSystem({floorAt})`).
+- `scripts/screenshot.mjs --views FILE` takes an ad-hoc view list; `--shadows` turns shadow
+  maps on; `--at id,id` captures spawns.
+
 ## Related
 
 - tzadek.ai (`~/prod/tzadek_ai`): the Ask panel streams from it with the guest passcode

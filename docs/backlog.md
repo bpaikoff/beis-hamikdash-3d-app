@@ -85,6 +85,31 @@ stairs (docs/content.md, GEO-D; `meta.disputes`). Still open:
   half-amah sliver behind the kerb (z -51..-50.5), unwalkable, harmless. The passage sits
   on the Cheil pavement (no notch in the slab) and the lamps are static spheres.
 
+## Round 7 (2026-09-10): owner feedback after round 6
+
+- Even HaShtiya: now a seeded bedrock outcrop (`builders/outcrop.js`, one mesh, walkable),
+  three etzbaos high (`geometry.h` 0.125; 0.19 was ~4.5 etzbaos), with procedural bedrock
+  colour/normal/roughness maps (`TextureFactory.bedrockHeight`), the Kodesh HaKodashim dim
+  and warm (its own gold panels at low env intensity, a `khkLamp` point light 3 m east of the
+  stone; `KHK_LIGHT` in HeichalBuilder.js is the knob). Open: the lamp's warm pool on the west
+  gold panel; a `even_hashtiya_close` view exists.
+- Wood flicker was z-fighting, not textures: gate frames were flush with the wall faces and
+  reveals (`CourtBuilder.FRAME_PROUD` = 5 mm now), plus a bath-house leaf inside its wall,
+  overlapping soreg/pen rails, the lowest melatra and the Ulam ceiling rim. `WoodCoplanar.test.js`
+  probes the built scene for coplanar wood pairs (266 -> 0). Open: ~455 non-wood coplanar pairs
+  (slab undersides, roof/wall tops) are listed but unaudited; the Palhedrin regex exclusion in
+  that test must go once the r7/flip merge lands. Every factory texture now has an explicit mip
+  chain, trilinear filtering and anisotropy >= 8 (`TextureFactory.finish`).
+- Immersion: the altar smoke column (200 sprites, no drift per Avos 5:5, dusk glow) and a Heichal
+  incense haze with dust motes (`ParticleSystem.createSmokeColumn/createHaze`, `?fx=0` skips
+  them, `FX_BUDGET` 400 sprites in 4 draw calls); procedural ambient sound (`Audio.js`: wind,
+  fire crackle, crowd murmur, birds, the Heichal hush; `ZONE_MIX` by area and time of day;
+  muted by default, `M` / the speaker button, `localStorage['mikdash.audio']`); a kohen walking
+  the kevesh with ground-following walkers (`CharacterSystem({floorAt})`, `WALKER_MAX_STEP`
+  0.6 m), two kohanim at the kiyor, one on the Ulam's top rovad (four static altar kohanim
+  removed to stay at 20 humans). Open: the haze barely registers in software captures; no
+  dedicated kevesh-walker screenshot view (`--at kevesh` shows him).
+
 ## Characters (Sprint 4, round 5)
 
 Round 5 (2026-09-06) replaced the mannequin: `kohen.glb` is the Quaternius Universal Base

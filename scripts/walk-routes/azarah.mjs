@@ -61,13 +61,13 @@ export const routes = {
     p(20, -18, K),
     p(20, -54.5, K),
     p(-22, -54.5, K),
-    p(-62, -54.5, K),
-    p(-62, -18, K),
+    p(-60, -54.5, K), // x -60: clear of the Beis Avtinas stair tower (round 7: x -73.5 .. -61.5, z -32 .. -23)
+    p(-60, -18, K),
     p(-50, -18, K),
     p(-50, -52, K),
-    p(-62, -52, K),
+    p(-60, -52, K),
     at('kiyor', { ...amos(0, 4), level: K }),
-    p(-62, -18, K),
+    p(-60, -18, K),
   ],
 
   // Slaughtering area (Middot 3:5, 5:2): along the tables (x 51.5 .. 52.5, centres z
@@ -81,7 +81,7 @@ export const routes = {
     p(55, -53, K),
     p(55, -29.5, K, { reach: 0.4 }),
     p(60, -29.5, K),
-    p(60, -53, K), // between the pillars and the Beis Avtinas stair tower (x 61.5 .. 73.5, z -51 .. -42)
+    p(60, -53, K), // between the pillars and the north wall (the Beis Avtinas stair tower stood here until round 6)
     p(60, -29.5, K, { reach: 0.4 }),
     p(55, -29.5, K, { reach: 0.4 }),
     p(55, -30, K, { reach: 0.4 }),
@@ -133,61 +133,70 @@ export const routes = {
     p(-45, -103, K),
   ],
 
-  // Lishkas Palhedrin (Yoma 19a): from the Cheil through its door, up its two flights to
-  // the landing at the court level, through the upper door into the Water Gate passage
-  // and out into the court; then back down to the Cheil.
+  // Lishkas Palhedrin (Yoma 19a; round 7: in the north Cheil west of Shaar HaKorban,
+  // x 73.5 .. 81, z -79 .. -63): from the Cheil in front of the Korban gate through its
+  // door in its east wall (x 77.25 .. 79.75), up the lower flight along the Soreg side
+  // (x 77 .. 80, 16 half-amah steps west from the entry strip z -67 .. -64), across the
+  // turn landing at the west end (z -78 .. -75, 8 amos up), up the upper flight along the
+  // wall side (x 73.5 .. 76.5) to the landing at the court level (z -67 .. -64), through
+  // the bay in the wall into the Korban gate passage and out into the court; then back
+  // down to the Cheil. minY is metres over the Cheil level.
   azarah_palhedrin: [
-    p(-78.5, -10, C),
-    p(-78.5, -19.5, C, { reach: 0.5 }),
-    p(-78.5, -23.5, C, { reach: 0.4 }),
-    p(-81, -24.5, C, { reach: 0.4 }),
-    p(-81, -32.5, C, { reach: 0.4, minY: 3.5 }),
-    p(-78.5, -34.5, C, { reach: 0.4, minY: 4 }),
-    p(-76, -32.5, C, { reach: 0.4, minY: 4 }),
-    p(-76, -25.5, K, { reach: 0.4 }),
-    p(-76, -23.5, K, { reach: 0.4 }),
-    p(-70.5, -23, K, { reach: 0.4 }),
-    p(-62, -23, K),
-    p(-70.5, -23, K, { reach: 0.4 }),
-    p(-76, -23.5, K, { reach: 0.4 }),
-    p(-76, -25.5, K, { reach: 0.4 }),
-    p(-76, -32.5, C, { reach: 0.4, minY: 4 }),
-    p(-78.5, -34.5, C, { reach: 0.4, minY: 4 }),
-    p(-81, -32.5, C, { reach: 0.4, minY: 3.5 }),
-    p(-81, -24.5, C, { reach: 0.4 }),
-    p(-78.5, -23.5, C, { reach: 0.4 }),
-    p(-78.5, -10, C),
+    p(78.5, -56, C),
+    p(78.5, -61.5, C, { reach: 0.4 }),
+    p(78.5, -65.5, C, { reach: 0.4 }),
+    p(78.5, -68.25, C, { reach: 0.4, minY: 0.5 }),
+    p(78.5, -72.25, C, { reach: 0.4, minY: 2.5 }),
+    p(78.5, -76.5, C, { reach: 0.4, minY: 3.9 }),
+    p(75, -76.5, C, { reach: 0.4, minY: 3.9 }),
+    p(75, -72.25, C, { reach: 0.4, minY: 5.25 }),
+    p(75, -68.25, C, { reach: 0.4, minY: 7.25 }),
+    p(75, -65.5, K, { reach: 0.4 }),
+    p(70.5, -65.5, K, { reach: 0.4 }),
+    p(61, -65.5, K),
+    p(70.5, -65.5, K, { reach: 0.4 }),
+    p(75, -65.5, K, { reach: 0.4 }),
+    p(75, -68.25, C, { reach: 0.4, minY: 7.25 }),
+    p(75, -72.25, C, { reach: 0.4, minY: 5.25 }),
+    p(75, -76.5, C, { reach: 0.4, minY: 3.9 }),
+    p(78.5, -76.5, C, { reach: 0.4, minY: 3.9 }),
+    p(78.5, -72.25, C, { reach: 0.4, minY: 2.5 }),
+    p(78.5, -68.25, C, { reach: 0.4, minY: 0.5 }),
+    p(78.5, -65.5, C, { reach: 0.4 }),
+    p(78.5, -61.5, C, { reach: 0.4 }),
+    p(78.5, -56, C),
   ],
 
-  // Beis Avtinas: from the court beside the Korban gate into the stair tower (door on its
-  // east face, x 62.5 .. 65), up its four flights of half-amah steps (11, 11, 11, 10; bands
-  // 1.75 amos wide, landings at alternate ends) to the storey 21.5 amos up, into the
-  // storey, and back down.
+  // Beis Avtinas (round 7: the storey over the Water Gate, x -73.5 .. -61.5, z -24 .. -8;
+  // its stair tower west of it, z -32 .. -23): from the court beside Shaar HaBechoros into
+  // the tower (door on its west face, x -65 .. -62.5), up its four flights of half-amah
+  // steps (11, 11, 11, 10; bands 1.75 amos wide from the door end, landings at alternate
+  // ends) to the storey 21.5 amos up, into the storey, and back down.
   azarah_avtinas: [
-    p(60, -30, K),
-    p(63.75, -38, K),
-    p(63.75, -43.9, K, { reach: 0.4 }),
-    p(67.5, -43.9, K, { reach: 0.4, minY: 1 }),
-    p(71.25, -44.75, K, { reach: 0.4, minY: 2.5 }),
-    p(67.5, -45.6, K, { reach: 0.4, minY: 3.5 }),
-    p(63.75, -46.5, K, { reach: 0.4, minY: 5 }),
-    p(67.5, -47.4, K, { reach: 0.4, minY: 6 }),
-    p(71.25, -48.25, K, { reach: 0.4, minY: 7.5 }),
-    p(67.5, -49.1, K, { reach: 0.4, minY: 8.5 }),
-    p(63.75, -49.1, K, { reach: 0.4, minY: 10 }),
-    p(63.75, -53, K, { reach: 0.4, minY: 10 }),
+    p(-60, -40, K),
+    p(-63.75, -38, K),
+    p(-63.75, -30.1, K, { reach: 0.4 }),
+    p(-67.5, -30.1, K, { reach: 0.4, minY: 1 }),
+    p(-71.25, -29.25, K, { reach: 0.4, minY: 2.5 }),
+    p(-67.5, -28.4, K, { reach: 0.4, minY: 3.5 }),
+    p(-63.75, -27.5, K, { reach: 0.4, minY: 5 }),
+    p(-67.5, -26.6, K, { reach: 0.4, minY: 6 }),
+    p(-71.25, -25.75, K, { reach: 0.4, minY: 7.5 }),
+    p(-67.5, -24.9, K, { reach: 0.4, minY: 8.5 }),
+    p(-63.75, -24.9, K, { reach: 0.4, minY: 10 }),
+    p(-63.75, -21, K, { reach: 0.4, minY: 10 }),
     at('beis_avtinas', { level: K, minY: 10 }),
-    p(63.75, -53, K, { reach: 0.4, minY: 10 }),
-    p(63.75, -49.1, K, { reach: 0.4, minY: 10 }),
-    p(67.5, -49.1, K, { reach: 0.4, minY: 8.5 }),
-    p(71.25, -48.25, K, { reach: 0.4, minY: 7.5 }),
-    p(67.5, -47.4, K, { reach: 0.4, minY: 6 }),
-    p(63.75, -46.5, K, { reach: 0.4, minY: 5 }),
-    p(67.5, -45.6, K, { reach: 0.4, minY: 3.5 }),
-    p(71.25, -44.75, K, { reach: 0.4, minY: 2.5 }),
-    p(67.5, -43.9, K, { reach: 0.4, minY: 1 }),
-    p(63.75, -43.9, K, { reach: 0.4 }),
-    p(63.75, -38, K),
+    p(-63.75, -21, K, { reach: 0.4, minY: 10 }),
+    p(-63.75, -24.9, K, { reach: 0.4, minY: 10 }),
+    p(-67.5, -24.9, K, { reach: 0.4, minY: 8.5 }),
+    p(-71.25, -25.75, K, { reach: 0.4, minY: 7.5 }),
+    p(-67.5, -26.6, K, { reach: 0.4, minY: 6 }),
+    p(-63.75, -27.5, K, { reach: 0.4, minY: 5 }),
+    p(-67.5, -28.4, K, { reach: 0.4, minY: 3.5 }),
+    p(-71.25, -29.25, K, { reach: 0.4, minY: 2.5 }),
+    p(-67.5, -30.1, K, { reach: 0.4, minY: 1 }),
+    p(-63.75, -30.1, K, { reach: 0.4 }),
+    p(-63.75, -38, K),
     p(60, -30, K),
   ],
 
@@ -258,7 +267,9 @@ export const routes = {
     p(40, -14, K),
   ],
 
-  // The three southern gates of Middot 1:4 and Shaar HaElyon, each entered from the court.
+  // The three southern gates of Middot 1:4 and Shaar HaElyon, each entered from the court;
+  // the lane at x -58 keeps clear of the Beis Avtinas stair tower (round 7: x -73.5 ..
+  // -61.5, z -32 .. -23) between the Water Gate and Shaar HaBechoros.
   azarah_gates_south: [
     p(-58, -16, K),
     p(-69, -16, K, { reach: 0.6 }),
@@ -291,9 +302,7 @@ export const routes = {
     p(69, -36, K, { reach: 0.6 }),
     p(73, -36, K, blocked),
     p(61, -36, K),
-    p(60, -40, K), // past the Beis Avtinas stair tower (x 61.5 .. 73.5, z -51 .. -42)
-    p(60, -54, K),
-    p(61, -58, K),
+    p(61, -58, K), // the Beis Avtinas stair tower stood between the two gates until round 6
     p(69, -58, K, { reach: 0.6 }),
     p(73, -58, K, blocked),
     p(61, -58, K),
@@ -403,16 +412,19 @@ Object.assign(routes, {
   ]),
 
   // (a) South wall inside face from the Nicanor corner to the back corner: the frontage
-  // steps, the Water Gate, the Palhedrin bay, Bechoros, Delek, round Lishkas HaGazis and
-  // through its open door, round Lishkas HaGolah and through its door, Shaar HaElyon.
+  // steps, the Water Gate (under the Beis Avtinas storey since round 7), round the Avtinas
+  // stair tower (x -73.5 .. -61.5, z -32 .. -23, its court door on the west face), Bechoros,
+  // Delek, round Lishkas HaGazis and through its open door, round Lishkas HaGolah and
+  // through its door, Shaar HaElyon.
   azarah_hug_south: pushed([
     h(-X_IN + HUG, -HUG, Y),
     h(-X_IN + HUG, -7, Y),
     h(-X_IN + HUG, -12, K),
     ...gateReveal(-1, -16),
-    h(-X_IN + HUG, -23, K),
-    h(-X_IN - 3, -23, K), // the Palhedrin bay off the Water Gate passage
-    hc(-X_IN + HUG, -23, K),
+    h(-X_IN + HUG, -23 + HUG, K), // the tower's east face
+    hc(-61.5 + HUG, -23 + HUG, K), // round the tower's north face
+    hc(-61.5 + HUG, -32 - HUG, K),
+    h(-X_IN + HUG, -32 - HUG, K), // its west face, past the court door
     h(-X_IN + HUG, -37, K),
     ...gateReveal(-1, -44),
     h(-X_IN + HUG, -60, K),
@@ -439,9 +451,9 @@ Object.assign(routes, {
 
   // (a) North wall inside face: the strip between the east wall and Beis HaMoked, the
   // hall's south face with the frontage steps and its open gate, its west face, Shaar
-  // HaNashim, round the Beis Avtinas stair tower, Korban, Nitzotz, the pocket beside the
-  // Ulam's north wing, the slot past the wing, the three northern lishkos through their
-  // doors, and the wall behind them to the back corner.
+  // HaNashim, Korban (the Beis Avtinas stair tower stood between them until round 6),
+  // Nitzotz, the pocket beside the Ulam's north wing, the slot past the wing, the three
+  // northern lishkos through their doors, and the wall behind them to the back corner.
   azarah_hug_north: pushed([
     h(X_IN - HUG, -1, Y),
     h(52.5 + HUG, -1, Y),
@@ -461,10 +473,7 @@ Object.assign(routes, {
     h(58.5 + HUG, -26 - HUG, K),
     h(X_IN - HUG, -26 - HUG, K), // the rest of the hall's west face
     ...gateReveal(1, -36),
-    h(X_IN - HUG, -42 + HUG, K),
-    hc(61.5 - HUG, -42 + HUG, K), // round the Beis Avtinas stair tower
-    hc(61.5 - HUG, -51 - HUG, K),
-    h(X_IN - HUG, -51 - HUG, K),
+    h(X_IN - HUG, -50, K),
     ...gateReveal(1, -58),
     h(X_IN - HUG, -70, K),
     ...gateReveal(1, -78),
@@ -619,38 +628,39 @@ Object.assign(routes, {
     p(40, -100, K),
   ]),
 
-  // (e) Beis Avtinas: up the stair tower (azarah_avtinas checks each flight) and round
-  // the storey's four walls, then down.
+  // (e) Beis Avtinas (round 7: over the Water Gate): up the stair tower (azarah_avtinas
+  // checks each flight) and round the storey's four walls (interior x -72.5 .. -62.5,
+  // z -23 .. -9), then down.
   azarah_hug_avtinas: pushed([
-    p(60, -30, K),
-    p(63.75, -38, K),
-    p(63.75, -43.9, K, { reach: 0.4 }),
-    p(67.5, -43.9, K, { reach: 0.4, minY: 1 }),
-    p(71.25, -44.75, K, { reach: 0.4, minY: 2.5 }),
-    p(67.5, -45.6, K, { reach: 0.4, minY: 3.5 }),
-    p(63.75, -46.5, K, { reach: 0.4, minY: 5 }),
-    p(67.5, -47.4, K, { reach: 0.4, minY: 6 }),
-    p(71.25, -48.25, K, { reach: 0.4, minY: 7.5 }),
-    p(67.5, -49.1, K, { reach: 0.4, minY: 8.5 }),
-    p(63.75, -49.1, K, { reach: 0.4, minY: 10 }),
-    p(63.75, -53, K, { reach: 0.4, minY: 10 }),
-    h(62.5 + HUG, -51 - HUG, K, { minY: 10 }),
-    h(62.5 + HUG, -65 + HUG, K, { minY: 10 }), // the storey's south wall
-    h(72.5 - HUG, -65 + HUG, K, { minY: 10 }), // its west wall
-    h(72.5 - HUG, -51 - HUG, K, { minY: 10 }), // its north wall, in the court wall's thickness
-    h(62.5 + HUG, -51 - HUG, K, { minY: 10 }), // its east wall
-    p(63.75, -53, K, { reach: 0.4, minY: 10 }),
-    p(63.75, -49.1, K, { reach: 0.4, minY: 10 }),
-    p(67.5, -49.1, K, { reach: 0.4, minY: 8.5 }),
-    p(71.25, -48.25, K, { reach: 0.4, minY: 7.5 }),
-    p(67.5, -47.4, K, { reach: 0.4, minY: 6 }),
-    p(63.75, -46.5, K, { reach: 0.4, minY: 5 }),
-    p(67.5, -45.6, K, { reach: 0.4, minY: 3.5 }),
-    p(71.25, -44.75, K, { reach: 0.4, minY: 2.5 }),
-    p(67.5, -43.9, K, { reach: 0.4, minY: 1 }),
-    p(63.75, -43.9, K, { reach: 0.4 }),
-    p(63.75, -38, K),
-    p(60, -30, K),
+    p(-60, -40, K),
+    p(-63.75, -38, K),
+    p(-63.75, -30.1, K, { reach: 0.4 }),
+    p(-67.5, -30.1, K, { reach: 0.4, minY: 1 }),
+    p(-71.25, -29.25, K, { reach: 0.4, minY: 2.5 }),
+    p(-67.5, -28.4, K, { reach: 0.4, minY: 3.5 }),
+    p(-63.75, -27.5, K, { reach: 0.4, minY: 5 }),
+    p(-67.5, -26.6, K, { reach: 0.4, minY: 6 }),
+    p(-71.25, -25.75, K, { reach: 0.4, minY: 7.5 }),
+    p(-67.5, -24.9, K, { reach: 0.4, minY: 8.5 }),
+    p(-63.75, -24.9, K, { reach: 0.4, minY: 10 }),
+    p(-63.75, -21, K, { reach: 0.4, minY: 10 }),
+    h(-62.5 - HUG, -23 + HUG, K, { minY: 10 }),
+    h(-62.5 - HUG, -9 - HUG, K, { minY: 10 }), // the storey's north wall, on the court side
+    h(-72.5 + HUG, -9 - HUG, K, { minY: 10 }), // its east wall
+    h(-72.5 + HUG, -23 + HUG, K, { minY: 10 }), // its south wall, in the court wall's thickness
+    h(-62.5 - HUG, -23 + HUG, K, { minY: 10 }), // its west wall, shared with the tower
+    p(-63.75, -21, K, { reach: 0.4, minY: 10 }),
+    p(-63.75, -24.9, K, { reach: 0.4, minY: 10 }),
+    p(-67.5, -24.9, K, { reach: 0.4, minY: 8.5 }),
+    p(-71.25, -25.75, K, { reach: 0.4, minY: 7.5 }),
+    p(-67.5, -26.6, K, { reach: 0.4, minY: 6 }),
+    p(-63.75, -27.5, K, { reach: 0.4, minY: 5 }),
+    p(-67.5, -28.4, K, { reach: 0.4, minY: 3.5 }),
+    p(-71.25, -29.25, K, { reach: 0.4, minY: 2.5 }),
+    p(-67.5, -30.1, K, { reach: 0.4, minY: 1 }),
+    p(-63.75, -30.1, K, { reach: 0.4 }),
+    p(-63.75, -38, K),
+    p(-60, -40, K),
   ]),
 
   // (f) Beis HaMoked: the hall's cross-shaped floor hugging the chamber faces and the

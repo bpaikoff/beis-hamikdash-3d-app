@@ -211,7 +211,8 @@ describe('Ezras Kohanim floor over the whole Temple', () => {
   });
 
   it('opens the Water Gate and the Beis HaMoked gate onto flat court beside the Duchan, and the Duchan itself is a 1-amah step', () => {
-    const under = (x, z) => player.getFloorHeight(...xz(x, z), 200);
+    // Cast from under the Beis Avtinas storey (round 7: x -73.5 .. -61.5, z -24 .. -8, floor slab from y 23.2) where it stands over the frontage.
+    const under = (x, z) => player.getFloorHeight(...xz(x, z), x < -61.5 && z > -24 ? K + 5 : 200);
     for (const [x, z] of [[-62, -20], [-62, -14], [-62, -11.5], [-57, -12], [46, -13], [46, -9.5], [51, -10]]) expect(under(x, z), `${x},${z}`).toBeCloseTo(K, 2);
     expect(under(-50, -11.7)).toBeCloseTo(levelWorldY('duchan') - 0.01 * AMAH, 2);
     expect(under(38, -11.7)).toBeCloseTo(levelWorldY('duchan') - 0.01 * AMAH, 2);
@@ -261,15 +262,28 @@ describe('Ezras Kohanim floor over the whole Temple', () => {
     expect(box.max.x).toBeLessThan(xz(-20 - 1, -65)[0]);
   });
 
-  it('floors Palhedrin at the Cheil level and lands its stair and the Avtinas stair at the levels of their doors', () => {
+  it('floors Palhedrin at the Cheil level and lands its stair and the Avtinas stair at the levels of their doors (round 7: Palhedrin north, Avtinas south)', () => {
     const under = (x, z, from = 200) => player.getFloorHeight(...xz(x, z), from);
-    expect(under(-78.5, -29, K)).toBeCloseTo(levelWorldY('cheil') + 0.04 * AMAH, 2); // the Cheil pavement is its floor
-    expect(under(-76, -23.5, K + 6)).toBeCloseTo(K, 2); // its upper landing
-    expect(under(-70.5, -23)).toBeCloseTo(K, 2); // the Water Gate passage bay
-    expect(under(63.75, -43.9)).toBeCloseTo(K + LIP, 2); // the tower's entry landing
+    const cheil = levelWorldY('cheil');
+    expect(under(78.5, -65.5, K)).toBeCloseTo(cheil + 0.09 * AMAH, 2); // the entry strip inside its Cheil door, a LIP over the pavement
+    expect(under(78.5, -72.25, K)).toBeCloseTo(cheil + 11 * 0.5 * AMAH, 2); // the lower flight's eleventh tread (half-amah rises from the Cheil level)
+    expect(under(77, -76.5, K)).toBeCloseTo(cheil + 8 * AMAH, 2); // the turn landing across the west end, 8 amos up
+    expect(under(75, -65.5, K + 6)).toBeCloseTo(K, 2); // its upper landing at the court level
+    expect(under(70.5, -65.5)).toBeCloseTo(K, 2); // the bay through the north wall into the Korban gate passage
+    expect(under(-63.75, -30.1)).toBeCloseTo(K + LIP, 2); // the Avtinas tower's entry landing (x -65 .. -62.5, z -31 .. -29.25)
     const storey = (byId.beis_avtinas.position.y - byId.azaras_kohanim.position.y) * AMAH; // 21.5 amos over the court
-    expect(under(63.75, -49.1)).toBeCloseTo(K + storey + LIP, 2); // its top landing, 21.5 amos up (43 half-amah steps)
-    expect(under(67.5, -58, K + 26 * AMAH)).toBeCloseTo(K + storey + LIP, 2); // the storey floor (cast from under its roof)
+    expect(under(-63.75, -24.9)).toBeCloseTo(K + storey + LIP, 2); // its top landing, 21.5 amos up (43 half-amah steps)
+    expect(under(-67.5, -16, K + 26 * AMAH)).toBeCloseTo(K + storey + LIP, 2); // the storey floor over the Water Gate (cast from under its roof)
+    expect(under(-71.25, -29.25)).toBeCloseTo(K + LIP + 11 * 0.5 * AMAH, 2); // the first landing at the wall end after 11 steps
+    // The Cheil lane along the Soreg past Palhedrin (x 81 .. 83.5) is at least 0.8 m clear.
+    const [, wz] = xz(0, -71);
+    const y = cheil + 0.5;
+    let soreg = Infinity;
+    for (const b of player.wallBoxes) {
+      if (wz < b.min.z || wz > b.max.z || y < b.min.y || y > b.max.y) continue;
+      if (b.min.x > xz(81, 0)[0] && b.min.x < soreg) soreg = b.min.x;
+    }
+    expect(soreg - xz(81, 0)[0], 'the Cheil lane past Palhedrin').toBeGreaterThanOrEqual(0.8);
   });
 
   it('floors the Beis HaMoked and Gazis vestibules at the Cheil level and lands their stairs in the wells', () => {

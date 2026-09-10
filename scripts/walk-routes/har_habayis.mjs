@@ -91,10 +91,11 @@ export const routes = {
 
   // The Cheil (Middot 2:3) all round the courts, entering and leaving through the Soreg
   // opening opposite every gate. The ring is interrupted where temple.json puts buildings
-  // across it: Beis HaMoked (x to 82.5, z -26 .. -2) on the north, Lishkas Palhedrin
-  // (z -21 .. -37, with a door to the Cheil) and Lishkas HaEtz (z -118 .. -148) on the
-  // south, so those stretches are bypassed over the plaza. The last leg goes in through
-  // the Beis HaMoked's Cheil door into its vestibule (stairs.mjs walks the stair).
+  // across it: Beis HaMoked (x to 82.5, z -26 .. -2), the Middot 1:9 bath-house, Lishkas
+  // Palhedrin (round 7: x to 81, z -79 .. -63, with a door to the Cheil) and the Nitzotz
+  // tower on the north (the last three rounded by the lane along the Soreg), Lishkas
+  // HaEtz (z -118 .. -148) on the south, so those stretches are bypassed. The last leg
+  // goes in through the Beis HaMoked's Cheil door into its vestibule (stairs.mjs walks the stair).
   cheil: [
     amos(0, 165, HB),
     at('cheil', CH), // in through the opening opposite the Ezras Nashim gate
@@ -102,7 +103,7 @@ export const routes = {
     amos(78.5, 2, CH), // north strip, up to the Beis HaMoked
     amos(78.5, 155, CH),
     amos(-78.5, 155, CH),
-    amos(-78.5, -10, CH), // south strip, up to Palhedrin
+    amos(-78.5, -10, CH), // south strip, under the Beis Avtinas storey (round 7, 37.5 amos up)
     amos(-78.5, -16, CH),
     amos(-90, -16, HB), // out opposite the Water Gate
     amos(-90, -44, HB),
@@ -124,11 +125,11 @@ export const routes = {
     amos(50, -198, CH),
     amos(78.5, -198, CH),
     amos(78.5, -102, CH),
-    amos(82.4, -102, { ...CH, reach: 0.4 }), // round the Nitzotz stair tower (round 6: x to 81, z -99 .. -83) by the lane along the Soreg
-    amos(82.4, -81, { ...CH, reach: 0.4 }),
-    amos(78.5, -78, CH),
-    amos(90, -78, HB), // out opposite Shaar HaNitzotz
-    amos(78.5, -78, CH),
+    amos(82.4, -102, { ...CH, reach: 0.4 }), // round the Nitzotz stair tower (round 6: x to 81, z -99 .. -83) and Lishkas Palhedrin (round 7: x to 81, z -79 .. -63) by the lane along the Soreg
+    amos(82.4, -78, { ...CH, reach: 0.4 }),
+    amos(90, -78, HB), // out opposite Shaar HaNitzotz, from the lane
+    amos(82.4, -78, { ...CH, reach: 0.4 }),
+    amos(82.4, -60, { ...CH, reach: 0.4 }),
     amos(78.5, -58, CH),
     amos(90, -58, HB), // out opposite Shaar HaKorban
     amos(78.5, -58, CH),
@@ -176,8 +177,9 @@ export const routes = {
   // The Cheil ring hugging the court walls (0.8 amos off their outer faces), with the
   // bypasses over the plaza where temple.json puts buildings across the ring: Beis
   // HaMoked (x 52.5 .. 82.5, z -26 .. -2) leaves the north strip east of it a dead end
-  // (no Soreg opening between it and the east side); Lishkas Palhedrin (z -37 .. -21)
-  // and Lishkas HaEtz (z -148 .. -118) fill the south strip, and the chol half of
+  // (no Soreg opening between it and the east side); Lishkas Palhedrin (round 7: x to 81,
+  // z -79 .. -63) stands in the north strip between the bath-house and the Nitzotz tower;
+  // Lishkas HaEtz (z -148 .. -118) fills the south strip, and the chol half of
   // Lishkas HaGazis (x to -77.5, z -118 .. -88) narrows it. Palhedrin's door to the Cheil
   // is walked into; Beis HaMoked's and the Gazis' Cheil doors, at the Cheil level into
   // the vestibules under their chol halves, are walked in stairs.mjs.
@@ -210,8 +212,14 @@ export const routes = {
     amos(82.4, -41.2, { ...CH, reach: 0.3 }),
     amos(82.4, -52.8, { ...CH, reach: 0.3 }), // its west wall
     amos(74.3, -52.8, { ...CH, reach: 0.3 }),
-    amos(74.3, -82.2, { ...CH, reach: 0.3 }), // past Shaar HaKorban to the Nitzotz tower's east wall
-    amos(82.4, -82.2, { ...CH, reach: 0.3 }),
+    amos(74.3, -62.2, { ...CH, reach: 0.3 }), // past Shaar HaKorban to Lishkas Palhedrin's east wall (round 7)
+    amos(78.5, -62.2, { ...CH, reach: 0.3 }),
+    amos(78.5, -65.5, CH), // in through its Cheil door (Yoma 19a), onto the entry strip
+    amos(78.5, -62.2, { ...CH, reach: 0.3 }),
+    amos(82.4, -62.2, { ...CH, reach: 0.3 }),
+    amos(82.4, -79.8, { ...CH, reach: 0.3 }), // the lane along the Soreg past Palhedrin's north wall, to its west wall
+    amos(74.3, -81, { ...CH, reach: 0.3 }), // the gap between Palhedrin (z -79) and the Nitzotz tower (z -83)
+    amos(82.4, -82.2, { ...CH, reach: 0.3 }), // the tower's east wall
     amos(82.4, -99.8, { ...CH, reach: 0.3 }), // its west wall
     amos(74.3, -99.8, { ...CH, reach: 0.3 }),
     amos(74.3, -194.5, { ...CH, reach: 0.3 }), // north strip to the north-west corner
@@ -226,15 +234,7 @@ export const routes = {
     amos(-78.3, -117.2, CH), // beside the Gazis' chol half, to the east wall of Lishkas HaEtz
     amos(-79, -86.5, { ...CH, reach: 0.3 }),
     amos(-74.3, -86.5, CH),
-    amos(-74.3, -37.8, CH), // to Palhedrin's west wall
-    amos(-74.3, -44, CH),
-    amos(-90, -44, HB), // out opposite Shaar HaBechoros, over the plaza
-    amos(-90, -16, HB),
-    amos(-78.5, -16, CH), // in opposite the Water Gate
-    amos(-78.5, -20.2, CH), // Palhedrin's door to the Cheil (Yoma 19a), in its east wall
-    amos(-78.5, -30, CH), // inside, between the two flights of its stair
-    amos(-78.5, -18, CH),
-    amos(-74.3, -18, CH),
+    amos(-74.3, -16, CH), // south strip past Shaar HaBechoros and under the Beis Avtinas storey and its tower (round 7: z -32 .. -8, 37.5 amos up; Palhedrin stood here until round 6)
     amos(-74.3, 148.5, { ...CH, reach: 0.3 }), // south strip along the Azarah and Ezras Nashim walls to the south-east corner
     amos(-11.3, 147.8, CH),
     amos(-11.3, 153.8, CH),
@@ -270,7 +270,7 @@ export const routes = {
     amos(50, -210, HB),
     amos(90, -210, HB),
     amos(90, -78, HB),
-    amos(78.5, -78, CH), // Shaar HaNitzotz
+    amos(82.4, -78, { ...CH, reach: 0.4 }), // Shaar HaNitzotz: onto the lane along the Soreg (Lishkas Palhedrin, round 7, fills the Cheil up to x 81)
     amos(90, -78, HB),
     amos(90, -58, HB),
     amos(78.5, -58, CH), // Shaar HaKorban

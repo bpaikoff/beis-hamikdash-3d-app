@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as THREE from 'three';
-import { TextureFactory, TEXTURE_NAMES, BAKED_PATH, CLOTH_FOLDS, clothFoldsHeight, heightToNormal } from './TextureFactory.js';
+import { TextureFactory, TEXTURE_NAMES, BAKED_PATH, PBR_SETS, CLOTH_FOLDS, clothFoldsHeight, heightToNormal } from './TextureFactory.js';
 import { mulberry32 } from './random.js';
 
 /** Stub the image loader: returns a bare Texture and settles on the next tick. */
@@ -76,6 +76,9 @@ describe('TextureFactory (baked path)', () => {
     expect(n.colorSpace).toBe(THREE.NoColorSpace);
     expect(a.wrapS).toBe(THREE.RepeatWrapping);
     expect(a.anisotropy).toBe(8);
+    expect(a.generateMipmaps).toBe(true);
+    expect(a.minFilter).toBe(THREE.LinearMipmapLinearFilter);
+    expect(a.magFilter).toBe(THREE.LinearFilter);
     expect(f.total).toBe(2);
 
     await f.whenLoaded();
@@ -132,6 +135,10 @@ describe('TextureFactory.pbrSet', () => {
     for (const k of ['normalMap', 'roughnessMap', 'aoMap']) expect(a[k].colorSpace, k).toBe(THREE.NoColorSpace);
     expect(a.map.wrapS).toBe(THREE.RepeatWrapping);
     expect(a.map.anisotropy).toBe(16);
+    for (const k of ['map', 'normalMap', 'roughnessMap', 'aoMap']) {
+      expect(a[k].generateMipmaps, k).toBe(true);
+      expect(a[k].minFilter, k).toBe(THREE.LinearMipmapLinearFilter);
+    }
     expect(f.total).toBe(7);
     await f.whenLoaded();
     expect(f.loaded).toBe(7);
@@ -177,6 +184,29 @@ describe('TextureFactory.pbrSet', () => {
       expect(f.loaded).toBe(f.total);
     } finally {
       console.warn = warn;
+    }
+  });
+
+  it('every texture the factory returns is trilinear with mipmaps and anisotropy of at least 8', () => {
+    // Round 7: a wood grain seen from 40 m shimmers without a mip chain; the settings are
+    // three's defaults, so this guards every path through finish() (baked files, the
+    // canvas fallback which reuses the loader's texture, the PBR maps) and the default
+    // anisotropy when no renderer maximum is given.
+    for (const opts of [{}, { maxAnisotropy: 16 }]) {
+      const f = new TextureFactory(opts);
+      stubPbrLoader(f);
+      const all = TEXTURE_NAMES.map((n) => [n, f.get(n)]);
+      for (const set of Object.keys(PBR_SETS)) for (const [slot, tex] of Object.entries(f.pbrSet(set))) all.push([`${set}.${slot}`, tex]);
+      expect(all.length).toBeGreaterThan(TEXTURE_NAMES.length + 3 * Object.keys(PBR_SETS).length - 1);
+      for (const [name, tex] of all) {
+        expect(tex, name).toBeTruthy();
+        expect(tex.generateMipmaps, name).toBe(true);
+        expect(tex.minFilter, name).toBe(THREE.LinearMipmapLinearFilter);
+        expect(tex.magFilter, name).toBe(THREE.LinearFilter);
+        expect(tex.anisotropy, name).toBeGreaterThanOrEqual(8);
+        expect(tex.wrapS, name).toBe(THREE.RepeatWrapping);
+        expect(tex.wrapT, name).toBe(THREE.RepeatWrapping);
+      }
     }
   });
 

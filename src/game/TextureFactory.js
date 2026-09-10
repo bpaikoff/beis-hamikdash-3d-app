@@ -121,7 +121,7 @@ const PBR_NEUTRAL = { map: [176, 168, 144], normalMap: [128, 128, 255], roughnes
 export class TextureFactory {
   /**
    * @param {{maxAnisotropy?: number, baked?: boolean, pbr?: boolean, manager?: THREE.LoadingManager}} [opts]
-   *   maxAnisotropy: renderer.capabilities.getMaxAnisotropy();
+   *   maxAnisotropy: renderer.capabilities.getMaxAnisotropy() (default 8);
    *   baked: try public/textures/<name>.webp first (default true; pass false for ?bake=0);
    *   pbr: serve the photographic sets from pbrSet() (default true; false for ?pbr=0 makes
    *        pbrSet() return null so materials fall back to the procedural textures);
@@ -130,7 +130,7 @@ export class TextureFactory {
   constructor(opts = {}) {
     this.cache = new Map();
     this.size = 1024;
-    this.maxAnisotropy = opts.maxAnisotropy ?? 4;
+    this.maxAnisotropy = opts.maxAnisotropy ?? 8; // the renderer passes its real maximum (16 on most GPUs); three clamps at upload
     this.baked = opts.baked ?? true;
     this.pbr = opts.pbr ?? true;
     this.manager = opts.manager ?? new THREE.LoadingManager();
@@ -176,14 +176,20 @@ export class TextureFactory {
 
   /**
    * Every colour texture is authored in sRGB; telling three so keeps the colours from
-   * washing out under the sRGB output. Anisotropy keeps the 8x-repeated floors sharp at
-   * grazing angles. Normal maps are linear data and skip the colour-space tag.
+   * washing out under the sRGB output. Normal maps are linear data and skip the
+   * colour-space tag. Every texture, canvas or file, is sampled through a full mip chain
+   * (trilinear) with the renderer's anisotropy: the 8x-repeated floors stay sharp at
+   * grazing angles and a wood grain seen from 40 m does not shimmer. These are three's
+   * defaults, set here so no texture path can lose them (TextureFactory.test.js).
    * `update` is false for a texture whose image has not arrived yet (the loader flags
    * it when the file lands).
    */
   finish(tex, { srgb = true, update = true } = {}) {
     tex.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.generateMipmaps = true;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
     tex.anisotropy = this.maxAnisotropy;
     if (update) tex.needsUpdate = true;
     return tex;

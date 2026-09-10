@@ -104,8 +104,9 @@ Conventions:
   its floor at the Cheil level and an internal stair, on the Nitzotz tower's plan, to a
   landing at the court level whose door opens through a bay into the Korban gate passage.
   Yoma 19a raises the opposite arrangement (Palhedrin south by the Water Gate) and rejects
-  its reasoning; rounds A to 6 built that one. Both stairs, Palhedrin's site and the
-  north/south assignment are reconstructions (`meta.disputes`).
+  its reasoning; rounds A to 6 built that one. Both stairs, Palhedrin's site and size,
+  and the Avtinas storey's size are reconstructions; the north/south assignment follows
+  the Meiri (`meta.disputes`).
 - Sub-rooms listed under a parent's `children` (Beis HaMoked's four) are flattened by
   `src/content/index.js` into `entries` and `byId` with `parent` set: they keep their own
   id, name, desc, position and sources and inherit type, area, period, icon and questions,
@@ -278,9 +279,14 @@ after the first frame, `?tour=tamid&stop=5` starts at a stop (1-based); the star
 Decision: Yoma 19a leaves the sides of the Kohen Gadol's two chambers open (its suggestion
 that Palhedrin was the southern one beside the Water Gate is rejected); the model follows the
 sources that commit: Meiri (Yoma 19a) states Palhedrin north and Beis Avtinas south beside
-the Water Gate, Yerushalmi Yoma 1:5 puts Beis Avtinas over the Water Gate, Rambam Beis
-HaBechirah 5:17 and Bartenura (Middot 5:4) make Palhedrin the Lishkas HaEtz, north on their
-text. Content: `beis_avtinas.position` x 67.5 -> -67.5, z -58 -> -16 (the storey over
+the Water Gate, Yerushalmi Yoma 1:5 has the aliyas Beis Avtinas "over the Water Gate and
+near his chamber" (Korban HaEdah reads that chamber as Palhedrin beside it, so the
+Yerushalmi supports the storey's site but not the split), Rambam Beis HaBechirah 5:17
+makes Palhedrin the Lishkas HaEtz, north on his text of Middot 5:3-4 (Bartenura Middot 5:4
+makes the identification without a side, on the printed Mishnah that has Etz south).
+Source reviewer (2026-09-10): those two softenings applied; Rambam 8:5 (upper storeys
+beside the gates, no gate named) added to `beis_avtinas.sources`; the Even HaShtiya note
+gives the etzba convention (Kelim 17:10, Rambam Sefer Torah 9:9). Content: `beis_avtinas.position` x 67.5 -> -67.5, z -58 -> -16 (the storey over
 `water_gate`, floor y 24 unchanged; `geometry.stair` "from the court beside the Water
 Gate"); `lishkas_palhedrin.position` x -78.5 -> 78.5, z -29 -> -65.5 (the entry strip
 inside its Cheil door), `outsideWall` south -> north, `geometry.w` 10 -> 7.5 (x 73.5 .. 81,
@@ -336,8 +342,8 @@ does not say which pair of chambers is chol (Rambam's diagram); Bartenura (Middo
 puts the Nitzotz opening in one of the exedra's side walls, and the Bavli's baraisa
 (Yoma 19a) has no opening; Middot 2:6 lists Shaar Yechonya without naming Nitzotz. All
 applied as note wording. **Yoma 19a, second reading:** the sugya suggests Palhedrin was
-the southern chamber and rejects the reasoning; Rambam 5:17 and Bartenura (Middot 5:4)
-make Palhedrin the Lishkas HaEtz in the north, Meiri (Yoma 19a) states Palhedrin north and
+the southern chamber and rejects the reasoning; Rambam 5:17 makes Palhedrin the Lishkas
+HaEtz in the north (Bartenura Middot 5:4 identifies them without a side), Meiri (Yoma 19a) states Palhedrin north and
 Beis Avtinas south by the Water Gate, Yerushalmi Yoma 1:5 puts Beis Avtinas over the
 Water Gate. The `lishkas_palhedrin` and `beis_avtinas` notes and descriptions now say
 the built arrangement follows the rejected suggestion and the printed Mishnah's southern
